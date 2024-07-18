@@ -1,0 +1,39 @@
+
+.entry {
+  padding: 16px 16px 0;
+  text-decoration: none;
+  color: inherit;
+
+  .name {
+    line-height: 16px;
+    margin-top: 16px;
+    margin-bottom: 8px;
+  }
+
+  .deleteButton {
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+  }
+
+  &:hover {
+    .deleteButton {
+      opacity: 1;
+    }
+  }
+}
+
+.sortPopover {
+  padding: 16px;
+  width: 400px;
+  .patternList {
+    margin-bottom: 16px;
+  }
+  .exampleList {
+    margin-top: 16px;
+  }
+  .exampleItem {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+}

@@ -1,0 +1,12 @@
+[package]
+name = "kira-remote-stream"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+kira = { version = "0.8.7", features = ["symphonia"] }
+ringbuf = "0.3.1"
+stream-download = "0.5.2"
+symphonia = { version = "0.5.4", default-features = false }

@@ -1,0 +1,153 @@
+GET http://localhost:8080/system-config
+
+
+###
+PUT http://localhost:8080/system-config
+Content-Type: application/json
+
+{
+  "id": 2,
+  "sleep_timer": 80,
+  "idle_shutdown_timer": 5,
+  "display_off_timer": 2,
+  "hostname": "mupibox",
+  "cpu_governor": "schedutil",
+  "overclock_sd_card": false,
+  "log_to_ram": true,
+  "wait_for_network": false,
+  "initial_turbo": true,
+  "swap_enabled": true,
+  "hdmi_rotate": 0,
+  "lcd_rotate": 0,
+  "display_brightness": 100,
+  "display_resolution_x": 800,
+  "display_resolution_y": 480,
+  "audio_device": "hifiberry-dac",
+  "volume": 50,
+  "max_volume": 100,
+  "led_on_off_shim_pin": 0,
+  "led_brightness": 100,
+  "led_brightness_dimmed": 10,
+  "power_off_btn_delay": 2
+}
+
+###
+GET http://localhost:8080/spotify-config
+
+###
+PUT http://localhost:8080/api/spotify/config
+Content-Type: application/json
+
+{
+  "client_id": "asdasd",
+  "secret_key": "qweqweqwe",
+  "username": "qweqweqwe1",
+  "password": "qweqweqwe1"
+}
+
+###
+GET http://localhost:8080/library/8
+
+###
+POST http://localhost:8080/library
+Content-Type: application/json
+
+{
+  "parent_id": 0,
+  "variant": "stream",
+  "name": "Music",
+  "image": [
+    50,
+    50,
+    50
+  ],
+  "track_source": {
+    "title": "some title",
+    "url": "https://open.spotify.com/track/6rqhFgbbKwnb9MLmUQDhG6"
+  },
+  "played_at": "2021-01-01T00:00:00Z"
+}
+
+###
+POST http://localhost:8080/library
+Content-Type: application/json
+
+{
+  "parent_id": 0,
+  "variant": "folder",
+  "name": "Some sub folder",
+  "image": [
+    50,
+    50,
+    50
+  ],
+  "played_at": "2021-01-01T00:00:00Z",
+  "children": [
+    {
+      "variant": "folder",
+      "name": "sub sub folder",
+      "image": [
+        50,
+        50,
+        50
+      ],
+      "played_at": "2021-01-01T00:00:00Z",
+      "children": [
+        {
+          "variant": "localFile",
+          "name": "some track.mp3",
+          "image": [
+            50,
+            50,
+            50
+          ],
+          "played_at": "2021-01-01T00:00:00Z"
+        }
+      ]
+    }
+  ]
+}
+
+###
+PUT http://localhost:8080/library/7
+Content-Type: application/json
+
+{
+  "id": 7,
+  "parent_id": 0,
+  "variant": "folder",
+  "name": "Some sub folder1",
+  "image": [
+    50,
+    50,
+    50
+  ],
+  "played_at": "2021-01-01T00:00:00Z",
+  "children": [
+    {
+      "id": 8,
+      "parent_id": 7,
+      "variant": "folder",
+      "name": "sub sub folder5",
+      "image": [
+        50,
+        50,
+        50
+      ],
+      "played_at": "2021-01-01T00:00:00Z",
+      "children": null
+    },
+    {
+      "id": 1
+    }
+  ]
+}
+
+###
+DELETE http://localhost:8080/library/4
+
+###
+GET http://localhost:8080/api/spotify/auth
+
+###
+GET http://localhost:8080/api/image?url=https://www.ardalpha.de/wissen/psychologie/musik-gehirn-aktivitaet-wirkung-forschung-100~_v-img__16__9__xl_-d31c35f8186ebeb80b0cd843a7c267a0e0c81647.jpg?version=6b5e8

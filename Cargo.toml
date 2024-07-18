@@ -1,0 +1,13 @@
+[workspace]
+resolver = "2"
+members = [
+    "admin_interface/server",
+    "database",
+    "kira_remote_stream",
+    "migration",
+    "player",
+    "user_interface"
+]
+
+[profile.dev]
+opt-level = 3

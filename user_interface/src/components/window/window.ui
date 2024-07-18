@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="MupiboxWindow" parent="GtkApplicationWindow">
+    <style>
+      <class name="app-window"/>
+    </style>
+    <property name="title">Mupibox Gui</property>
+    <property name="width-request">800</property>
+    <property name="height-request">480</property>
+    <child>
+      <object class="GtkBox" id="container">
+        <property name="orientation">vertical</property>
+      </object>
+    </child>
+  </template>
+</interface>

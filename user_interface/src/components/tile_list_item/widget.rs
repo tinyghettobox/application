@@ -1,0 +1,77 @@
+use gtk4::{CompositeTemplate, GestureClick, glib};
+use gtk4::gdk::Texture;
+use gtk4::glib::{Bytes, object_subclass};
+use gtk4::glib::subclass::InitializingObject;
+use gtk4::prelude::{GestureExt, WidgetExt};
+use gtk4::subclass::prelude::*;
+use tracing::{info, warn};
+
+#[derive(Default, CompositeTemplate)]
+#[template(file = "./tile_list_item.ui")]
+pub struct TileListItemWidgetImp {
+    #[template_child]
+    pub wrapper: TemplateChild<gtk4::Box>,
+    #[template_child]
+    pub image: TemplateChild<gtk4::Picture>,
+    #[template_child]
+    pub label: TemplateChild<gtk4::Label>
+}
+
+#[object_subclass]
+impl ObjectSubclass for TileListItemWidgetImp {
+    const NAME: &'static str = "MupiboxTileListItem";
+    type Type = TileListItemWidget;
+    type ParentType = gtk4::Box;
+
+    fn class_init(klass: &mut Self::Class) {
+        klass.bind_template();
+    }
+
+    fn instance_init(obj: &InitializingObject<Self>) {
+        obj.init_template();
+    }
+}
+
+impl ObjectImpl for TileListItemWidgetImp {}
+impl WidgetImpl for TileListItemWidgetImp {}
+impl BoxImpl for TileListItemWidgetImp {}
+
+glib::wrapper! {
+    pub struct TileListItemWidget(ObjectSubclass<TileListItemWidgetImp>)
+        @extends gtk4::Box, gtk4::Widget,
+        @implements gtk4::Accessible, gtk4::Buildable, gtk4::ConstraintTarget, gtk4::Orientable;
+}
+
+impl TileListItemWidget {
+    pub fn new() -> Self {
+        glib::Object::new()
+    }
+
+    pub fn set_image(&self, buffer: Option<Vec<u8>>) {
+        let paintable = buffer.and_then(|buffer| {
+            let bytes = Bytes::from(&buffer);
+            match Texture::from_bytes(&bytes) {
+                Ok(texture) => Some(texture),
+                Err(error) => {
+                    warn!("Failed to load texture: {}", error);
+                    None
+                }
+            }
+        });
+        info!("Setting paintable {:?}", paintable);
+        self.imp().image.set_paintable(paintable.as_ref());
+    }
+
+    pub fn set_name(&self, name: String) {
+        self.imp().label.set_label(&name);
+    }
+
+    pub fn connect_clicked(&self, callback: impl Fn() + Send + Sync + 'static) {
+        let gesture = GestureClick::new();
+        gesture.connect_released(move |gesture, _, _, _| {
+            gesture.set_state(gtk4::EventSequenceState::Claimed);
+            callback();
+        });
+        self.imp().wrapper.add_controller(gesture);
+    }
+}

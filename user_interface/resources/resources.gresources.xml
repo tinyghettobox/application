@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/org/mupibox-rs/gui/">
+    <file compressed="true">styles.css</file>
+    <file compressed="true">icons/scalable/actions/arrow-down-symbolic.svg</file>
+    <file compressed="true">icons/scalable/actions/arrow-left-symbolic.svg</file>
+    <file compressed="true">icons/scalable/actions/arrow-right-symbolic.svg</file>
+    <file compressed="true">icons/scalable/actions/arrow-up-symbolic.svg</file>
+    <file compressed="true">icons/scalable/actions/bullet-list-symbolic.svg</file>
+    <file compressed="true">icons/scalable/actions/pause-symbolic.svg</file>
+    <file compressed="true">icons/scalable/actions/play-symbolic.svg</file>
+    <file compressed="true">icons/scalable/actions/menu-symbolic.svg</file>
+    <file compressed="true">icons/scalable/actions/playlist-symbolic.svg</file>
+    <file compressed="true">icons/scalable/actions/seek-backward-symbolic.svg</file>
+    <file compressed="true">icons/scalable/actions/seek-forward-symbolic.svg</file>
+    <file compressed="true">icons/scalable/actions/volume-symbolic.svg</file>
+    <file compressed="true">icons/scalable/actions/volume-full-symbolic.svg</file>
+    <file compressed="true">icons/scalable/actions/volume-off-symbolic.svg</file>
+    <file compressed="true">icons/scalable/actions/check-symbolic.svg</file>
+  </gresource>
+</gresources>

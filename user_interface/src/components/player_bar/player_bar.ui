@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="MupiboxPlayerBar" parent="GtkBox">
+    <style>
+      <class name="player-bar"/>
+    </style>
+    <child>
+      <object class="GtkBox" id="wrapper">
+        <style>
+          <class name="wrapper"/>
+        </style>
+        <property name="orientation">vertical</property>
+        <child>
+          <!-- progress bar -->
+          <object class="GtkBox">
+            <property name="hexpand">true</property>
+            <child>
+              <object class="GtkScale" id="progress_bar">
+                <style>
+                  <class name="progress-bar"/>
+                </style>
+                <property name="orientation">horizontal</property>
+                <property name="hexpand">true</property>
+                <property name="adjustment">
+                  <object class="GtkAdjustment">
+                    <property name="lower">0.0</property>
+                    <property name="upper">100.0</property>
+                  </object>
+                </property>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <!-- player bar -->
+          <object class="GtkBox">
+            <style>
+              <class name="main-content"/>
+            </style>
+            <property name="hexpand">true</property>
+            <child>
+              <object class="GtkPicture" id="image"/>
+            </child>
+            <child>
+              <object class="GtkBox">
+                <property name="orientation">vertical</property>
+                <property name="hexpand">true</property>
+                <child>
+                  <object class="GtkLabel" id="track_name">
+                    <style>
+                      <class name="track-name"/>
+                    </style>
+                    <property name="halign">start</property>
+                    <property name="ellipsize">end</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="folder_name">
+                    <style>
+                      <class name="folder-name"/>
+                    </style>
+                    <property name="halign">start</property>
+                    <property name="ellipsize">end</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkBox">
+                <style>
+                  <class name="action-buttons"/>
+                </style>
+                <child>
+                  <object class="GtkButton" id="back_button">
+                    <style>
+                      <class name="seek-backward-button"/>
+                    </style>
+                    <property name="icon-name">seek-backward</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkButton" id="play_toggle_button">
+                    <style>
+                      <class name="play-toggle-button"/>
+                    </style>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkButton" id="forward_button">
+                    <style>
+                      <class name="seek-forward-button"/>
+                    </style>
+                    <property name="icon-name">seek-forward</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkScaleButton" id="volume_button">
+                    <style>
+                      <class name="volume-button"/>
+                    </style>
+                    <!-- @formatter:off -->
+                    <property name="icons">volume-off
+                      volume-full
+                      volume</property>
+                    <!-- @formatter:on -->
+                    <property name="adjustment">
+                      <object class="GtkAdjustment">
+                        <property name="lower">0</property>
+                        <property name="step-increment">1</property>
+                        <property name="page-increment">10</property>
+                      </object>
+                    </property>
+                  </object>
+                </child>
+                <!--            <child>-->
+                <!--              <object class="GtkButton" id="queue_toggle_button">-->
+                <!--                <style>-->
+                <!--                  <class name="playlist-button"/>-->
+                <!--                </style>-->
+                <!--                <property name="icon-name">playlist</property>-->
+                <!--              </object>-->
+                <!--            </child>-->
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>

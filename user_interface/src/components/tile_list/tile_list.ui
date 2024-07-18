@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="MupiboxTileList" parent="GtkBox">
+    <child>
+      <object class="GtkBox">
+        <!--        <property name="valign">center</property>-->
+        <!--        <property name="height-request">300</property>-->
+        <child>
+          <object class="GtkScrolledWindow">
+            <property name="hscrollbar-policy">never</property>
+            <property name="hexpand">true</property>
+            <property name="vexpand">true</property>
+            <child>
+              <object class="GtkGrid" id="grid">
+                <style>
+                  <class name="tiles"/>
+                </style>
+                <property name="hexpand">true</property>
+                <property name="vexpand">true</property>
+                <property name="row-spacing">32</property>
+                <property name="column-homogeneous">true</property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>

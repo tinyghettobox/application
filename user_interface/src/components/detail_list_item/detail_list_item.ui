@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="MupiboxDetailListItem" parent="GtkBox">
+    <style>
+      <class name="detail-list-item"/>
+    </style>
+    <property name="orientation">horizontal</property>
+    <child>
+      <object class="GtkLabel" id="position">
+        <style>
+          <class name="position"/>
+        </style>
+      </object>
+    </child>
+    <child>
+      <object class="GtkLabel" id="name">
+        <style>
+          <class name="name"/>
+        </style>
+        <property name="ellipsize">end</property>
+      </object>
+    </child>
+    <child>
+      <object class="GtkImage" id="icon">
+        <style>
+          <class name="status-icon"/>
+        </style>
+        <property name="hexpand">true</property>
+        <property name="halign">end</property>
+      </object>
+    </child>
+  </template>
+</interface>

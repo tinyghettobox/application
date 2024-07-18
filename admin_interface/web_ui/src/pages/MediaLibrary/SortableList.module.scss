@@ -1,0 +1,35 @@
+
+.sortableListItem {
+  position: relative;
+  background-color: transparent;
+  cursor: pointer;
+
+  &::before {
+    content: ' ';
+    display: block;
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 4px;
+    background-color: #999;
+    opacity: 0;
+    transition: opacity .1s linear;
+  }
+
+  &:hover {
+    background-color: #f0f0f0;
+
+    &::before {
+      opacity: 1;
+    }
+  }
+
+  &.isDragging {
+    background-color: #e3e3e3;
+
+    &::before {
+      opacity: 1;
+    }
+  }
+}

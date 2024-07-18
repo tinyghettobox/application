@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="MupiboxNavbar" parent="GtkBox">
+    <style>
+      <class name="navbar"/>
+    </style>
+    <child>
+      <object class="GtkBox" id="wrapper">
+        <style>
+          <class name="wrapper"/>
+        </style>
+        <property name="hexpand">true</property>
+        <child>
+          <object class="GtkButton" id="back_button">
+            <property name="icon-name">go-previous</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkPicture" id="image"/>
+        </child>
+        <child>
+          <object class="GtkLabel" id="label">
+            <property name="ellipsize">end</property>
+            <property name="hexpand">true</property>
+            <property name="halign">start</property>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>

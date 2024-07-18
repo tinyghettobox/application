@@ -1,0 +1,52 @@
+
+.resultList {
+
+  .title {
+    text-transform: capitalize;
+    margin-bottom: 16px;
+  }
+
+  .itemContainer {
+    .item {
+      display: flex;
+      cursor: pointer;
+      width: 100%;
+      padding: 8px 0;
+
+      .icon {
+        transform: rotate(0deg);
+      }
+
+      .avatar {
+        flex: 0 0 32px;
+      }
+
+      .name {
+        margin-left: 16px;
+        display: flex;
+        align-items: center;
+        flex-grow: 1;
+      }
+
+      .action {
+        flex: 0 0 150px;
+        text-align: right;
+      }
+    }
+
+    .itemChildren {
+      margin-left: 24px;
+      display: none;
+    }
+
+    &.expanded {
+      > .item .icon {
+        transform: rotate(90deg);
+      }
+
+      > .itemChildren {
+        display: block;
+      }
+    }
+  }
+}

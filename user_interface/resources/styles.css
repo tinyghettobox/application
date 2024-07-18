@@ -1,0 +1,168 @@
+@define-color primary-color #1B6D9B;
+@define-color background #21242D;
+@define-color background-accent #272A34;
+@define-color color white;
+@define-color color-accent #aaa;
+@define-color button-disabled-color #777;
+@define-color button-active-background #555;
+@define-color list-separator #333;
+
+window.background {
+    background: @background;
+}
+
+window.background > box label {
+    color: @color;
+    font-family: Verdana, sans-serif;
+    font-size: 20px;
+}
+
+window.background > box button:active {
+    background: @button-active-background;
+}
+
+window.background > box button:disabled {
+    color: @button-disabled-color;
+}
+
+window.background > box button:not(:active) {
+    transition: all .4s linear;
+}
+
+listview {
+    background: transparent;
+}
+
+listview row:focus {
+    outline: none;
+}
+
+.navbar {
+    min-height: 70px;
+}
+
+.navbar .wrapper {
+    padding: 8px;
+    background: @background-accent;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, .2);
+}
+
+.navbar button {
+    margin-left: 8px;
+    padding: 0 16px;
+    border: none;
+    background: transparent;
+    color: white;
+}
+
+.navbar .play-button {
+    border-radius: 50px;
+    background: @primary-color;
+    color: white;
+}
+
+.navbar picture {
+    margin: 0 16px 0 16px;
+    border-radius: 30px;
+}
+
+window.background .navbar label {
+    font-size: 20px;
+}
+
+.tiles {
+    margin: 32px 0;
+}
+
+.tile-item {
+    min-width: 150px;
+    margin: 0 16px;
+}
+
+.tile-item .image {
+    border-radius: 100px;
+    min-width: 150px;
+    min-height: 150px;
+    margin-bottom: 16px;
+
+    background-color: #cfdae5;
+    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAAsQAAALEBxi1JjQAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAGkSURBVEiJtdQ/SJVRGAbwH9cbFYE3IxuKmhp0yYQWIZqsCFoKLjQVCGFDCG1J0NToKAYuQdIiLqlL0dDU7R8EFY0iIVEQFgSi/dGG8124fp77eW7pA4fD93znfZ735Zz3ZSMe4G6E3zLUsIYL223wA8f/V6zUhJ/FR8ygazsMvuI0loSKzm61AXxCH14KFVVb1D6AY7EfNdxr+G7DQ6GqXQWCZZzEHbzGH6ykGMAp4eJPRLKs4j4WszPrVrkgo0Z0ZvtnVHAT59CTGL8OjRXsRD/m8TTjqrFMm63NKniDbjzH5YxrKzj/G8/wCPtxo25wRujc7+hoCLiCn3iH1SaiX/BY6Jkn+Jbx1wg3fxXjuaBatr8qyPYWpvG+4IwyhosOFGBMqLgQJbRH+MV/NI0aTOW41QiXih04jwEcrJN7MIoFvLX5SLgkPMG9OX43Xtj4VFtGM4OhiHhyJ3dgEIeEhxHD0Qi3lCJewVwku3wFsQ6fTjG4HgmMGcCIMEXXhDF/OMXgdkR8WXgxMbTjSIpwHb34lTOYbEUgBRfxQZgzE9iXGvgXn7d6sxdQgh4AAAAASUVORK5CYII=);
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.detail-list {
+    margin: 15px;
+}
+
+.detail-list row:not(:first-child) {
+    border-top: 1px solid @list-separator;
+}
+
+.detail-list-item {
+    padding: 16px 16px;
+}
+
+.detail-list-item .position {
+    margin-right: 24px;
+    color: @color-accent;
+}
+
+.detail-list-item .status-icon {
+    color: @color;
+}
+
+.player-bar.hidden {
+    min-height: 50px;
+}
+
+.player-bar .wrapper {
+    background: @background-accent;
+    box-shadow: 0 -1px 6px rgba(0, 0, 0, .2);
+}
+
+.player-bar .wrapper .main-content {
+    padding: 16px;
+}
+
+.player-bar .progress-bar {
+    padding: 0;
+}
+
+.player-bar .wrapper picture {
+    border-radius: 100%;
+    margin-right: 16px;
+}
+
+.player-bar .wrapper .track-name {
+    font-size: 20px;
+}
+
+.player-bar .wrapper .folder-name {
+    color: @color-accent;
+}
+
+.player-bar .action-buttons button {
+    background: transparent;
+    border: none;
+    color: @color;
+    min-width: 42px;
+    margin: 0;
+    border-radius: 40px;
+}
+
+.player-bar .action-buttons .volume-button {
+    margin-left: 32px;
+}
+
+popover.background contents,
+popover.background arrow {
+    background: @background-accent;
+}
+.scale-popup scale {
+    min-height: 180px;
+}
+
+.content .empty-info label {
+    color: @color-accent;
+}
