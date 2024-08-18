@@ -1,7 +1,4 @@
-use std::sync::{Arc};
-use std::sync::Mutex;
-use gtk4::prelude::IsA;
-use gtk4::Widget;
+use std::sync::{Arc, Mutex};
 use crate::components::{Children, Component};
 use crate::components::empty_info::widget::EmptyInfoWidget;
 use crate::state::{Dispatcher, Event, EventHandler, State};
@@ -25,13 +22,15 @@ impl Component<Option<()>> for EmptyInfoComponent {
         Self { widget, children }
     }
 
+    #[allow(refining_impl_trait)]
     fn render(_state: Arc<Mutex<State>>, _dispatcher: Arc<Mutex<Dispatcher>>, _params: Option<()>) -> (EmptyInfoWidget, Children) {
         (EmptyInfoWidget::new(), vec![])
     }
 
     fn update(&mut self) { }
 
-    fn get_widget(&self) -> impl IsA<Widget> {
+    #[allow(refining_impl_trait)]
+    fn get_widget(&self) -> EmptyInfoWidget {
         self.widget.clone()
     }
 }

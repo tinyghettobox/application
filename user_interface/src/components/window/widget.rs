@@ -1,19 +1,15 @@
-use gtk4::{CompositeTemplate, gio, glib, prelude::*, TemplateChild, Widget};
-use gtk4::glib::{object_subclass};
+use gtk4::{CompositeTemplate, gio, glib};
+use gtk4::glib::object_subclass;
 use gtk4::subclass::prelude::*;
-use gtk4::subclass::prelude::ObjectSubclassIsExt;
 
 #[derive(Default, CompositeTemplate)]
 #[template(file = "./window.ui")]
-pub struct WindowWidgetImp {
-    #[template_child]
-    pub container: TemplateChild<gtk4::Box>,
-}
+pub struct WindowWidgetImp {}
 
 
 #[object_subclass]
 impl ObjectSubclass for WindowWidgetImp {
-    const NAME: &'static str = "MupiboxWindow";
+    const NAME: &'static str = "TinyGhettoBoxWindow";
     type Type = WindowWidget;
     type ParentType = gtk4::ApplicationWindow;
 
@@ -41,9 +37,5 @@ glib::wrapper! {
 impl WindowWidget {
     pub fn new() -> Self {
         glib::Object::new()
-    }
-
-    pub fn add_child(&self, widget: &impl IsA<Widget>) {
-        self.imp().container.get().append(widget);
     }
 }

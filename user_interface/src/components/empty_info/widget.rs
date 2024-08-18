@@ -9,7 +9,7 @@ pub struct EmptyInfoWidgetImp {}
 
 #[object_subclass]
 impl ObjectSubclass for EmptyInfoWidgetImp {
-    const NAME: &'static str = "MupiboxEmptyInfo";
+    const NAME: &'static str = "TinyGhettoBoxEmptyInfo";
     type Type = EmptyInfoWidget;
     type ParentType = gtk4::Box;
 

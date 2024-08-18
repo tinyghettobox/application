@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-  <template class="MupiboxTileList" parent="GtkBox">
+  <template class="TinyGhettoBoxTileList" parent="GtkBox">
     <child>
       <object class="GtkBox">
         <!--        <property name="valign">center</property>-->
         <!--        <property name="height-request">300</property>-->
         <child>
-          <object class="GtkScrolledWindow">
+          <object class="GtkScrolledWindow" id="scroll_window">
             <property name="hscrollbar-policy">never</property>
             <property name="hexpand">true</property>
             <property name="vexpand">true</property>

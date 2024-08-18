@@ -1,12 +1,14 @@
 use std::collections::HashSet;
+
 use chrono::Utc;
-use crate::model::library_entry::{ActiveModel, Column, Entity, Model, ParentLink};
-use crate::model::track_source::{Entity as TrackSourceEntity, Column as TrackSourceColumn};
-use crate::repository::track_source::TrackSourceRepository;
-use sea_orm::ActiveValue::Set;
 use sea_orm::{ActiveModelTrait, ColumnTrait, ConnectionTrait, DatabaseConnection, DbBackend, DbErr, EntityTrait, QueryFilter, QueryOrder, Statement, TransactionTrait};
-use sea_orm::Order::{Asc};
+use sea_orm::ActiveValue::Set;
+use sea_orm::Order::Asc;
 use serde_json::Value;
+
+use crate::model::library_entry::{ActiveModel, Column, Entity, Model, ParentLink};
+use crate::model::track_source::{Column as TrackSourceColumn, Entity as TrackSourceEntity};
+use crate::repository::track_source::TrackSourceRepository;
 
 pub struct LibraryEntryRepository {}
 
@@ -81,16 +83,18 @@ impl LibraryEntryRepository {
     pub async fn get_tracks_in_parent(conn: &DatabaseConnection, library_entry_id: i32) -> Result<Vec<Model>, DbErr> {
         let library_entries = Entity::find().from_raw_sql(
             Statement::from_sql_and_values(DbBackend::Sqlite, r#"
-                with recursive library_entry_hierarchy as (
-                    select * from library_entry where parent_id = $1
-                    union all
-                    select le.*
-                    from library_entry le
-                    join library_entry_hierarchy leh on le.parent_id = leh.id
-                    where le.parent_id = leh.id
-                    order by parent_id, sort_key
+                WITH RECURSIVE library_hierarchy AS (
+                    SELECT *, substr('0000' || sort_key, -4, 4) as path
+                    FROM library_entry
+                    WHERE parent_id = ?
+
+                    UNION ALL
+
+                    SELECT le.*, lh.path || '.' || substr('0000' || le.sort_key, -4, 4)
+                    FROM library_entry le
+                    INNER JOIN library_hierarchy lh ON le.parent_id = lh.id
                 )
-                select * from library_entry_hierarchy where variant != 'folder';
+                SELECT * FROM library_hierarchy WHERE variant != 'folder' ORDER BY path ASC;
             "#, [library_entry_id.into()])
         ).all(conn).await?;
 
@@ -105,7 +109,10 @@ impl LibraryEntryRepository {
             .map(|mut entry| {
                 entry.track_source = track_sources.iter().find(|source| source.library_entry_id == entry.id).cloned();
                 if let Some(parent_id) = entry.parent_id.clone() {
-                    entry.parent_name = parent_entries.iter().find(|parent| parent.id == parent_id).map(|parent| parent.name.to_string());
+                    if let Some(parent) = parent_entries.iter().find(|parent| parent.id == parent_id) {
+                        entry.parent_name = Some(parent.name.to_string());
+                        entry.parent_image = parent.image.clone();
+                    }
                 }
                 entry
             })

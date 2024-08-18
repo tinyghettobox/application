@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-  <template class="MupiboxDetailListItem" parent="GtkBox">
+  <template class="TinyGhettoBoxDetailListItem" parent="GtkBox">
     <style>
       <class name="detail-list-item"/>
     </style>

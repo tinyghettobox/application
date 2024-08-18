@@ -1,14 +1,15 @@
-use std::sync::{Arc};
-use std::sync::Mutex;
-use gtk4::prelude::{GtkWindowExt, IsA};
-use gtk4::{Application, Widget};
+use std::sync::{Arc, Mutex};
+
+use gtk4::Application;
+use gtk4::prelude::GtkWindowExt;
+
 use crate::components::{Children, Component};
 use crate::components::content::ContentComponent;
 use crate::components::navbar::NavbarComponent;
 use crate::components::player_bar::PlayerBarComponent;
+use crate::components::ripple::RippleComponent;
 use crate::components::window::widget::WindowWidget;
 use crate::state::{Dispatcher, Event, EventHandler, State};
-
 
 pub struct WindowComponent {
     pub widget: WindowWidget,
@@ -16,8 +17,11 @@ pub struct WindowComponent {
 }
 
 impl EventHandler for WindowComponent {
-    fn on_event(&mut self, _event: &Event) {
-
+    fn on_event(&mut self, event: &Event) {
+        match event {
+            Event::Error(error) => tracing::error!("Received error event: {}", error),
+            _ => {}
+        }
     }
 
     fn get_children(&self) -> Vec<Arc<Mutex<Box<dyn EventHandler>>>> {
@@ -33,24 +37,32 @@ impl Component<Option<()>> for WindowComponent {
         component
     }
 
+    #[allow(refining_impl_trait)]
     fn render(state: Arc<Mutex<State>>, dispatcher: Arc<Mutex<Dispatcher>>, _params: Option<()>) -> (WindowWidget, Children) {
+        let ripple = RippleComponent::new(state.clone(), dispatcher.clone(), None);
         let navbar = NavbarComponent::new(state.clone(), dispatcher.clone(), None);
         let content = ContentComponent::new(state.clone(), dispatcher.clone(), None);
         let player_bar = PlayerBarComponent::new(state.clone(), dispatcher.clone(), None);
 
+        ripple.add_child(&navbar.get_widget());
+        ripple.add_child(&content.get_widget());
+        ripple.add_child(&player_bar.get_widget());
+
         let widget = WindowWidget::new();
-        widget.add_child(&navbar.widget);
-        widget.add_child(&content.widget);
-        widget.add_child(&player_bar.widget);
+        widget.set_child(Some(&ripple.get_widget()));
 
-        (widget, vec![Arc::new(Mutex::new(Box::new(navbar))), Arc::new(Mutex::new(Box::new(content))), Arc::new(Mutex::new(Box::new(player_bar)))])
+        (widget, vec![
+            Arc::new(Mutex::new(Box::new(navbar))),
+            Arc::new(Mutex::new(Box::new(content))),
+            Arc::new(Mutex::new(Box::new(player_bar))),
+            Arc::new(Mutex::new(Box::new(ripple))),
+        ])
     }
 
-    fn update(&mut self) {
+    fn update(&mut self) {}
 
-    }
-
-    fn get_widget(&self) -> impl IsA<Widget> {
+    #[allow(refining_impl_trait)]
+    fn get_widget(&self) -> WindowWidget {
         self.widget.clone()
     }
 }

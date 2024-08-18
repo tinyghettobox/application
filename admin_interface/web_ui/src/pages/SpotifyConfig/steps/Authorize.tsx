@@ -19,7 +19,8 @@ export default function Authorize() {
       <Typography variant="h5">Authorize</Typography>
       <p>
         By clicking the button below, you will be redirected to the authorization page of Spotify. You have to login
-        with the Spotify account you want to use on the MuPiBox-rs, and authorize the developer application you created
+        with the Spotify account you want to use on the TinyGhettoBox, and authorize the developer application you
+        created
         in the previous step to control your spotify account and devices. Indeed this can be the same account but this
         authorization method is required by Spotify&apos;s rules when accessing sensitive data, which device and
         playback is

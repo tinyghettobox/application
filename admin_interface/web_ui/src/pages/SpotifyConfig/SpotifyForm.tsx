@@ -115,7 +115,7 @@ export default function SpotifyForm() {
         </Grid>
       </Grid>
       <Typography variant="subtitle1" sx={{mb: 5}}>
-        Here you can connect your MuPiBox-rs to Spotify. Each step explains what you have to do.
+        Here you can connect your TinyGhettoBox to Spotify. Each step explains what you have to do.
       </Typography>
       {loading ? (
         <CircularProgress />

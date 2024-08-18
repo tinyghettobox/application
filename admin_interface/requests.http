@@ -10,7 +10,7 @@ Content-Type: application/json
   "sleep_timer": 80,
   "idle_shutdown_timer": 5,
   "display_off_timer": 2,
-  "hostname": "mupibox",
+  "hostname": "tinyghettobox",
   "cpu_governor": "schedutil",
   "overclock_sd_card": false,
   "log_to_ram": true,
@@ -150,4 +150,5 @@ DELETE http://localhost:8080/library/4
 GET http://localhost:8080/api/spotify/auth
 
 ###
-GET http://localhost:8080/api/image?url=https://www.ardalpha.de/wissen/psychologie/musik-gehirn-aktivitaet-wirkung-forschung-100~_v-img__16__9__xl_-d31c35f8186ebeb80b0cd843a7c267a0e0c81647.jpg?version=6b5e8
+GET http://localhost:8080/api/image?
+    url=https://www.ardalpha.de/wissen/psychologie/musik-gehirn-aktivitaet-wirkung-forschung-100~_v-img__16__9__xl_-d31c35f8186ebeb80b0cd843a7c267a0e0c81647.jpg?version=6b5e8

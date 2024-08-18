@@ -37,7 +37,7 @@ export default function SystemSettings({control}: Props) {
                   <InputLabel id={"hostname-label"}>Hostname</InputLabel>
                   <OutlinedInput label={"Hostname"} {...field} />
                   <FormHelperText sx={{ml: 0}}>
-                    The Mupibox will be visible in your LAN with this name
+                    The TinyGhettoBox will be visible in your LAN with this name
                   </FormHelperText>
                 </FormControl>
               }

@@ -2,11 +2,10 @@ use std::env;
 use std::thread::sleep;
 use std::time::Duration;
 
-use kira::manager::{backend::DefaultBackend, AudioManager, AudioManagerSettings};
+use kira::manager::{AudioManager, AudioManagerSettings, backend::DefaultBackend};
 use kira::sound::streaming::{StreamingSoundData, StreamingSoundSettings};
 use kira::tween::Value;
 use kira::Volume;
-use stream_download::source::SourceStream;
 
 // struct RemoteSource {
 //     reader: StreamDownload<MemoryStorageProvider>,
@@ -68,7 +67,7 @@ async fn main() {
         args.iter().nth(1).expect("Url to be passed"),
         StreamingSoundSettings::new().volume(Value::Fixed(Volume::Amplitude(0.3))),
     )
-    .expect("stream sound data to be created");
+        .expect("stream sound data to be created");
     //
     let mut handle = manager.play(sound).expect("failed to play");
 

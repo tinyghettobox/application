@@ -18,7 +18,7 @@ export default function SystemConfig() {
       idleShutdownTimer: 15, // self handled
       displayOffTimer: 5, // self handled
       // system
-      hostname: 'mupibox', // command x
+      hostname: 'tinyghettobox', // command x
       cpuGovernor: 'performance', // command x
       overclockSdCard: false, // command
       logToRam: true, // command x
@@ -91,7 +91,7 @@ export default function SystemConfig() {
           </Grid>
         </Grid>
         <Typography variant="subtitle1" sx={{mb: 5}}>
-          Here you can configure general settings of the MuPiBox-rs
+          Here you can configure general settings of the TinyGhettoBox
         </Typography>
         <div style={{position: 'relative'}}>
           <TimerConfig control={control}/>

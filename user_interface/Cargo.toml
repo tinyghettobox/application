@@ -9,16 +9,17 @@ edition = "2021"
 database = { path = "../database" }
 player = { path = "../player" }
 async-channel = "2.2.0"
-gtk4 = { version = "0.8.1", package = "gtk4", default-features = false }
+gtk4 = { version = "0.9.0", package = "gtk4", default-features = false, features = ["v4_8"] }
+image = "0.25.2"
+minifb = "0.27.0"
 tracing = "0.1.40"
 tracing-subscriber = "0.3.18"
 tokio = { version = "1.35.1", features = ["rt-multi-thread"] }
-tracing-mutex = "0.3.0"
-console-subscriber = "0.3.0"
 
 [build-dependencies]
-glib-build-tools = "0.19.0"
+glib-build-tools = "0.20.0"
 
 [features]
-gtk4_6 = ["gtk4/v4_6"]
+gtk4_8 = ["gtk4/v4_8"]
 gtk4_12 = ["gtk4/v4_12"]
+

@@ -22,7 +22,7 @@ pub struct NavbarWidgetImp {
 
 #[object_subclass]
 impl ObjectSubclass for NavbarWidgetImp {
-    const NAME: &'static str = "MupiboxNavbar";
+    const NAME: &'static str = "TinyGhettoBoxNavbar";
     type Type = NavbarWidget;
     type ParentType = gtk4::Box;
 

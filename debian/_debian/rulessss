@@ -1,0 +1,20 @@
+#!/usr/bin/make -f
+
+#!/usr/bin/make -f
+
+%:
+	dh $@
+
+override_dh_auto_build:
+	# No compilation needed, so this is empty
+
+override_dh_auto_install:
+	# Call the standard dh_auto_install
+	dh_auto_install
+
+    echo "PATH IS $(pwd)"
+    mkdir -p debian/srv/tinyghettobox
+    cp target/aarch64-unknown-linux-gnu/release/user_interface debian/srv/tinyghettobox/tgb_user_interface
+
+override_dh_auto_clean:
+

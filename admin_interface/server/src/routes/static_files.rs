@@ -1,10 +1,21 @@
-use actix_files::NamedFile;
-use actix_web::error::{ErrorInternalServerError, ErrorNotFound};
-use actix_web::{get, web, Error, Result};
 use std::env::current_dir;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+
+use actix_files::NamedFile;
+use actix_web::{Error, get, Result, web};
+use actix_web::error::{ErrorInternalServerError, ErrorNotFound};
+use tracing::warn;
 
 fn get_out_dir() -> Result<PathBuf, Error> {
+    if let Ok(ui_path) = std::env::var("UI_PATH") {
+        let static_files_path = Path::new(&ui_path);
+        if static_files_path.exists() {
+            return Ok(static_files_path.to_path_buf());
+        } else {
+            warn!("Supplied UI_PATH={} does not exist", ui_path);
+        }
+    }
+
     let dir = current_dir().map_err(|e| ErrorInternalServerError(e))?;
     let mut path = dir.as_path();
     loop {

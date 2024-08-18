@@ -1,0 +1,14 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@
+override_dh_auto_build:
+	# No compilation needed, so this is empty
+	echo "dh auto build"
+
+override_dh_auto_install:
+	echo "dh auto install"
+	# Custom installation commands can be added here, if necessary
+	# For example, copying files into the package structure
+	mkdir -p $(DESTDIR)/usr/local/bin
+	cp usr/local/bin/tinyghettobox $(DESTDIR)/usr/local/bin/

@@ -1,10 +1,13 @@
 import {
   Accordion,
   AccordionDetails,
-  AccordionSummary, FormControl, FormHelperText,
+  AccordionSummary,
+  FormControl,
+  FormHelperText,
   FormLabel,
   Grid,
-  Slider, Stack,
+  Slider,
+  Stack,
   TextField,
   Typography
 } from "@mui/material";
@@ -50,7 +53,7 @@ export default function TimerConfig({control}: Props) {
                       />
                     </Grid>
                   </Grid>
-                  <FormHelperText sx={{ml: 0}}>How many minutes to shut down MuPiBox</FormHelperText>
+                  <FormHelperText sx={{ml: 0}}>How many minutes to shut down TinyGhettoBox</FormHelperText>
                 </FormControl>
               }
             />
@@ -84,7 +87,7 @@ export default function TimerConfig({control}: Props) {
                     </Grid>
                   </Grid>
                   <FormHelperText sx={{ml: 0}}>
-                    How many minutes can the Mupibox be idle (without playing) before it gets shutdown
+                    How many minutes can the TinyGhettoBox be idle (without playing) before it gets shutdown
                   </FormHelperText>
                 </FormControl>
               }

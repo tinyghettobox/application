@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# Install font files
+fc-cache -f -v
+
+# Enable and start the systemd services
+systemctl enable tgb_user_interface.service
+systemctl enable tgb_admin_interface.service
+systemctl start tgb_user_interface.service
+systemctl start tgb_admin_interface.service
+
+exit 0

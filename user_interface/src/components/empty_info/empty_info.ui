@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-  <template class="MupiboxEmptyInfo" parent="GtkBox">
+  <template class="TinyGhettoBoxEmptyInfo" parent="GtkBox">
     <style>
       <class name="empty-info"/>
     </style>

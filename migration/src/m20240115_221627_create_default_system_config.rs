@@ -34,7 +34,7 @@ impl MigrationTrait for Migration {
                 led_brightness_dimmed,
                 power_off_btn_delay
             )
-            VALUES (1, 60, 5, 2, 'mupibox', 'schedutil', false, true, false, true, true, 0, 0, 100, 800, 480, 'hifiberry-dac', 50, 100, 0, 100, 10, 2);
+            VALUES (1, 60, 5, 2, 'tinyghettobox', 'schedutil', false, true, false, true, true, 0, 0, 100, 800, 480, 'hifiberry-dac', 50, 100, 0, 100, 10, 2);
         "#).await?;
 
         Ok(())

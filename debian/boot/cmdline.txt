@@ -1,0 +1,1 @@
+root=PARTUUID=a580676e-02 rootfstype=ext4 rootwait net.ifnames=0 logo.nologo console=tty3 fastboot noatime nodiratime noram splash silent loglevel=0 quiet vt.default_red=68,68,68,68,68,68,68,68 vt.default_grn=175,175,175,175,175,175,175,175 vt.default_blu=226,226,226,226,226,226,226,226

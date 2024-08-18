@@ -2,4 +2,4 @@
 import type { TrackSource } from "./TrackSource";
 import type { Variant } from "./Variant";
 
-export interface LibraryEntry { id?: number; parentId?: number, variant: Variant, name: string, image?: Array<number>, playedAt?: string, sortKey: number, children?: Array<LibraryEntry>, trackSource?: TrackSource, parentName?: string, }
+export type LibraryEntry = { id?: number, parentId?: number, variant: Variant, name: string, image?: Array<number>, playedAt?: string, sortKey: number, children?: Array<LibraryEntry>, trackSource?: TrackSource, parentName?: string, parentImage?: Array<number>, };

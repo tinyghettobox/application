@@ -1,0 +1,17 @@
+[config]
+default_to_workspace = false
+
+[tasks.build-image-docker]
+script = "docker build -t cross_compile ."
+
+[tasks.build-image-podman]
+script = "podman build -t cross_compile ."
+
+[tasks.build-binaries-docker]
+script = "docker run -ti -v .:/project/tinyghettobox/ -v H:\\Data\\projects\\kira:/project/kira -v ~/.cargo:/.cargo cross_compile"
+
+[tasks.build-binaries-podman]
+script = "podman run -ti -v .:/project/tinyghettobox/ -v /mnt/h/Data/projects/kira:/project/kira -v ~/.cargo:/.cargo cross_compile"
+
+[tasks.build-deb]
+script = "cargo deb -p tinyghettobox --target aarch64-unknown-linux-gnu --no-build"

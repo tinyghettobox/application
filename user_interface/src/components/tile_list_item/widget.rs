@@ -2,9 +2,9 @@ use gtk4::{CompositeTemplate, GestureClick, glib};
 use gtk4::gdk::Texture;
 use gtk4::glib::{Bytes, object_subclass};
 use gtk4::glib::subclass::InitializingObject;
-use gtk4::prelude::{GestureExt, WidgetExt};
+use gtk4::prelude::{ButtonExt, GestureExt, WidgetExt};
 use gtk4::subclass::prelude::*;
-use tracing::{info, warn};
+use tracing::warn;
 
 #[derive(Default, CompositeTemplate)]
 #[template(file = "./tile_list_item.ui")]
@@ -14,12 +14,14 @@ pub struct TileListItemWidgetImp {
     #[template_child]
     pub image: TemplateChild<gtk4::Picture>,
     #[template_child]
-    pub label: TemplateChild<gtk4::Label>
+    pub label: TemplateChild<gtk4::Label>,
+    #[template_child]
+    pub play_button: TemplateChild<gtk4::Button>,
 }
 
 #[object_subclass]
 impl ObjectSubclass for TileListItemWidgetImp {
-    const NAME: &'static str = "MupiboxTileListItem";
+    const NAME: &'static str = "TinyGhettoBoxTileListItem";
     type Type = TileListItemWidget;
     type ParentType = gtk4::Box;
 
@@ -58,7 +60,6 @@ impl TileListItemWidget {
                 }
             }
         });
-        info!("Setting paintable {:?}", paintable);
         self.imp().image.set_paintable(paintable.as_ref());
     }
 
@@ -73,5 +74,9 @@ impl TileListItemWidget {
             callback();
         });
         self.imp().wrapper.add_controller(gesture);
+    }
+
+    pub fn connect_play_clicked(&self, callback: impl Fn() + Send + Sync + 'static) {
+        self.imp().play_button.connect_clicked(move |_| callback());
     }
 }

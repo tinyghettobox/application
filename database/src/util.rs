@@ -1,3 +1,4 @@
+#[allow(dead_code)]
 pub trait ChangeTracking {
     fn update_from_json(&mut self, value: serde_json::Value) -> Vec<String>;
 }

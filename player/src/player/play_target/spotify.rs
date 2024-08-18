@@ -1,36 +1,33 @@
-use database::model::library_entry::{Model as LibraryEntry, Variant};
 use std::time::Duration;
+
 use async_trait::async_trait;
-use rspotify::model::{TrackId, ArtistId, PlayContextId, AlbumId, PlaylistId, ShowId, EpisodeId, IdError, PlayableItem, AdditionalType};
+use rspotify::model::{AdditionalType, AlbumId, ArtistId, EpisodeId, IdError, PlayableItem, PlayContextId, PlaylistId, ShowId, TrackId};
 use rspotify::prelude::{OAuthClient, PlayableId};
-use tracing::{debug, error, warn};
+use tracing::{debug, error};
+
+use database::model::library_entry::{Model as LibraryEntry, Variant};
+
 use crate::player::play_target::{PlayTarget, Progress};
-use crate::player::spotify::SpotifyManager;
+use crate::player::spotify_manager::SpotifyManager;
 
 #[derive(Clone)]
 pub struct SpotifyPlayTarget {
     manager: SpotifyManager,
-    device_id: Option<String>
+    device_id: Option<String>,
 }
 
 impl SpotifyPlayTarget {
-    pub async fn new(manager: SpotifyManager, volume: f64) -> Self {
-        let mut target = Self {
+    pub async fn new(manager: SpotifyManager, _volume: f64) -> Self {
+        Self {
             manager,
-            device_id: None
-        };
-
-        if let Err(error) = target.set_volume(volume).await {
-            warn!("Failed to set volume on Spotify play target: {}", error);
+            device_id: None,
         }
-
-        target
     }
 
     fn get_play_id(&self, track: &LibraryEntry) -> Result<SpotifyId, String> {
         if !matches!(track.variant, Variant::Spotify) {
             error!("Attempted to play non-Spotify track on Spotify play target: {}", track.id);
-            return Err("Track is not a Spotify track".to_string())
+            return Err("Track is not a Spotify track".to_string());
         }
 
         let track_source = track.track_source.as_ref().ok_or("Track source not set")?;
@@ -56,7 +53,7 @@ impl SpotifyPlayTarget {
         }
 
         self.device_id = devices.iter()
-            .find(|device| device.is_active && device.name.contains("mupibox"))
+            .find(|device| device.is_active && device.name.contains("TinyGhettoBox"))
             .unwrap_or(&devices[0])
             .id
             .clone();
@@ -145,7 +142,7 @@ impl PlayTarget for SpotifyPlayTarget {
 
         Ok(Progress {
             position: progress,
-            duration
+            duration,
         })
     }
 

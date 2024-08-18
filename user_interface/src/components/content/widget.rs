@@ -13,7 +13,7 @@ pub struct ContentWidgetImp {
 
 #[glib::object_subclass]
 impl ObjectSubclass for ContentWidgetImp {
-    const NAME: &'static str = "MupiboxContent";
+    const NAME: &'static str = "TinyGhettoBoxContent";
     type Type = ContentWidget;
     type ParentType = gtk4::Box;
 

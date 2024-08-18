@@ -13,7 +13,8 @@ window.background {
 
 window.background > box label {
     color: @color;
-    font-family: Verdana, sans-serif;
+    font-family: 'Quicksand', Verdana, sans-serif;
+    font-weight: 500;
     font-size: 20px;
 }
 
@@ -79,6 +80,16 @@ window.background .navbar label {
     margin: 0 16px;
 }
 
+.tile-item .play-button {
+    background: @primary-color;
+    border: none;
+    border-radius: 50px;
+    min-width: 42px;
+    min-height: 42px;
+    color: @text-color;
+    box-shadow: 0 1px 2px #000;
+}
+
 .tile-item .image {
     border-radius: 100px;
     min-width: 150px;
@@ -109,7 +120,7 @@ window.background .navbar label {
 }
 
 .detail-list-item .status-icon {
-    color: @color;
+    color: @primary-color;
 }
 
 .player-bar.hidden {

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-  <template class="MupiboxPlayerBar" parent="GtkBox">
+  <template class="TinyGhettoBoxPlayerBar" parent="GtkBox">
     <style>
       <class name="player-bar"/>
     </style>
@@ -100,14 +100,15 @@
                     </style>
                     <!-- @formatter:off -->
                     <property name="icons">volume-off
-                      volume-full
-                      volume</property>
+volume-full
+volume</property>
                     <!-- @formatter:on -->
                     <property name="adjustment">
                       <object class="GtkAdjustment">
                         <property name="lower">0</property>
-                        <property name="step-increment">1</property>
-                        <property name="page-increment">10</property>
+                        <property name="upper">1</property>
+                        <property name="step-increment">0.1</property>
+                        <property name="page-increment">0.3</property>
                       </object>
                     </property>
                   </object>

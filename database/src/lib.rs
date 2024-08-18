@@ -1,20 +1,28 @@
-pub mod model;
-mod repository;
-mod util;
-
-pub use repository::library_entry::LibraryEntryRepository;
-pub use repository::spotify_config::SpotifyConfigRepository;
-pub use repository::system_config::SystemConfigRepository;
-pub use repository::track_source::TrackSourceRepository;
-
-pub use migration::{Migrator, MigratorTrait};
 pub use sea_orm::{Database, DatabaseConnection, DbErr};
 use sea_orm::ConnectOptions;
 use tracing::info;
 use tracing::log::LevelFilter;
 
+pub use migration::{Migrator, MigratorTrait};
+pub use repository::library_entry::LibraryEntryRepository;
+pub use repository::spotify_config::SpotifyConfigRepository;
+pub use repository::system_config::SystemConfigRepository;
+pub use repository::track_source::TrackSourceRepository;
+
+pub mod model;
+mod repository;
+mod util;
+
+fn get_connection_uri() -> String {
+    if std::path::Path::new("/var/lib/tinyghettobox/tinyghettobox.sqlite").exists() {
+        return "sqlite:///var/lib/tinyghettobox/tinyghettobox.sqlite?mode=rwc".to_owned();
+    }
+
+    "sqlite://tinyghettobox.sqlite?mode=rwc".to_owned()
+}
+
 pub async fn connect() -> Result<DatabaseConnection, DbErr> {
-    let mut connect_options = ConnectOptions::new("sqlite://mupibox.sqlite?mode=rwc");
+    let mut connect_options = ConnectOptions::new(get_connection_uri());
     connect_options.sqlx_logging_level(LevelFilter::Trace);
 
     let connection = Database::connect(connect_options).await?;

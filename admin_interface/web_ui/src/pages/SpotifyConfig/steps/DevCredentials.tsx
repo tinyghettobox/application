@@ -11,21 +11,22 @@ export default function DevCredentials() {
       <Typography variant="h6">How does it work?</Typography>
       <p>
         The integration of Spotify works by letting spotifyd, an interface less spotify client, run on the system. It
-        will be controlled by MuPiBox-rs through the Spotify API. Imagine this like MuPiBox-rs is your phone which plays
-        music on a speaker, but the speaker is the same system. To enable MuPiBox-rs to control Spotify you need to
+        will be controlled by TinyGhettoBox through the Spotify API. Imagine this like TinyGhettoBox is your phone which
+        plays
+        music on a speaker, but the speaker is the same system. To enable TinyGhettoBox to control Spotify you need to
         configure relevant information to authorize on Spotify&apos;s API through the Authorization Code flow.
       </p>
       <Typography variant="h6">What you need to do now!</Typography>
       <p>
-        The information MuPiBox-rs needs are the client id and secret key. In order to get them, you have to create a
+        The information TinyGhettoBox needs are the client id and secret key. In order to get them, you have to create a
         developer application at <a href={'https://developer.spotify.com'}>https://developer.spotify.com</a>. Use the
         following config to create it (only website and redirect uri are relevant):
       </p>
       <ul>
-        <li><strong>App name</strong>: MuPiBox-rs</li>
-        <li><strong>App description</strong>: Developer app for my mupibox-rs</li>
-        <li><strong>Website</strong>: http://mupibox</li>
-        <li><strong>Redirect URI</strong>: http://mupibox/api/spotify/callback</li>
+        <li><strong>App name</strong>: TinyGhettoBox</li>
+        <li><strong>App description</strong>: Developer app for my TinyGhettoBox</li>
+        <li><strong>Website</strong>: http://tinyghettobox</li>
+        <li><strong>Redirect URI</strong>: http://tinyghettobox/api/spotify/callback</li>
       </ul>
       <p>
         After that you have to head back to the settings of the newly created app, copy the Client ID and client secret

@@ -26,12 +26,12 @@ pub struct PlayerBarWidgetImp {
     #[template_child]
     forward_button: TemplateChild<gtk4::Button>,
     #[template_child]
-    volume_button: TemplateChild<gtk4::ScaleButton>
+    volume_button: TemplateChild<gtk4::ScaleButton>,
 }
 
 #[object_subclass]
 impl ObjectSubclass for PlayerBarWidgetImp {
-    const NAME: &'static str = "MupiboxPlayerBar";
+    const NAME: &'static str = "TinyGhettoBoxPlayerBar";
     type Type = PlayerBarWidget;
     type ParentType = gtk4::Box;
 
@@ -99,8 +99,14 @@ impl PlayerBarWidget {
         self.imp().play_toggle_button.set_icon_name(icon_name);
     }
 
+    pub fn set_volume(&self, volume: f64) {
+        let adjustment = self.imp().volume_button.adjustment();
+        adjustment.set_value(volume);
+        self.imp().volume_button.set_adjustment(&adjustment);
+    }
+
     pub fn connect_seek(&self, callback: impl Fn(f64) + 'static) {
-        self.imp().progress_bar.connect_change_value(move |scale, _scroll_type, new_value| {
+        self.imp().progress_bar.connect_change_value(move |_scale, _scroll_type, new_value| {
             callback(new_value);
             Propagation::Proceed
         });

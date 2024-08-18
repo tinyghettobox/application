@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
-  <gresource prefix="/org/mupibox-rs/gui/">
+  <gresource prefix="/org/tinyghettobox/gui/">
     <file compressed="true">styles.css</file>
     <file compressed="true">icons/scalable/actions/arrow-down-symbolic.svg</file>
     <file compressed="true">icons/scalable/actions/arrow-left-symbolic.svg</file>

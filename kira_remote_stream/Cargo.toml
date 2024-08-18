@@ -8,5 +8,5 @@ edition = "2021"
 [dependencies]
 kira = { version = "0.8.7", features = ["symphonia"] }
 ringbuf = "0.3.1"
-stream-download = "0.5.2"
+stream-download = "0.7.1"
 symphonia = { version = "0.5.4", default-features = false }

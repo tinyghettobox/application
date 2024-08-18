@@ -1,5 +1,4 @@
-use std::sync::{Arc};
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 
 use gtk4::prelude::IsA;
 use gtk4::Widget;
@@ -15,9 +14,9 @@ mod tile_list;
 mod tile_list_item;
 mod detail_list;
 mod detail_list_item;
-mod list_item_factory;
 mod empty_info;
 mod player_bar;
+mod ripple;
 
 pub type Children = Vec<Arc<Mutex<Box<dyn EventHandler>>>>;
 

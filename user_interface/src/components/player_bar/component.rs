@@ -1,11 +1,10 @@
-use std::sync::{Arc};
-use std::sync::Mutex;
-use gtk4::prelude::IsA;
-use gtk4::Widget;
-use tracing::debug;
+use std::sync::{Arc, Mutex};
+use std::time::Duration;
+
 use crate::components::{Children, Component};
 use crate::components::player_bar::widget::PlayerBarWidget;
 use crate::state::{Action, Dispatcher, Event, EventHandler, State};
+use crate::util::debouncer::Debouncer;
 
 pub struct PlayerBarComponent {
     pub(crate) widget: PlayerBarWidget,
@@ -19,9 +18,10 @@ impl EventHandler for PlayerBarComponent {
             Event::TrackChanged => {
                 self.update_play_state();
                 self.update_track();
-            },
-            // Event::PlayStateChanged => self.update_play_state(),
-            // Event::ProgressChanged => self.update_progress(),
+            }
+            Event::PlayStateChanged => self.update_play_state(),
+            Event::ProgressChanged => self.update_progress(),
+            Event::VolumeChanged => self.update_volume(),
             _ => {}
         }
     }
@@ -39,33 +39,43 @@ impl Component<Option<()>> for PlayerBarComponent {
         component
     }
 
+    #[allow(refining_impl_trait)]
     fn render(_state: Arc<Mutex<State>>, dispatcher: Arc<Mutex<Dispatcher>>, _params: Option<()>) -> (PlayerBarWidget, Children) {
         let widget = PlayerBarWidget::new();
 
         {
             let dispatcher = dispatcher.clone();
             widget.connect_play_toggle_clicked(move || {
-                dispatcher.lock().expect("Could not lock dispatcher").dispatch_action(Action::TogglePlay);
+                dispatcher.lock().unwrap().dispatch_action(Action::TogglePlay);
             });
         }
         {
             let dispatcher = dispatcher.clone();
             widget.connect_back_clicked(move || {
-                dispatcher.lock().expect("Could not lock dispatcher").dispatch_action(Action::PrevTrack);
+                dispatcher.lock().unwrap().dispatch_action(Action::PrevTrack);
             });
         }
         {
             let dispatcher = dispatcher.clone();
             widget.connect_forward_clicked(move || {
-                dispatcher.lock().expect("Could not lock dispatcher").dispatch_action(Action::NextTrack);
+                dispatcher.lock().unwrap().dispatch_action(Action::NextTrack);
             });
         }
         {
             let dispatcher = dispatcher.clone();
             widget.connect_seek(move |progress| {
-                debug!("connect_seek start");
-                dispatcher.lock().expect("Could not lock dispatcher").dispatch_action(Action::Seek(progress));
-                debug!("connect_seek end");
+                dispatcher.lock().unwrap().dispatch_action(Action::Seek(progress));
+            });
+        }
+        {
+            let dispatcher = dispatcher.clone();
+            let debouncer = Debouncer::new(Duration::from_millis(500), move |volume| {
+                tracing::warn!("SetVolume called debounced");
+                dispatcher.lock().unwrap().dispatch_action(Action::SetVolume(volume));
+            });
+            widget.connect_volume_change(move |volume: f64| {
+                tracing::warn!("SetVolume called");
+                debouncer.add(volume)
             });
         }
 
@@ -76,40 +86,40 @@ impl Component<Option<()>> for PlayerBarComponent {
         self.update_progress();
         self.update_track();
         self.update_play_state();
+        self.update_volume();
     }
 
-    fn get_widget(&self) -> impl IsA<Widget> {
+    #[allow(refining_impl_trait)]
+    fn get_widget(&self) -> PlayerBarWidget {
         self.widget.clone()
     }
 }
 
 impl PlayerBarComponent {
     pub fn update_progress(&self) {
-        debug!("updating progress");
-        let state = self.state.lock().expect("Could not lock state");
-        debug!("updating progress locked");
+        let state = self.state.lock().unwrap();
         self.widget.set_progress(state.progress);
-        debug!("updated progress");
     }
 
     pub fn update_track(&self) {
-        debug!("player_bar update_track start");
-        let state = self.state.lock().expect("Could not lock state");
+        let state = self.state.lock().unwrap();
         if let Some(playing_library_entry) = state.playing_library_entry.as_ref() {
             self.widget.set_visibility(true);
-            self.widget.set_image(playing_library_entry.image.clone());
+            self.widget.set_image(playing_library_entry.image.clone().or(playing_library_entry.parent_image.clone()));
             self.widget.set_track_name(playing_library_entry.name.clone());
             self.widget.set_folder_name(playing_library_entry.parent_name.clone().unwrap_or("".to_string()));
         } else {
             self.widget.set_visibility(false);
         }
-        debug!("player_bar update_track end");
     }
 
     pub fn update_play_state(&self) {
-        debug!("player_bar update_play_state start");
-        let state = self.state.lock().expect("Could not lock state");
+        let state = self.state.lock().unwrap();
         self.widget.set_paused(state.paused);
-        debug!("player_bar update_play_state end");
+    }
+
+    pub fn update_volume(&self) {
+        let state = self.state.lock().unwrap();
+        self.widget.set_volume(state.volume);
     }
 }

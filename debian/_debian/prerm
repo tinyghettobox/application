@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# Stop the systemd services
+systemctl stop tgb_user_interface.service
+systemctl stop tgb_admin_interface.service
+
+# Disable the systemd services
+systemctl disable tgb_user_interface.service
+systemctl disable tgb_admin_interface.service
+
+exit 0

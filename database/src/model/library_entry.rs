@@ -1,11 +1,13 @@
 use std::fmt::{Debug, Display, Formatter};
-use super::track_source::Model as TrackSource;
+
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
 
+use super::track_source::Model as TrackSource;
+
 #[derive(Clone, Copy, Debug, PartialEq, EnumIter, DeriveActiveEnum, Serialize, Deserialize, TS)]
-#[sea_orm(rs_type = "String", db_type = "String(Some(9))")]
+#[sea_orm(rs_type = "String", db_type = "String(StringLen::N(9))")]
 #[serde(rename_all = "snake_case")]
 #[ts(export)]
 pub enum Variant {
@@ -57,7 +59,11 @@ pub struct Model {
     // Only relevant for the user interface
     #[sea_orm(ignore)]
     #[ts(optional)]
-    pub parent_name: Option<String>
+    pub parent_name: Option<String>,
+    // Only relevant for the user interface
+    #[sea_orm(ignore)]
+    #[ts(optional)]
+    pub parent_image: Option<Vec<u8>>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -83,6 +89,7 @@ impl Debug for Model {
             .field("children", &self.children)
             .field("track_source", &self.track_source)
             .field("parent_name", &self.parent_name)
+            .field("parent_image", &FormatImage(self.parent_image.as_ref()))
             .finish()
     }
 }

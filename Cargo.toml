@@ -6,8 +6,14 @@ members = [
     "kira_remote_stream",
     "migration",
     "player",
-    "user_interface"
+    "user_interface",
+    "debian",
+    "spotifyd"
 ]
 
 [profile.dev]
 opt-level = 3
+
+[profile.release]
+lto = true
+strip = "symbols"

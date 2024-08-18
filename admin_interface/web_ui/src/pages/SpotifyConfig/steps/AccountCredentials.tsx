@@ -11,7 +11,8 @@ export default function AccountCredentials() {
       <Typography variant="h6">Why do you need this?</Typography>
       <p>
         By default the spotifyd instance, which acts like a speaker, will be accessible to the whole network.
-        Meaning all devices in the same network can start playback on the MuPiBox-rs. In case you want to prevent that,
+        Meaning all devices in the same network can start playback on the TinyGhettoBox. In case you want to prevent
+        that,
         you can specify which account is allowed to use the spotifyd instance. The spotifyd instance will login to the
         account and register itself there instead of notifying the whole network about the availability. <br/><br/>
         <i>When you can&apos;t see your speaker your credentials may be wrong</i>

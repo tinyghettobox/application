@@ -1,8 +1,4 @@
-use std::sync::{Arc};
-use std::sync::Mutex;
-use gtk4::prelude::IsA;
-use gtk4::Widget;
-use tracing::debug;
+use std::sync::{Arc, Mutex};
 use crate::components::{Children, Component};
 use crate::components::content::widget::ContentWidget;
 use crate::components::detail_list::DetailListComponent;
@@ -37,6 +33,7 @@ impl Component<Option<()>> for ContentComponent {
         component
     }
 
+    #[allow(refining_impl_trait)]
     fn render(state: Arc<Mutex<State>>, dispatcher: Arc<Mutex<Dispatcher>>, _params: Option<()>) -> (ContentWidget, Children) {
         let widget = ContentWidget::new();
 
@@ -44,21 +41,20 @@ impl Component<Option<()>> for ContentComponent {
         let detail_list = DetailListComponent::new(state.clone(), dispatcher.clone(), None);
         let empty_info = EmptyInfoComponent::new(state.clone(), dispatcher.clone(), None);
 
-        widget.append_child("tile_list", &tile_list.widget);
-        widget.append_child("detail_list", &detail_list.widget);
-        widget.append_child("empty_info", &empty_info.widget);
+        widget.append_child("tile_list", &tile_list.get_widget());
+        widget.append_child("detail_list", &detail_list.get_widget());
+        widget.append_child("empty_info", &empty_info.get_widget());
 
         (widget, vec![Arc::new(Mutex::new(Box::new(tile_list))), Arc::new(Mutex::new(Box::new(detail_list))), Arc::new(Mutex::new(Box::new(empty_info)))])
     }
 
     fn update(&mut self) {
-        debug!("update content");
-        let state = self.state.lock().expect("Could not lock state");
+        let state = self.state.lock().unwrap();
         self.widget.set_active_child(state.active_view.to_owned());
-        debug!("update content done");
     }
 
-    fn get_widget(&self) -> impl IsA<Widget> {
+    #[allow(refining_impl_trait)]
+    fn get_widget(&self) -> ContentWidget {
         self.widget.clone()
     }
 }

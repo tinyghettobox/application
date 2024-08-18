@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <interface>
-  <template class="MupiboxTileListItem" parent="GtkBox">
+  <template class="TinyGhettoBoxTileListItem" parent="GtkBox">
     <property name="halign">center</property>
     <child>
       <object class="GtkBox" id="wrapper">
@@ -13,10 +13,24 @@
           <object class="GtkBox">
             <property name="halign">center</property>
             <child>
-              <object class="GtkPicture" id="image">
-                <style>
-                  <class name="image"/>
-                </style>
+              <object class="GtkOverlay">
+                <child type="overlay">
+                  <object class="GtkButton" id="play_button">
+                    <style>
+                      <class name="play-button"/>
+                    </style>
+                    <property name="halign">end</property>
+                    <property name="valign">end</property>
+                    <property name="icon-name">play</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkPicture" id="image">
+                    <style>
+                      <class name="image"/>
+                    </style>
+                  </object>
+                </child>
               </object>
             </child>
           </object>

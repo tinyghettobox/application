@@ -1,10 +1,8 @@
-use std::sync::{Arc};
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use gtk4::glib::BoxedAnyObject;
 
-use gtk4::prelude::{IsA};
-use gtk4::{gio, Widget};
-use tracing::{debug, error};
+use gtk4::{gio};
+use tracing::{error};
 
 use crate::components::{Children, Component};
 use crate::components::detail_list::widget::DetailListWidget;
@@ -37,6 +35,7 @@ impl Component<Option<()>> for DetailListComponent {
         component
     }
 
+    #[allow(refining_impl_trait)]
     fn render(state: Arc<Mutex<State>>, dispatcher: Arc<Mutex<Dispatcher>>, _params: Option<()>) -> (DetailListWidget, Children) {
         let widget = DetailListWidget::new(state.clone(), dispatcher.clone());
 
@@ -44,12 +43,10 @@ impl Component<Option<()>> for DetailListComponent {
     }
 
     fn update(&mut self) {
-        debug!("update detail_list");
-        if self.state.lock().expect("could not lock state").active_view != "detail_list" {
-            debug!("update detail_list return");
+        if self.state.lock().unwrap().active_view != "detail_list" {
             return;
         }
-        let list_store = self.state.lock().expect("could not lock state")
+        let list_store = self.state.lock().unwrap()
             .library_entry
             .children
             .clone()
@@ -62,18 +59,16 @@ impl Component<Option<()>> for DetailListComponent {
 
         match list_store {
             Some(list_store) => {
-                debug!("Setting list store with items");
                 self.widget.set_list_store(list_store);
             },
             None => {
                 error!("Want to render detail list but no children are available? o.O");
             }
         }
-
-        debug!("update detail_list done");
     }
 
-    fn get_widget(&self) -> impl IsA<Widget> {
+    #[allow(refining_impl_trait)]
+    fn get_widget(&self) -> DetailListWidget {
         self.widget.clone()
     }
 }

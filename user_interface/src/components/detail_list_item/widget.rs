@@ -1,14 +1,15 @@
 use std::cell::RefCell;
-use std::sync::{Arc};
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
+
 use gtk4::{CompositeTemplate, GestureClick, glib};
 use gtk4::glib::object_subclass;
 use gtk4::glib::subclass::InitializingObject;
 use gtk4::prelude::{GestureExt, WidgetExt};
 use gtk4::subclass::prelude::*;
-use tracing::debug;
-use crate::state::{Action, Dispatcher};
+
 use database::model::library_entry::Model as LibraryEntry;
+
+use crate::state::{Action, Dispatcher};
 
 #[derive(Default, CompositeTemplate)]
 #[template(file = "./detail_list_item.ui")]
@@ -25,7 +26,7 @@ pub struct DetailListItemWidgetImp {
 
 #[object_subclass]
 impl ObjectSubclass for DetailListItemWidgetImp {
-    const NAME: &'static str = "MupiboxDetailListItem";
+    const NAME: &'static str = "TinyGhettoBoxDetailListItem";
     type Type = DetailListItemWidget;
     type ParentType = gtk4::Box;
 
@@ -55,13 +56,12 @@ impl DetailListItemWidget {
         let gesture = GestureClick::new();
         let widget_ = widget.clone();
         gesture.connect_released(move |gesture, _, _, _| {
-            debug!("gesture start");
             gesture.set_state(gtk4::EventSequenceState::Claimed);
+            let library_entry = widget_.get_library_entry();
             dispatcher
                 .lock()
-                .expect("could not lock dispatcher")
-                .dispatch_action(Action::Play(widget_.get_library_entry()));
-            debug!("gesture start done");
+                .unwrap()
+                .dispatch_action(Action::Play(library_entry.parent_id.expect("A children should have a parent"), Some(library_entry.id)));
         });
         widget.add_controller(gesture);
 
@@ -82,7 +82,7 @@ impl DetailListItemWidget {
     }
 
     pub fn set_name(&self, name: &str) {
-        self.imp().position.set_label(name);
+        self.imp().name.set_label(name);
     }
 
     pub fn set_state(&self, state: DetailListItemState) {
@@ -103,8 +103,9 @@ impl DetailListItemWidget {
     // }
 }
 
+#[derive(Debug)]
 pub enum DetailListItemState {
     Playing,
     Played,
-    None
+    None,
 }

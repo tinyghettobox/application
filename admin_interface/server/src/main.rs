@@ -1,10 +1,13 @@
-use crate::routes::*;
-use actix_web::{web, App, HttpServer};
-use database::connect;
 use std::collections::HashMap;
+
+use actix_web::{App, HttpServer, web};
 use actix_web::middleware::Logger;
 use tracing::info;
 use tracing::level_filters::LevelFilter;
+
+use database::connect;
+
+use crate::routes::*;
 
 mod commands;
 mod routes;
@@ -13,7 +16,8 @@ mod error;
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt().with_max_level(LevelFilter::DEBUG).init();
-    info!("Starting server on http://localhost:8080 ...");
+    let port = std::env::var("PORT").unwrap_or("8080".to_owned()).parse::<u16>().unwrap();
+    info!("Starting server on http://localhost:{} ...", port);
 
     let connection = connect().await.expect("Failed to connect to database");
 
@@ -38,7 +42,7 @@ async fn main() {
             .app_data(web::Data::new(HashMap::<String, String>::new()))
             .app_data(web::JsonConfig::default().limit(100 * 1024 * 1024))
     })
-    .bind(("0.0.0.0", 8080))
+    .bind(("0.0.0.0", port))
     .expect("Failed to bind to port")
     .run()
     .await

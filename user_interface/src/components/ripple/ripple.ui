@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="TinyGhettoBoxRipple" parent="GtkBox">
+    <child>
+      <object class="GtkOverlay">
+        <child type="overlay">
+          <object class="GtkDrawingArea" id="canvas">
+            <property name="hexpand">true</property>
+            <property name="vexpand">true</property>
+            <property name="can_focus">false</property>
+            <property name="focusable">false</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkBox" id="container">
+            <property name="orientation">vertical</property>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>

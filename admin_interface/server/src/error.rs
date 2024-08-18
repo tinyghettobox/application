@@ -1,4 +1,5 @@
 use std::fmt::{Display, Formatter};
+
 use actix_web::{HttpResponse, ResponseError};
 use actix_web::http::StatusCode;
 
@@ -6,6 +7,7 @@ use actix_web::http::StatusCode;
 pub struct Problem {
     pub status: u16,
     pub message: String,
+    #[allow(dead_code)]
     pub root_cause: Option<String>,
 }
 

@@ -1,6 +1,7 @@
+use std::future::Future;
 use gtk4::glib;
 use tokio::sync::mpsc::{unbounded_channel, UnboundedSender, UnboundedReceiver};
-use tracing::{warn, error, info, debug};
+use tracing::{warn, error, debug};
 use crate::state::Event;
 use super::action::{Action};
 
@@ -18,56 +19,51 @@ impl Dispatcher {
         Self { action_sender, event_sender, action_receiver: Some(action_receiver), event_receiver: Some(event_receiver) }
     }
 
-    pub fn handle(&mut self, handle_action: impl Fn(Action) + 'static, handle_event: impl Fn(Event) + 'static) {
+    pub fn handle<A, AR, E>(&mut self, handle_action: A, handle_event: E)
+    where
+        A: (Fn(Action) -> AR) + 'static + Send,
+        AR: Future<Output = ()> + Send,
+        E: Fn(Event) + 'static,
+    {
         let mut action_receiver = self.action_receiver.take().expect("No action receiver yet set");
         let mut event_receiver = self.event_receiver.take().expect("No event receiver yet set");
 
-        glib::MainContext::default().spawn_local(async move {
+        tokio::spawn(async move {
             loop {
-                debug!("waiting for next action...");
                 match action_receiver.recv().await {
                     Some(action) => {
-                        debug!("handling action...");
-                        handle_action(action);
-                        debug!("finished action handling...");
+                        handle_action(action).await;
                     },
                     None => warn!("Failed to receive action from channel")
                 }
-                debug!("finished action handling...");
             }
         });
 
         glib::MainContext::default().spawn_local(async move {
             loop {
-                debug!("waiting for next event...");
                 match event_receiver.recv().await {
                     Some(event) => {
-                        debug!("event handling...");
                         handle_event(event);
-                        debug!("finished event handling...");
                     },
                     None => warn!("Failed to receive action from channel")
                 }
-                debug!("event loop end...");
             }
         });
     }
 
     pub fn dispatch_action(&self, action: Action) {
-        info!("Dispatching action {:?}", action);
+        debug!("Dispatching action {:?}", action);
         let action_sender = self.action_sender.clone();
         if let Err(error) = action_sender.send(action) {
             error!("Could not send action: {}", error);
         }
-        info!("dispatched action");
     }
 
     pub fn dispatch_event(&self, event: Event) {
-        info!("Dispatching event {:?}", event);
+        debug!("Dispatching event {:?}", event);
         let event_sender = self.event_sender.clone();
         if let Err(error) = event_sender.send(event) {
             error!("Could not send event: {}", error);
         }
-        info!("dispatched event");
     }
 }

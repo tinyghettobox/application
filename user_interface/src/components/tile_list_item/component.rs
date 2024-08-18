@@ -1,8 +1,7 @@
-use std::sync::{Arc};
-use std::sync::Mutex;
-use gtk4::prelude::IsA;
-use gtk4::Widget;
-use tracing::{debug, error, info};
+use std::sync::{Arc, Mutex};
+
+use tracing::{debug, error};
+
 use crate::components::{Children, Component};
 use crate::components::tile_list_item::widget::TileListItemWidget;
 use crate::state::{Action, Dispatcher, Event, EventHandler, State};
@@ -15,9 +14,7 @@ pub struct TileListItemComponent {
 }
 
 impl EventHandler for TileListItemComponent {
-    fn on_event(&mut self, _event: &Event) {
-
-    }
+    fn on_event(&mut self, _event: &Event) {}
 
     fn get_children(&self) -> Vec<Arc<Mutex<Box<dyn EventHandler>>>> {
         self.children.clone()
@@ -32,44 +29,60 @@ impl Component<i32> for TileListItemComponent {
         component
     }
 
-    fn render(_state: Arc<Mutex<State>>, dispatcher: Arc<Mutex<Dispatcher>>, library_entry_id: i32) -> (TileListItemWidget, Children) {
+    #[allow(refining_impl_trait)]
+    fn render(state: Arc<Mutex<State>>, dispatcher: Arc<Mutex<Dispatcher>>, library_entry_id: i32) -> (TileListItemWidget, Children) {
         let widget = TileListItemWidget::new();
 
-        let dispatcher = dispatcher.clone();
-        widget.connect_clicked(move || {
-            debug!("connect_clicked start");
-            dispatcher
-                .lock()
-                .expect("could not lock dispatcher")
-                .dispatch_action(Action::Select(library_entry_id));
-            debug!("connect_clicked end");
-        });
+        {
+            let dispatcher = dispatcher.clone();
+            widget.connect_clicked(move || {
+                dispatcher.lock().unwrap().dispatch_action(Action::Select(library_entry_id));
+            });
+        }
+        {
+            let dispatcher = dispatcher.clone();
+            let state = state.clone();
+            widget.connect_play_clicked(move || {
+                let library_entry = state
+                    .lock()
+                    .unwrap()
+                    .library_entry
+                    .children
+                    .as_ref()
+                    .and_then(|children|
+                    children.iter().find(|library_entry| library_entry.id == library_entry_id).cloned()
+                    );
+
+                if let Some(library_entry) = library_entry {
+                    dispatcher.lock().unwrap().dispatch_action(Action::Play(library_entry.id, None));
+                }
+            });
+        }
 
         (widget, vec![])
     }
 
     fn update(&mut self) {
-        debug!("tile_list_item update start");
-        let state = self.state.lock().expect("Could not lock state");
+        let state = self.state.lock().unwrap();
 
         match &state.library_entry.children {
             Some(child_library_entry) => {
-                info!("Searching id {} in {} children", self.library_entry_id, child_library_entry.len());
+                debug!("Searching id {} in {} children", self.library_entry_id, child_library_entry.len());
                 match child_library_entry.iter().find(|entry| entry.id == self.library_entry_id) {
                     Some(entry) => {
-                        info!("Entry {} has image size: {}", entry.id, entry.image.as_ref().unwrap_or(&vec![]).len());
+                        debug!("Entry {} has image size: {}", entry.id, entry.image.as_ref().unwrap_or(&vec![]).len());
                         self.widget.set_image(entry.image.clone());
                         self.widget.set_name(entry.name.to_string());
-                    },
+                    }
                     None => error!("Passed library entry '{}' does not exist o.O???", self.library_entry_id)
                 }
             }
             None => error!("Library entry has no children o.O???")
         }
-        debug!("tile_list_item update end");
     }
 
-    fn get_widget(&self) -> impl IsA<Widget> {
+    #[allow(refining_impl_trait)]
+    fn get_widget(&self) -> TileListItemWidget {
         self.widget.clone()
     }
 }
