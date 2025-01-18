@@ -1,10 +1,10 @@
-use std::sync::{Arc, Mutex};
-use std::time::Duration;
-
-use crate::components::{Children, Component};
 use crate::components::player_bar::widget::PlayerBarWidget;
+use crate::components::{Children, Component};
 use crate::state::{Action, Dispatcher, Event, EventHandler, State};
 use crate::util::debouncer::Debouncer;
+use std::sync::{Arc, Mutex};
+use std::time::Duration;
+use tracing::warn;
 
 pub struct PlayerBarComponent {
     pub(crate) widget: PlayerBarWidget,
@@ -34,13 +34,21 @@ impl EventHandler for PlayerBarComponent {
 impl Component<Option<()>> for PlayerBarComponent {
     fn new(state: Arc<Mutex<State>>, dispatcher: Arc<Mutex<Dispatcher>>, params: Option<()>) -> Self {
         let (widget, children) = Self::render(state.clone(), dispatcher.clone(), params);
-        let mut component = Self { widget, children, state };
+        let mut component = Self {
+            widget,
+            children,
+            state,
+        };
         component.update();
         component
     }
 
     #[allow(refining_impl_trait)]
-    fn render(_state: Arc<Mutex<State>>, dispatcher: Arc<Mutex<Dispatcher>>, _params: Option<()>) -> (PlayerBarWidget, Children) {
+    fn render(
+        _state: Arc<Mutex<State>>,
+        dispatcher: Arc<Mutex<Dispatcher>>,
+        _params: Option<()>,
+    ) -> (PlayerBarWidget, Children) {
         let widget = PlayerBarWidget::new();
 
         {
@@ -63,20 +71,17 @@ impl Component<Option<()>> for PlayerBarComponent {
         }
         {
             let dispatcher = dispatcher.clone();
-            widget.connect_seek(move |progress| {
+            let debouncer = Debouncer::new(Duration::from_millis(500), move |progress| {
                 dispatcher.lock().unwrap().dispatch_action(Action::Seek(progress));
             });
+            widget.connect_seek(move |progress| debouncer.add(progress));
         }
         {
             let dispatcher = dispatcher.clone();
             let debouncer = Debouncer::new(Duration::from_millis(500), move |volume| {
-                tracing::warn!("SetVolume called debounced");
                 dispatcher.lock().unwrap().dispatch_action(Action::SetVolume(volume));
             });
-            widget.connect_volume_change(move |volume: f64| {
-                tracing::warn!("SetVolume called");
-                debouncer.add(volume)
-            });
+            widget.connect_volume_change(move |volume: f64| debouncer.add(volume));
         }
 
         (widget, vec![])

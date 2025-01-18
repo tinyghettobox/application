@@ -220,7 +220,6 @@ impl Action {
                 if !state.lock().unwrap().started {
                     tokio::time::sleep(Duration::from_secs(2)).await;
                 }
-                debug!("Setting player volume");
                 let event = match player.lock().await.set_volume(volume).await {
                     Ok(_) => {
                         let connection = state.lock().unwrap().connection.clone();

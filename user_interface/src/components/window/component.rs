@@ -1,14 +1,14 @@
 use std::sync::{Arc, Mutex};
 
+use gtk4::prelude::{GtkWindowExt, WidgetExt};
 use gtk4::Application;
-use gtk4::prelude::GtkWindowExt;
 
-use crate::components::{Children, Component};
 use crate::components::content::ContentComponent;
 use crate::components::navbar::NavbarComponent;
 use crate::components::player_bar::PlayerBarComponent;
 use crate::components::ripple::RippleComponent;
 use crate::components::window::widget::WindowWidget;
+use crate::components::{Children, Component};
 use crate::state::{Dispatcher, Event, EventHandler, State};
 
 pub struct WindowComponent {
@@ -49,6 +49,7 @@ impl Component<Option<()>> for WindowComponent {
         ripple.add_child(&player_bar.get_widget());
 
         let widget = WindowWidget::new();
+        
         widget.set_child(Some(&ripple.get_widget()));
 
         (widget, vec![
