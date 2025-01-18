@@ -42,7 +42,7 @@ impl PlayerTimer {
 
                 // For spotify we want to add tracks to queue before they end to ensure seamless playing
                 if matches!(variant, Variant::Spotify) {
-                    if progress.position + Duration::from_secs(1) >= progress.duration {
+                    if progress.position >= progress.duration {
                         if let Err(err) = player.on_track_end().await {
                             error!("Failed to play next track: {}", err);
                         }
