@@ -15,6 +15,7 @@ minifb = "0.27.0"
 tracing = "0.1.40"
 tracing-subscriber = "0.3.18"
 tokio = { version = "1.35.1", features = ["rt-multi-thread"] }
+chrono = "0.4.35"
 
 [build-dependencies]
 glib-build-tools = "0.20.0"

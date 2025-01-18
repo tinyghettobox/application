@@ -55,27 +55,24 @@ async fn main() -> glib::ExitCode {
         let player = player.clone();
         let dispatcher1 = dispatcher.clone();
         let dispatcher2 = dispatcher.clone();
+        let dispatcher3 = dispatcher.clone();
         tokio::spawn(async move {
             let mut player = player.lock().await;
             let handle_progress_change = move |progress: Progress| {
-                dispatcher1
-                    .clone()
-                    .lock()
-                    .unwrap()
-                    .dispatch_action(Action::SetProgress(progress.as_f64()));
+                dispatcher1.clone().lock().unwrap().dispatch_action(Action::SetProgress(progress.as_f64()));
             };
             let handle_track_change = move |library_entry: Option<LibraryEntry>| {
-                dispatcher2
-                    .lock()
-                    .unwrap()
-                    .dispatch_action(Action::SetPlayingTrack(library_entry));
+                dispatcher2.lock().unwrap().dispatch_action(Action::SetPlayingTrack(library_entry));
+            };
+            let handle_track_end = move |_library_entry: LibraryEntry| {
+                dispatcher3.lock().unwrap().dispatch_action(Action::SetPlayedAt);
             };
 
-            player.connect_progress_change(handle_progress_change);
-            player.connect_track_change(handle_track_change);
+            player.connect_progress_changed(handle_progress_change);
+            player.connect_track_changed(handle_track_change);
+            player.connect_track_ended(handle_track_end);
         });
     }
-
 
     let handle = tokio::runtime::Handle::current();
     let thread = std::thread::spawn(move || {

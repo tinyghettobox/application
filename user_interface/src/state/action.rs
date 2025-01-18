@@ -2,10 +2,10 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use tokio::sync::Mutex as AsyncMutex;
-use tracing::{debug, error};
+use tracing::{debug, error, warn};
 
-use database::{LibraryEntryRepository, model::library_entry::Model as LibraryEntry, SystemConfigRepository};
 use database::model::library_entry::Variant;
+use database::{model::library_entry::Model as LibraryEntry, LibraryEntryRepository, SystemConfigRepository};
 use player::{Player, Progress};
 
 use crate::state::{Dispatcher, State};
@@ -18,6 +18,7 @@ pub enum Action {
     TogglePlay,
     NextTrack,
     PrevTrack,
+    SetPlayedAt,
     Seek(f64),
     SetProgress(f64), // 0-1
     SetPlayingTrack(Option<LibraryEntry>),
@@ -29,6 +30,7 @@ pub enum Event {
     LibraryEntryChanged,
     PlayStateChanged,
     ProgressChanged,
+    TrackPlayed,
     TrackChanged,
     VolumeChanged,
     Error(String),
@@ -40,10 +42,15 @@ pub trait EventHandler {
 }
 
 impl Action {
-    pub async fn process<P, T>(action: Action, state: Arc<Mutex<State>>, dispatcher: Arc<Mutex<Dispatcher>>, player: Arc<AsyncMutex<Player<P, T>>>)
-    where
+    pub async fn process<P, T, E>(
+        action: Action,
+        state: Arc<Mutex<State>>,
+        dispatcher: Arc<Mutex<Dispatcher>>,
+        player: Arc<AsyncMutex<Player<P, T, E>>>,
+    ) where
         P: Fn(Progress) + 'static + Sync + Send,
         T: Fn(Option<LibraryEntry>) + 'static + Sync + Send,
+        E: Fn(LibraryEntry) + 'static + Sync + Send,
     {
         match action {
             Action::Started => {
@@ -51,8 +58,8 @@ impl Action {
             }
             Action::Select(library_entry_id) => {
                 let connection = state.lock().unwrap().connection.clone();
-                let library_entry = LibraryEntryRepository::get(&connection, library_entry_id).await
-                    .unwrap_or_else(|error| {
+                let library_entry =
+                    LibraryEntryRepository::get(&connection, library_entry_id).await.unwrap_or_else(|error| {
                         error!("Could not load library entry '{}': {}", library_entry_id, error);
                         None
                     });
@@ -105,14 +112,37 @@ impl Action {
                                 None
                             }
                             Ok(None) => Some(Event::Error("Did not play anything".to_string())),
-                            Err(error) => Some(Event::Error(format!("Could not play: {}", error)))
+                            Err(error) => Some(Event::Error(format!("Could not play: {}", error))),
                         }
                     }
-                    Err(error) => Some(Event::Error(format!("Could not play: {}", error)))
+                    Err(error) => Some(Event::Error(format!("Could not play: {}", error))),
                 };
 
                 if let Some(event) = event {
                     dispatcher.lock().unwrap().dispatch_event(event);
+                }
+            }
+            Action::SetPlayedAt => {
+                let library_entry =
+                    {
+                        let mut state = state.lock().unwrap();
+                        let library_entry_id = state.playing_library_entry.as_ref().map(|entry| entry.id).unwrap_or(-1);
+                        state.library_entry.children.as_mut().and_then(|children| {
+                            children.iter_mut().find(|c| c.id == library_entry_id).map(|c| c.clone())
+                        })
+                    };
+
+                if let Some(mut entry) = library_entry {
+                    entry.played_at = Some(chrono::Utc::now());
+                    let connection = state.lock().unwrap().connection.clone();
+                    match LibraryEntryRepository::mark_played(&connection, entry.id, entry.played_at).await {
+                        Ok(_) => {
+                            dispatcher.lock().unwrap().dispatch_event(Event::TrackPlayed);
+                        }
+                        Err(error) => error!("Could not mark library entry as played: {}", error),
+                    }
+                } else {
+                    warn!("Could not find library entry to mark as played")
                 }
             }
             Action::SetPlayingTrack(library_entry) => {
@@ -135,7 +165,7 @@ impl Action {
                         state.paused = !state.paused;
                         Event::PlayStateChanged
                     }
-                    Err(error) => Event::Error(error)
+                    Err(error) => Event::Error(error),
                 };
                 dispatcher.lock().unwrap().dispatch_event(event);
             }
@@ -164,7 +194,7 @@ impl Action {
                             }
                         }
                     }
-                    Err(error) => Event::Error(error)
+                    Err(error) => Event::Error(error),
                 };
                 dispatcher.lock().unwrap().dispatch_event(event);
             }
@@ -180,7 +210,7 @@ impl Action {
                         Event::ProgressChanged
                     }
                     Ok(None) => Event::ProgressChanged,
-                    Err(error) => Event::Error(format!("Could not seek: {}", error))
+                    Err(error) => Event::Error(format!("Could not seek: {}", error)),
                 };
 
                 dispatcher.lock().unwrap().dispatch_event(event);
@@ -199,10 +229,10 @@ impl Action {
                                 state.lock().unwrap().volume = volume;
                                 Event::VolumeChanged
                             }
-                            Err(error) => Event::Error(format!("Could not save volume to database: {}", error))
+                            Err(error) => Event::Error(format!("Could not save volume to database: {}", error)),
                         }
                     }
-                    Err(error) => Event::Error(format!("Could not change volume: {}", error))
+                    Err(error) => Event::Error(format!("Could not change volume: {}", error)),
                 };
 
                 dispatcher.lock().unwrap().dispatch_event(event);

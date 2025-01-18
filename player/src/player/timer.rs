@@ -11,10 +11,11 @@ use crate::{Player, Progress};
 // Update progress position every second optimistically. FetchProgressTimer is used to correct the optimistic progress position
 pub struct PlayerTimer;
 impl PlayerTimer {
-    pub fn start_progress_timer<P, T>(player: Arc<Mutex<Player<P, T>>>)
+    pub fn start_progress_timer<P, T, E>(player: Arc<Mutex<Player<P, T, E>>>)
     where
         P: Fn(Progress) + 'static + Sync + Send,
         T: Fn(Option<LibraryEntry>) + 'static + Sync + Send,
+        E: Fn(LibraryEntry) + 'static + Sync + Send,
     {
         tokio::spawn(async move {
             let mut interval = tokio::time::interval(Duration::from_millis(1000));
@@ -32,7 +33,7 @@ impl PlayerTimer {
 
                     track.progress.position += Duration::from_millis(1000);
 
-                    if let Some(on_progress) = player.on_progress.as_ref() {
+                    if let Some(on_progress) = player.notify_progress.as_ref() {
                         on_progress(track.progress.clone())
                     }
 
@@ -57,11 +58,12 @@ impl PlayerTimer {
         });
     }
 
-    // Fetching is progress is done in separate thread to not block progress update
-    pub fn start_correct_progress_timer<P, T>(player: Arc<Mutex<Player<P, T>>>)
+    // Fetching progress is done in separate thread to not block progress update
+    pub fn start_correct_progress_timer<P, T, E>(player: Arc<Mutex<Player<P, T, E>>>)
     where
         P: Fn(Progress) + 'static + Sync + Send,
         T: Fn(Option<LibraryEntry>) + 'static + Sync + Send,
+        E: Fn(LibraryEntry) + 'static + Sync + Send,
     {
         tokio::spawn(async move {
             let mut interval = tokio::time::interval(Duration::from_millis(5000));
@@ -86,7 +88,7 @@ impl PlayerTimer {
 
                 current_track.progress = progress;
 
-                if let Some(on_progress) = player.on_progress.as_ref() {
+                if let Some(on_progress) = player.notify_progress.as_ref() {
                     on_progress(current_track.progress.clone())
                 }
             }
