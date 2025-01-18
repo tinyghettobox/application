@@ -1,15 +1,15 @@
 use std::cell::RefCell;
 use std::sync::{Arc, Mutex};
 
-use gtk4::{CompositeTemplate, GestureClick, glib};
+use super::component::ListenerComponent;
+use crate::state::{Action, Dispatcher};
+use database::model::library_entry::Model as LibraryEntry;
 use gtk4::glib::object_subclass;
 use gtk4::glib::subclass::InitializingObject;
-use gtk4::prelude::{GestureExt, WidgetExt};
+use gtk4::prelude::{GestureExt, ObjectExt, WidgetExt};
 use gtk4::subclass::prelude::*;
-
-use database::model::library_entry::Model as LibraryEntry;
-
-use crate::state::{Action, Dispatcher};
+use gtk4::{glib, CompositeTemplate, GestureClick};
+use tracing::info;
 
 #[derive(Default, CompositeTemplate)]
 #[template(file = "./detail_list_item.ui")]
@@ -20,8 +20,10 @@ pub struct DetailListItemWidgetImp {
     name: TemplateChild<gtk4::Label>,
     #[template_child]
     icon: TemplateChild<gtk4::Image>,
+    #[template_child]
+    wrapper: TemplateChild<gtk4::Box>,
 
-    library_entry: RefCell<Option<LibraryEntry>>,
+    component: RefCell<Option<Box<dyn ListenerComponent>>>,
 }
 
 #[object_subclass]
@@ -49,32 +51,24 @@ glib::wrapper! {
 }
 
 impl DetailListItemWidget {
-    pub fn new(dispatcher: Arc<Mutex<Dispatcher>>) -> Self {
-        let widget: Self = glib::Object::new();
-
-        let dispatcher = dispatcher.clone();
-        let gesture = GestureClick::new();
-        let widget_ = widget.clone();
-        gesture.connect_released(move |gesture, _, _, _| {
-            gesture.set_state(gtk4::EventSequenceState::Claimed);
-            let library_entry = widget_.get_library_entry();
-            dispatcher
-                .lock()
-                .unwrap()
-                .dispatch_action(Action::Play(library_entry.parent_id.expect("A children should have a parent"), Some(library_entry.id)));
-        });
-        widget.add_controller(gesture);
-
-        widget
+    pub fn new() -> Self {
+        glib::Object::new()
     }
 
-    pub fn get_library_entry(&self) -> LibraryEntry {
-        self.imp().library_entry.borrow().clone().expect("Wanted to get the library entry before setting it? o.O")
+    /**
+     * Allows passing component as listener for the library entry. This construct is necessary due to
+     * the way the list component works. A SignalListItemFactory is binding the library entry on
+     * demand and this need to be forwarded to the component.
+     */
+    pub fn set_component(&self, component: Box<dyn ListenerComponent>) {
+        *self.imp().component.borrow_mut() = Some(component);
     }
 
+    /**
+     * Forward the library entry from SignalListItemFactory to the component.
+     */
     pub fn set_library_entry(&self, library_entry: LibraryEntry) {
-        let mut entry = self.imp().library_entry.borrow_mut();
-        *entry = Some(library_entry);
+        self.imp().component.borrow_mut().as_mut().map(|component| component.notify(Some(library_entry)));
     }
 
     pub fn set_position(&self, position: u32) {
@@ -87,20 +81,29 @@ impl DetailListItemWidget {
 
     pub fn set_state(&self, state: DetailListItemState) {
         match state {
-            DetailListItemState::Playing => self.imp().icon.set_icon_name(Some("play")),
-            DetailListItemState::Played => self.imp().icon.set_icon_name(Some("check")),
-            DetailListItemState::None => self.imp().icon.set_icon_name(None)
+            DetailListItemState::Playing => {
+                self.imp().icon.set_icon_name(Some("play"));
+                self.imp().icon.set_css_classes(&vec!["status-icon", "playing"]);
+            }
+            DetailListItemState::Played => {
+                self.imp().icon.set_icon_name(Some("check"));
+                self.imp().icon.set_css_classes(&vec!["status-icon", "played"]);
+            }
+            DetailListItemState::None => {
+                self.imp().icon.set_icon_name(None);
+                self.imp().icon.set_css_classes(&vec!["status-icon"]);
+            }
         }
     }
 
-    // pub fn connect_clicked(&self, callback: impl Fn(i32) + Send + Sync + 'static) {
-    //     let gesture = GestureClick::new();
-    //     gesture.connect_released(move |gesture, _, _, _| {
-    //         gesture.set_state(gtk4::EventSequenceState::Claimed);
-    //         callback(*self.imp().id.borrow());
-    //     });
-    //     self.add_controller(gesture);
-    // }
+    pub fn connect_clicked(&self, callback: impl Fn() + Send + Sync + 'static) {
+        let gesture = GestureClick::new();
+        gesture.connect_released(move |gesture, _, _, _| {
+            gesture.set_state(gtk4::EventSequenceState::Claimed);
+            callback();
+        });
+        self.imp().wrapper.add_controller(gesture);
+    }
 }
 
 #[derive(Debug)]

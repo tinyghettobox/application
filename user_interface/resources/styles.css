@@ -119,8 +119,12 @@ window.background .navbar label {
     color: @color-accent;
 }
 
-.detail-list-item .status-icon {
+.detail-list-item .status-icon.playing {
     color: @primary-color;
+}
+
+.detail-list-item .status-icon.played {
+    color: @color-accent;
 }
 
 .player-bar.hidden {
