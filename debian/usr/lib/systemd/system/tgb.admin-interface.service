@@ -1,0 +1,15 @@
+[Unit]
+Description=TinyGhettoBox admin interface
+Wants=local-fs.target
+After=local-fs.target
+
+[Service]
+Environment="PORT=80"
+Environment="UI_PATH=/var/www/admin_interface/web_ui"
+ExecStart=/usr/bin/tinyghettobox/admin_interface
+Restart=always
+RestartSec=20
+Type=simple
+
+[Install]
+WantedBy=multi-user.target

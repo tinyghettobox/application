@@ -173,32 +173,44 @@ impl LibraryEntryRepository {
             }
         }
 
-        Entity::find().filter(Column::Id.is_in(created_model_ids)).all(tx).await
+        Ok(Entity::find()
+            .filter(Column::Id.is_in(created_model_ids))
+            .find_also_related(TrackSourceEntity)
+            .all(tx)
+            .await?
+            .into_iter()
+            .map(|(mut model, track_source)| {
+                model.track_source = track_source;
+                model
+            })
+            .collect::<Vec<Model>>())
     }
 
     async fn get_children<C: ConnectionTrait>(conn: &C, id: i32) -> Result<Vec<Model>, DbErr> {
-        Ok(Entity::find()
-            .filter(Column::ParentId.eq(id))
-            .order_by(Column::SortKey, Asc)
-            .find_also_related(TrackSourceEntity)
-            // Skip selecting file here to optimize the query
-            .select_only()
-            .column_as(Column::Id, "A_id")
-            .column_as(Column::ParentId, "A_parent_id")
-            .column_as(Column::Name, "A_name")
-            .column_as(Column::SortKey, "A_sort_key")
-            .column_as(Column::Image, "A_image")
-            .column_as(Column::Variant, "A_variant")
-            .column_as(Column::PlayedAt, "A_played_at")
-            .column(TrackSourceColumn::SpotifyId)
-            .column(TrackSourceColumn::SpotifyType)
-            .column(TrackSourceColumn::Title)
-            .column(TrackSourceColumn::Url)
+        let entries = Entity::find().filter(Column::ParentId.eq(id)).order_by(Column::SortKey, Asc).all(conn).await?;
+        let entry_ids = entries.iter().map(|e| e.id).collect::<Vec<i32>>();
+        let track_sources = TrackSourceEntity::find()
+            .filter(TrackSourceColumn::LibraryEntryId.is_in(entry_ids))
+            // Skip file. Due to its size it heavily impacts query performance and isn't needed here
+            .columns(vec![
+                TrackSourceColumn::Id,
+                TrackSourceColumn::Url,
+                TrackSourceColumn::SpotifyId,
+                TrackSourceColumn::SpotifyType,
+                TrackSourceColumn::Title,
+            ])
             .all(conn)
-            .await?
+            .await?;
+
+        Ok(entries
             .into_iter()
-            .map(|(mut entry, track_source)| {
-                entry.track_source = track_source;
+            .map(|mut entry| {
+                entry.track_source = track_sources.iter().find_map(|track| {
+                    if track.library_entry_id == entry.id {
+                        return Some(track.clone());
+                    }
+                    None
+                });
                 entry
             })
             .collect::<Vec<Model>>())

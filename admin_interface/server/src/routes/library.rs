@@ -3,6 +3,7 @@ use actix_multipart::form::tempfile::TempFile;
 use actix_multipart::form::text::Text;
 use actix_multipart::form::MultipartForm;
 use actix_web::{delete, get, post, put, web, Responder};
+use database::model::library_entry::Variant;
 use database::{
     model::library_entry::CreateModel as LibraryEntryCreateModel, model::library_entry::Model as LibraryEntry,
     DatabaseConnection, DbErr, LibraryEntryRepository,
@@ -138,13 +139,13 @@ fn enrich_entries_with_cached_files(
         if let Some(children) = entry.children.as_mut() {
             entry.children = Some(enrich_entries_with_cached_files(file_cache, children.clone())?);
         }
-        if let Some(track_source) = entry.track_source.as_mut() {
-            if track_source.file.is_some() {
-                continue;
+        if let Variant::File = entry.variant {
+            if let Some(track_source) = entry.track_source.as_mut() {
+                if track_source.file.is_none() {
+                    let uploaded_file = file_cache.get(track_source.title.clone())?;
+                    track_source.file = Some(uploaded_file);
+                }
             }
-
-            let uploaded_file = file_cache.get(track_source.title.clone())?;
-            track_source.file = Some(uploaded_file);
         }
         new_entries.push(entry);
     }

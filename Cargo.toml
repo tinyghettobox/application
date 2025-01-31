@@ -11,9 +11,10 @@ members = [
     "spotifyd"
 ]
 
-[profile.dev]
-opt-level = 3
+#[profile.dev]
+#opt-level = 3
 
 [profile.release]
+#debug = true
 lto = true
 strip = "symbols"
