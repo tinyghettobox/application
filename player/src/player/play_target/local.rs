@@ -2,13 +2,10 @@ use crate::player::play_target::{PlayTarget, Progress};
 use async_trait::async_trait;
 use database::model::library_entry::Model as LibraryEntry;
 use database::{DatabaseConnection, TrackSourceRepository};
-use kira::manager::backend::DefaultBackend;
-use kira::manager::{AudioManager, AudioManagerSettings};
 use kira::sound::streaming::{StreamingSoundData, StreamingSoundHandle, StreamingSoundSettings};
 use kira::sound::FromFileError;
-use kira::tween::Tween;
-use kira::tween::Value::Fixed;
-use kira::Volume;
+use kira::Value::Fixed;
+use kira::{AudioManager, AudioManagerSettings, Decibels, DefaultBackend, Tween, Value};
 use std::io::{Read, Seek, SeekFrom};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -37,6 +34,10 @@ impl LocalPlayTarget {
     }
 }
 
+fn percent_to_decibel(value: f64) -> Value<Decibels> {
+    Fixed(Decibels((30.0 * ((value / 100.0) * 0.99 + 0.01).log10()) as f32))
+}
+
 #[async_trait]
 impl PlayTarget for LocalPlayTarget {
     async fn play(&mut self, track: &LibraryEntry) -> Result<(), String> {
@@ -46,9 +47,10 @@ impl PlayTarget for LocalPlayTarget {
             .ok_or("Track source has no file set".to_string())?;
 
         let media_source = BytesMediaSource::new(file.clone());
-        let settings = StreamingSoundSettings::default().volume(Fixed(Volume::Amplitude(self.volume)));
-        let sound = StreamingSoundData::from_media_source(media_source, settings)
-            .map_err(|e| format!("Could not create sound data: {}", e))?;
+        let settings = StreamingSoundSettings::default().volume(percent_to_decibel(self.volume));
+        let sound = StreamingSoundData::from_media_source(media_source)
+            .map_err(|e| format!("Could not create sound data: {}", e))?
+            .with_settings(settings);
         self.duration = sound.duration();
 
         let handle = self
@@ -73,8 +75,8 @@ impl PlayTarget for LocalPlayTarget {
             .map_err(|e| format!("Could not lock sound handle: {}", e))?
             .as_mut()
             .ok_or("No sound handle to pause".to_string())?
-            .pause(Tween::default())
-            .map_err(|e| format!("Could not pause sound: {}", e))
+            .pause(Tween::default());
+        Ok(())
     }
 
     async fn resume(&mut self) -> Result<(), String> {
@@ -83,8 +85,8 @@ impl PlayTarget for LocalPlayTarget {
             .map_err(|e| format!("Could not lock sound handle: {}", e))?
             .as_mut()
             .ok_or("No sound handle to resume".to_string())?
-            .resume(Tween::default())
-            .map_err(|e| format!("Could not resume sound: {}", e))
+            .resume(Tween::default());
+        Ok(())
     }
 
     async fn stop(&mut self) -> Result<(), String> {
@@ -93,8 +95,8 @@ impl PlayTarget for LocalPlayTarget {
             .map_err(|e| format!("Could not lock sound handle: {}", e))?
             .as_mut()
             .ok_or("No sound handle to stop".to_string())?
-            .stop(Tween::default())
-            .map_err(|e| format!("Could not stop sound: {}", e))
+            .stop(Tween::default());
+        Ok(())
     }
 
     async fn seek_to(&mut self, position: Duration) -> Result<(), String> {
@@ -103,8 +105,8 @@ impl PlayTarget for LocalPlayTarget {
             .map_err(|e| format!("Could not lock sound handle: {}", e))?
             .as_mut()
             .ok_or("No sound handle to pause".to_string())?
-            .seek_to(position.as_secs_f64())
-            .map_err(|e| format!("Could not seek to position: {}", e))
+            .seek_to(position.as_secs_f64());
+        Ok(())
     }
 
     async fn set_volume(&mut self, volume: f64) -> Result<(), String> {
@@ -113,8 +115,8 @@ impl PlayTarget for LocalPlayTarget {
             .map_err(|e| format!("Could not lock sound handle: {}", e))?
             .as_mut()
             .ok_or("No sound handle to set value".to_string())?
-            .set_volume(Volume::Amplitude(volume), Tween::default())
-            .map_err(|e| format!("Could not set value: {}", e))
+            .set_volume(percent_to_decibel(volume), Tween::default());
+        Ok(())
     }
 
     async fn get_progress(&self) -> Result<Progress, String> {

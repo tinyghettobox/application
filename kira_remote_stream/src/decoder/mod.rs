@@ -1,6 +1,6 @@
 pub mod symphonia;
 
-use kira::dsp::Frame;
+use kira::Frame;
 
 /// Decodes chunks of audio.
 pub trait Decoder: Send {

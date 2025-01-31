@@ -1,5 +1,6 @@
 use std::io::{Read, Seek, SeekFrom};
 use stream_download::http::reqwest::{Client, Url};
+
 use stream_download::http::HttpStream;
 use stream_download::source::SourceStream;
 use stream_download::storage::memory::MemoryStorageProvider;
@@ -14,7 +15,9 @@ pub struct RemoteMediaSource {
 impl RemoteMediaSource {
     pub async fn from_url(url: String) -> Result<Self, String> {
         let parsed_url = url.parse::<Url>().map_err(|error| format!("Could not parse url: {}", error))?;
-        let stream = HttpStream::<Client>::create(parsed_url).await.map_err(|error| format!("Could not create stream: {}", error))?;
+        let stream = HttpStream::<Client>::create(parsed_url)
+            .await
+            .map_err(|error| format!("Could not create stream: {}", error))?;
 
         let content_length = stream.content_length();
 

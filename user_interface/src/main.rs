@@ -28,15 +28,11 @@ const APP_ID: &str = "org.tinyghettobox.gui";
 async fn main() -> glib::ExitCode {
     tracing_subscriber::registry()
         .with(console_subscriber::ConsoleLayer::builder().spawn())
-        .with(
-            tracing_subscriber::fmt::layer().with_filter(
-                Targets::new()
-                    .with_default(LevelFilter::DEBUG)
-                    // .with_target("user_interface::state::dispatcher", LevelFilter::DEBUG)
-                    .with_target("ureq", LevelFilter::INFO)
-                    .with_target("rustls", LevelFilter::INFO), // .with_target("user_interface::state", LevelFilter::INFO)
-            ),
-        )
+        .with(tracing_subscriber::fmt::layer().with_filter(
+            Targets::new().with_default(LevelFilter::DEBUG), // .with_target("user_interface::state::dispatcher", LevelFilter::DEBUG)
+                                                             // .with_target("ureq", LevelFilter::INFO)
+                                                             // .with_target("rustls", LevelFilter::INFO), // .with_target("user_interface::state", LevelFilter::INFO)
+        ))
         .init();
 
     info!("Starting user interface");

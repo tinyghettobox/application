@@ -9,7 +9,7 @@ edition = "2021"
 async-trait = "0.1.80"
 chrono = "0.4.31"
 database = { path = "../database" }
-kira = "0.8.7"
+kira = "0.10.2"
 kira-remote-stream = { path = "../kira_remote_stream" }
 rangemap = "1.4.0"
 rspotify = { version = "0.13.1", default-features = false, features = ["client-ureq", "ureq-rustls-tls"] }

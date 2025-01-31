@@ -1,17 +1,17 @@
-use std::convert::TryInto;
-use kira::dsp::Frame;
-use kira::sound::FromFileError;
 use kira::sound::streaming::Decoder as KiraDecoder;
+use kira::sound::FromFileError;
+use kira::Frame;
+use std::convert::TryInto;
 
+use symphonia::core::audio::{AudioBuffer, AudioBufferRef, Signal};
+use symphonia::core::conv::{FromSample, IntoSample};
+use symphonia::core::sample::Sample;
 use symphonia::core::{
     codecs::Decoder,
     formats::{FormatReader, SeekMode, SeekTo},
     io::{MediaSource, MediaSourceStream},
     probe::Hint,
 };
-use symphonia::core::audio::{AudioBuffer, AudioBufferRef, Signal};
-use symphonia::core::conv::{FromSample, IntoSample};
-use symphonia::core::sample::Sample;
 
 pub struct SymphoniaDecoder {
     format_reader: Box<dyn FormatReader>,
@@ -26,25 +26,10 @@ impl SymphoniaDecoder {
         let codecs = symphonia::default::get_codecs();
         let probe = symphonia::default::get_probe();
         let mss = MediaSourceStream::new(media_source, Default::default());
-        let format_reader = probe
-            .format(
-                &Hint::default(),
-                mss,
-                &Default::default(),
-                &Default::default(),
-            )?
-            .format;
-        let default_track = format_reader
-            .default_track()
-            .ok_or(FromFileError::NoDefaultTrack)?;
-        let sample_rate = default_track
-            .codec_params
-            .sample_rate
-            .ok_or(FromFileError::UnknownSampleRate)?;
-        let num_frames = default_track
-            .codec_params
-            .n_frames
-            .unwrap_or(u64::MAX) as usize;
+        let format_reader = probe.format(&Hint::default(), mss, &Default::default(), &Default::default())?.format;
+        let default_track = format_reader.default_track().ok_or(FromFileError::NoDefaultTrack)?;
+        let sample_rate = default_track.codec_params.sample_rate.ok_or(FromFileError::UnknownSampleRate)?;
+        let num_frames = default_track.codec_params.n_frames.unwrap_or(u64::MAX) as usize;
         let decoder = codecs.make(&default_track.codec_params, &Default::default())?;
         let track_id = default_track.id;
         Ok(Self {
@@ -82,10 +67,7 @@ impl KiraDecoder for SymphoniaDecoder {
                 track_id: self.track_id,
             },
         )?;
-        Ok(seeked_to
-            .actual_ts
-            .try_into()
-            .expect("could not convert u64 into usize"))
+        Ok(seeked_to.actual_ts.try_into().expect("could not convert u64 into usize"))
     }
 }
 
@@ -104,18 +86,12 @@ pub fn load_frames_from_buffer_ref(buffer: &AudioBufferRef) -> Result<Vec<Frame>
     }
 }
 
-pub fn load_frames_from_buffer<S: Sample>(
-    buffer: &AudioBuffer<S>,
-) -> Result<Vec<Frame>, FromFileError>
-    where
-        f32: FromSample<S>,
+pub fn load_frames_from_buffer<S: Sample>(buffer: &AudioBuffer<S>) -> Result<Vec<Frame>, FromFileError>
+where
+    f32: FromSample<S>,
 {
     match buffer.spec().channels.count() {
-        1 => Ok(buffer
-            .chan(0)
-            .iter()
-            .map(|sample| Frame::from_mono((*sample).into_sample()))
-            .collect()),
+        1 => Ok(buffer.chan(0).iter().map(|sample| Frame::from_mono((*sample).into_sample())).collect()),
         2 => Ok(buffer
             .chan(0)
             .iter()

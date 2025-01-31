@@ -1,10 +1,10 @@
 use std::sync::{Arc, Mutex};
 
-use tracing::{debug, error};
-
 use crate::components::tile_list_item::widget::TileListItemWidget;
 use crate::components::{Children, Component};
 use crate::state::{Action, Dispatcher, Event, EventHandler, State};
+use database::model::library_entry::Variant;
+use tracing::{debug, error};
 
 pub struct TileListItemComponent {
     pub widget: TileListItemWidget,
@@ -43,8 +43,22 @@ impl Component<i32> for TileListItemComponent {
         let widget = TileListItemWidget::new();
 
         {
+            let state = state.clone();
             let dispatcher = dispatcher.clone();
             widget.connect_clicked(move || {
+                let library_entry = state.lock().unwrap().library_entry.children.as_ref().and_then(|children| {
+                    children.iter().find(|library_entry| library_entry.id == library_entry_id).cloned()
+                });
+                // We use tile list component also for stream list to show them with an image. Thus playing the stream instead of selecting
+                if let Some(library_entry) = library_entry {
+                    if let Variant::Stream = library_entry.variant {
+                        dispatcher
+                            .lock()
+                            .unwrap()
+                            .dispatch_action(Action::Play(library_entry.parent_id.unwrap(), Some(library_entry.id)));
+                        return;
+                    }
+                }
                 dispatcher.lock().unwrap().dispatch_action(Action::Select(library_entry_id));
             });
         }
@@ -57,7 +71,14 @@ impl Component<i32> for TileListItemComponent {
                 });
 
                 if let Some(library_entry) = library_entry {
-                    dispatcher.lock().unwrap().dispatch_action(Action::Play(library_entry.id, None));
+                    if let Variant::Stream = library_entry.variant {
+                        dispatcher
+                            .lock()
+                            .unwrap()
+                            .dispatch_action(Action::Play(library_entry.parent_id.unwrap(), Some(library_entry.id)));
+                    } else {
+                        dispatcher.lock().unwrap().dispatch_action(Action::Play(library_entry.id, None));
+                    }
                 }
             });
         }
