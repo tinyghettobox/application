@@ -1,8 +1,8 @@
+use crate::error::Problem;
 use actix_web::{get, put, web, HttpResponse, Responder, Result};
-use database::{DatabaseConnection, SystemConfigRepository, model::system_config::Model};
+use database::{model::system_config::Model, DatabaseConnection, SystemConfigRepository};
 use serde_json::json;
 use tracing::{error, warn};
-use crate::error::Problem;
 
 #[get("/api/system/config")]
 pub async fn get(conn: web::Data<DatabaseConnection>) -> impl Responder {
@@ -25,7 +25,7 @@ pub async fn update(conn: web::Data<DatabaseConnection>, json: web::Json<serde_j
         Ok((updated_model, changed_fields)) => {
             run_update_commands(updated_model.clone(), changed_fields)?;
             Ok(HttpResponse::Ok().json(updated_model))
-        },
+        }
         Err(error) => {
             warn!("Failed to set system config: {:?}", error);
             Ok(HttpResponse::BadRequest().json(json!({ "error": error.to_string() })))

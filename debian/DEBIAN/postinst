@@ -2,7 +2,5 @@
 
 #DEBHELPER#
 
-# Install font files
-fc-cache -f -v
 
 exit 0

@@ -15,25 +15,26 @@ copyright = "2024, Thomas Schlage <t.schlage@gmx.net>"
 license-file = ["../LICENSE", "4"]
 extended-description = """\
 User and admin interface and the setup for the tiny ghetto box."""
-depends = "libgtk-4-dev (>=4.8.0), libasound2-dev, libdbus-1-dev, libbsd-dev, librsvg2-dev, fbi"
+depends = "libgtk-4.0 (>=4.8.0)"
 section = "base"
 priority = "important"
 maintainer-scripts = "./DEBIAN"
 systemd-units = [
-    { unit-name = "splashscreen", unit-scripts = "lib/systemd/system", enable = true },
-    { unit-name = "spotifyd", unit-scripts = "lib/systemd/system", enable = true },
-    { unit-name = "tgb.admin-interface", unit-scripts = "lib/systemd/system", enable = true },
-    { unit-name = "tgb.user-interface", unit-scripts = "lib/systemd/system", enable = true }
+    { unit-name = "splashscreen", unit-scripts = "usr/lib/systemd/system", enable = true },
+    { unit-name = "spotifyd", unit-scripts = "usr/lib/systemd/system", enable = true },
+    { unit-name = "tgb.admin-interface", unit-scripts = "usr/lib/systemd/system", enable = true },
+    { unit-name = "tgb.user-interface", unit-scripts = "usr/lib/systemd/system", enable = true }
 ]
 assets = [
-    ["../target/aarch64-unknown-linux-gnu/release/admin_interface_server", "usr/local/bin/tgb_admin_interface", "755"],
-    ["../target/aarch64-unknown-linux-gnu/release/user_interface", "usr/local/bin/tgb_user_interface", "755"],
-    ["../target/aarch64-unknown-linux-gnu/release/spotifyd", "usr/local/bin/spotifyd", "755"],
-    ["../admin_interface/web_ui/dist/**/*", "var/www/tgb_admin_interface_ui/", "755"],
-    ["./etc/spotifyd/spotifyd.conf", "etc/spotifyd/spotifyd.conf", "755"],
-    ["./etc/asound.conf", "etc/asound.conf", "755"],
-    ["./usr/local/share/fonts/*", "usr/local/share/fonts", "755"],
-    ["./usr/lib/systemd/system-shutdown/poweroff.sh", "usr/lib/systemd/system-shutdown/poweroff.sh", "755"],
-    ["./var/lib/dietpi/postboot.d/off_trigger.sh", "var/lib/dietpi/postboot.d/off_trigger.sh", "755"],
+    ["../target/aarch64-unknown-linux-gnu/release/admin_interface_server", "usr/bin/tinyghettobox/admin_interface", "755"],
+    ["../target/aarch64-unknown-linux-gnu/release/user_interface", "usr/bin/tinyghettobox/user_interface", "755"],
+    ["../target/aarch64-unknown-linux-gnu/release/spotifyd", "usr/bin/tinyghettobox/spotifyd", "755"],
+    ["../admin_interface/web_ui/dist/**/*", "var/www/admin_interface/web_ui/", "644"],
+    ["./etc/spotifyd/spotifyd.conf", "etc/spotifyd/spotifyd.conf", "644"],
+#    ["./etc/asound.conf", "etc/asound.conf", "755"],
+#    ["./usr/share/fonts/*", "usr/share/fonts", "755"],
+#    ["./usr/lib/systemd/system-shutdown/poweroff.sh", "usr/lib/systemd/system-shutdown/poweroff.sh", "755"],
+#    ["./var/lib/dietpi/postboot.d/off_trigger.sh", "var/lib/dietpi/postboot.d/off_trigger.sh", "755"],
+    ["./var/lib/tinyghettobox/tinyghettobox.sqlite", "var/lib/tinyghettobox/tinyghettobox.sqlite", "644"],
     ["../README.md", "usr/share/doc/cargo-deb/README", "644"],
 ]

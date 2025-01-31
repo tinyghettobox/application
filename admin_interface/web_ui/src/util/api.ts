@@ -28,8 +28,8 @@ function convertCaseDeep<T>(convertFn: (key: string) => string, some: T): T {
   return some;
 }
 
-async function api<T>(method: 'GET'|'POST'|'PUT'|'DELETE', path: string, payload?: unknown): Promise<T> {
-  const requestInit: RequestInit = { method };
+async function api<T>(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: string, payload?: unknown): Promise<T> {
+  const requestInit: RequestInit = {method};
   if (payload && method === 'POST' || method === 'PUT') {
     requestInit.headers = {'Content-Type': 'application/json'};
     requestInit.body = JSON.stringify(convertCaseDeep(camelToSnake, payload));
@@ -44,6 +44,31 @@ async function api<T>(method: 'GET'|'POST'|'PUT'|'DELETE', path: string, payload
   }
 
   return await response.text() as T;
+}
+
+export function upload(path: string, form: FormData, onProgress: (progress: number) => void, onLoad: (error?: string) => void): void {
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', path, true);
+  xhr.upload.addEventListener('progress', (event: ProgressEvent) => {
+    if (event.lengthComputable) {
+      onProgress(event.loaded / event.total);
+    }
+  });
+  xhr.upload.addEventListener('error', () => {
+    debugger;
+    onLoad(xhr.statusText);
+  });
+  xhr.addEventListener('load', () => {
+    if (xhr.status >= 200 && xhr.status < 300) {
+      onLoad();
+    } else {
+      onLoad(xhr.statusText);
+    }
+  });
+  xhr.addEventListener('error', () => {
+    onLoad('Network error');
+  });
+  xhr.send(form);
 }
 
 async function get<T>(path: string): Promise<T> {
@@ -92,5 +117,12 @@ export async function delLibraryEntry(id: number): Promise<void> {
 
 export async function postLibraryEntries(parent_id: number, entries: LibraryEntry[]): Promise<LibraryEntry[]> {
   return post<LibraryEntry[]>(`/api/library?parent_id=${parent_id}`, entries);
+}
+
+export function uploadLibraryEntryFile(file: File, onProgress: (progress: number) => void, onLoad: (error?: string) => void) {
+  const formData = new FormData();
+  formData.append('name', file.name);
+  formData.append('track', file);
+  upload('/api/library/upload', formData, onProgress, onLoad);
 }
 

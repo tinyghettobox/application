@@ -1,5 +1,5 @@
-pub use sea_orm::{Database, DatabaseConnection, DbErr};
 use sea_orm::ConnectOptions;
+pub use sea_orm::{Database, DatabaseConnection, DbErr};
 use tracing::info;
 use tracing::log::LevelFilter;
 
@@ -14,10 +14,6 @@ mod repository;
 mod util;
 
 fn get_connection_uri() -> String {
-    if std::path::Path::new("/var/lib/tinyghettobox/tinyghettobox.sqlite").exists() {
-        return "sqlite:///var/lib/tinyghettobox/tinyghettobox.sqlite?mode=rwc".to_owned();
-    }
-
     "sqlite://tinyghettobox.sqlite?mode=rwc".to_owned()
 }
 

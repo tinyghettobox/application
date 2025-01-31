@@ -1,6 +1,6 @@
-use std::process::Command;
-use tracing::{debug};
 use crate::error::Problem;
+use std::process::Command;
+use tracing::debug;
 
 macro_rules! run {
     ($cmd: expr $(, $arg: tt)*) => {

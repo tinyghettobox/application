@@ -9,6 +9,7 @@ edition = "2021"
 database = { path = "../../database" }
 migration = { path = "../../migration" }
 actix-web = { version = "4.4.1", features = ["macros"] }
+actix-multipart = "0.7.2"
 actix-files = "0.6.5"
 chrono = "0.4.34"
 cookie_store = "0.21.0"

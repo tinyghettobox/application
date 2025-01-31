@@ -1,10 +1,11 @@
-use std::fmt::{Debug, Display, Formatter};
-
-use sea_orm::entity::prelude::*;
-use serde::{Deserialize, Serialize};
-use ts_rs::TS;
-
+use super::track_source::CreateModel as TrackSourceCreateModel;
 use super::track_source::Model as TrackSource;
+use sea_orm::entity::prelude::*;
+use sea_orm::ActiveValue::Set;
+use sea_orm::Iterable;
+use serde::{Deserialize, Serialize};
+use std::fmt::{Debug, Display, Formatter};
+use ts_rs::TS;
 
 #[derive(Clone, Copy, Debug, PartialEq, EnumIter, DeriveActiveEnum, Serialize, Deserialize, TS)]
 #[sea_orm(rs_type = "String", db_type = "String(StringLen::N(9))")]
@@ -27,7 +28,7 @@ impl Display for Variant {
             Variant::Folder => "folder".to_string(),
             Variant::Stream => "stream".to_string(),
             Variant::File => "file".to_string(),
-            Variant::Spotify => "spotify".to_string()
+            Variant::Spotify => "spotify".to_string(),
         };
         write!(f, "{}", str)
     }
@@ -118,13 +119,50 @@ impl Linked for ParentLink {
 
 impl ActiveModelBehavior for ActiveModel {}
 
-
 struct FormatImage<'a>(pub Option<&'a Vec<u8>>);
 impl<'a> Debug for FormatImage<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match &self.0 {
             None => write!(f, "None"),
-            Some(buffer) => write!(f, "[u8; {}]", buffer.len())
+            Some(buffer) => write!(f, "[u8; {}]", buffer.len()),
         }
+    }
+}
+
+impl ActiveModel {
+    pub fn update_from_model(&mut self, model: Model) {
+        for column in Column::iter() {
+            let old_value = self.get(column);
+            let new_value = model.get(column);
+
+            if &new_value != old_value.as_ref() {
+                self.set(column, new_value);
+            }
+        }
+    }
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct CreateModel {
+    pub parent_id: Option<i32>,
+    pub variant: Variant,
+    pub name: String,
+    pub image: Option<Vec<u8>>,
+    pub sort_key: i32,
+    pub children: Option<Vec<CreateModel>>, // Just used to pass children from API to client
+    pub track_source: Option<TrackSourceCreateModel>, // Just used to pass children from API to client
+}
+
+impl CreateModel {
+    // Somehow the function is not recognized by rust as used, adding allow dead code
+    #[allow(dead_code)]
+    pub fn to_active_model(&self) -> ActiveModel {
+        let mut model = ActiveModel::new();
+        model.parent_id = Set(self.parent_id.clone());
+        model.variant = Set(self.variant.clone());
+        model.name = Set(self.name.clone());
+        model.image = Set(self.image.clone());
+        model.sort_key = Set(self.sort_key.clone());
+        model
     }
 }

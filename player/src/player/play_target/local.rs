@@ -1,18 +1,18 @@
-use std::io::{Read, Seek, SeekFrom};
-use std::sync::{Arc, Mutex};
-use database::model::library_entry::Model as LibraryEntry;
-use std::time::Duration;
+use crate::player::play_target::{PlayTarget, Progress};
 use async_trait::async_trait;
-use kira::manager::{AudioManager, AudioManagerSettings};
+use database::model::library_entry::Model as LibraryEntry;
+use database::{DatabaseConnection, TrackSourceRepository};
 use kira::manager::backend::DefaultBackend;
-use kira::sound::FromFileError;
+use kira::manager::{AudioManager, AudioManagerSettings};
 use kira::sound::streaming::{StreamingSoundData, StreamingSoundHandle, StreamingSoundSettings};
+use kira::sound::FromFileError;
 use kira::tween::Tween;
 use kira::tween::Value::Fixed;
 use kira::Volume;
+use std::io::{Read, Seek, SeekFrom};
+use std::sync::{Arc, Mutex};
+use std::time::Duration;
 use symphonia::core::io::MediaSource;
-use database::{DatabaseConnection, TrackSourceRepository};
-use crate::player::play_target::{PlayTarget, Progress};
 
 #[derive(Clone)]
 pub struct LocalPlayTarget {
@@ -23,12 +23,13 @@ pub struct LocalPlayTarget {
     duration: Duration,
 }
 
-
 impl LocalPlayTarget {
     pub async fn new(conn: DatabaseConnection, volume: f64) -> Self {
         Self {
             conn,
-            manager: Arc::new(Mutex::new(AudioManager::<DefaultBackend>::new(AudioManagerSettings::default()).expect("manager to be created"))),
+            manager: Arc::new(Mutex::new(
+                AudioManager::<DefaultBackend>::new(AudioManagerSettings::default()).expect("manager to be created"),
+            )),
             sound_handle: Arc::new(Mutex::new(None)),
             volume,
             duration: Duration::default(),
@@ -39,16 +40,19 @@ impl LocalPlayTarget {
 #[async_trait]
 impl PlayTarget for LocalPlayTarget {
     async fn play(&mut self, track: &LibraryEntry) -> Result<(), String> {
-        let file = TrackSourceRepository::get_file(&self.conn, track.id).await
+        let file = TrackSourceRepository::get_file(&self.conn, track.track_source.as_ref().unwrap().id)
+            .await
             .map_err(|e| format!("Could not get file: {}", e))?
             .ok_or("Track source has no file set".to_string())?;
 
         let media_source = BytesMediaSource::new(file.clone());
         let settings = StreamingSoundSettings::default().volume(Fixed(Volume::Amplitude(self.volume)));
-        let sound = StreamingSoundData::from_media_source(media_source, settings).map_err(|e| format!("Could not create sound data: {}", e))?;
+        let sound = StreamingSoundData::from_media_source(media_source, settings)
+            .map_err(|e| format!("Could not create sound data: {}", e))?;
         self.duration = sound.duration();
 
-        let handle = self.manager
+        let handle = self
+            .manager
             .lock()
             .map_err(|e| format!("Could not lock audio manager: {}", e))?
             .play(sound)
@@ -114,7 +118,8 @@ impl PlayTarget for LocalPlayTarget {
     }
 
     async fn get_progress(&self) -> Result<Progress, String> {
-        let progress = self.sound_handle
+        let progress = self
+            .sound_handle
             .lock()
             .map_err(|e| format!("Could not lock sound handle: {}", e))?
             .as_ref()
@@ -139,10 +144,7 @@ struct BytesMediaSource {
 
 impl BytesMediaSource {
     pub fn new(bytes: Vec<u8>) -> Self {
-        Self {
-            bytes,
-            position: 0,
-        }
+        Self { bytes, position: 0 }
     }
 }
 

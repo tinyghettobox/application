@@ -26,7 +26,7 @@ macro_rules! with_change_tracking {
                             println!("changed? {}", column.to_string());
                             match new_value {
                                 Some(value) => self.set(column, value),
-                                None => self.not_set(column)
+                                None => self.not_set(column),
                             }
                             Some(column.to_string())
                         } else {

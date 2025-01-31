@@ -1,8 +1,8 @@
+use crate::util::{with_change_tracking, ChangeTracking};
 use sea_orm::entity::prelude::*;
-use sea_orm::{Iterable};
+use sea_orm::Iterable;
 use serde::{Deserialize, Serialize};
 use ts_rs::TS;
-use crate::util::{ChangeTracking, with_change_tracking};
 
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Serialize, Deserialize, TS)]
 #[sea_orm(table_name = "system_config")]

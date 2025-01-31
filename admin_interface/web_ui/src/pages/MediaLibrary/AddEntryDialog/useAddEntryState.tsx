@@ -48,12 +48,12 @@ export const AddEntryStateProvider = (props: Props) => {
       let existingFlatEntries = flatten(existingEntries);
 
       for (const existingFlatEntry of existingFlatEntries) {
-        if (existingFlatEntry.entry.id === entry.id) {
+        if (existingFlatEntry.entry === entry) {
           const parent = existingFlatEntry.parent;
           if (parent && parent.variant === 'folder') {
-            parent.children = (parent.children || []).filter(child => child.id !== entry.id);
+            parent.children = (parent.children || []).filter(child => child !== entry);
           } else {
-            existingEntries = existingEntries.filter(existingEntry => existingEntry.id !== entry.id);
+            existingEntries = existingEntries.filter(existingEntry => existingEntry !== entry);
           }
           break;
         }

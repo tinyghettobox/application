@@ -17,7 +17,7 @@ export default function Authorize() {
   return (
     <div>
       <Typography variant="h5">Authorize</Typography>
-      <p>
+      <Typography variant="body1">
         By clicking the button below, you will be redirected to the authorization page of Spotify. You have to login
         with the Spotify account you want to use on the TinyGhettoBox, and authorize the developer application you
         created
@@ -25,7 +25,7 @@ export default function Authorize() {
         authorization method is required by Spotify&apos;s rules when accessing sensitive data, which device and
         playback is
         considered to be.
-      </p>
+      </Typography>
 
       <Box sx={{width: '100%', textAlign: 'center', p: '32px'}}>
         <Button onClick={handleAuth} disabled={tokenIsValid} variant="contained">
