@@ -3,8 +3,8 @@ use std::sync::{Arc, Mutex};
 use gtk4::prelude::*;
 use gtk4::Widget;
 
-use crate::components::{Children, Component};
 use crate::components::ripple::widget::RippleWidget;
+use crate::components::{Children, Component};
 use crate::state::{Dispatcher, Event, EventHandler, State};
 
 pub struct RippleComponent {
@@ -12,9 +12,15 @@ pub struct RippleComponent {
     pub children: Vec<Arc<Mutex<Box<dyn EventHandler>>>>,
 }
 
-
 impl EventHandler for RippleComponent {
-    fn on_event(&mut self, _event: &Event) {}
+    fn on_event(&mut self, event: &Event) {
+        match event {
+            Event::MonitorToggled => {
+                self.update();
+            }
+            _ => {}
+        }
+    }
 
     fn get_children(&self) -> Vec<Arc<Mutex<Box<dyn EventHandler>>>> {
         self.children.clone()
@@ -30,7 +36,11 @@ impl Component<Option<()>> for RippleComponent {
     }
 
     #[allow(refining_impl_trait)]
-    fn render(_state: Arc<Mutex<State>>, _dispatcher: Arc<Mutex<Dispatcher>>, _params: Option<()>) -> (RippleWidget, Children) {
+    fn render(
+        _state: Arc<Mutex<State>>,
+        _dispatcher: Arc<Mutex<Dispatcher>>,
+        _params: Option<()>,
+    ) -> (RippleWidget, Children) {
         let widget = RippleWidget::new();
         widget.start_ripple_drawing();
 

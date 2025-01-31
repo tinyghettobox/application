@@ -1,12 +1,13 @@
 use std::sync::{Arc, Mutex};
 
-use gtk4::prelude::{GtkWindowExt, WidgetExt};
+use gtk4::prelude::GtkWindowExt;
 use gtk4::Application;
 
 use crate::components::content::ContentComponent;
 use crate::components::navbar::NavbarComponent;
 use crate::components::player_bar::PlayerBarComponent;
 use crate::components::ripple::RippleComponent;
+use crate::components::shutdown_timer::ShutdownTimerComponent;
 use crate::components::window::widget::WindowWidget;
 use crate::components::{Children, Component};
 use crate::state::{Dispatcher, Event, EventHandler, State};
@@ -38,7 +39,12 @@ impl Component<Option<()>> for WindowComponent {
     }
 
     #[allow(refining_impl_trait)]
-    fn render(state: Arc<Mutex<State>>, dispatcher: Arc<Mutex<Dispatcher>>, _params: Option<()>) -> (WindowWidget, Children) {
+    fn render(
+        state: Arc<Mutex<State>>,
+        dispatcher: Arc<Mutex<Dispatcher>>,
+        _params: Option<()>,
+    ) -> (WindowWidget, Children) {
+        let shutdown_timer = ShutdownTimerComponent::new(state.clone(), dispatcher.clone(), None);
         let ripple = RippleComponent::new(state.clone(), dispatcher.clone(), None);
         let navbar = NavbarComponent::new(state.clone(), dispatcher.clone(), None);
         let content = ContentComponent::new(state.clone(), dispatcher.clone(), None);
@@ -48,16 +54,21 @@ impl Component<Option<()>> for WindowComponent {
         ripple.add_child(&content.get_widget());
         ripple.add_child(&player_bar.get_widget());
 
-        let widget = WindowWidget::new();
-        
-        widget.set_child(Some(&ripple.get_widget()));
+        shutdown_timer.add_child(&ripple.get_widget());
 
-        (widget, vec![
-            Arc::new(Mutex::new(Box::new(navbar))),
-            Arc::new(Mutex::new(Box::new(content))),
-            Arc::new(Mutex::new(Box::new(player_bar))),
-            Arc::new(Mutex::new(Box::new(ripple))),
-        ])
+        let widget = WindowWidget::new();
+
+        widget.set_child(Some(&shutdown_timer.get_widget()));
+
+        (
+            widget,
+            vec![
+                Arc::new(Mutex::new(Box::new(navbar))),
+                Arc::new(Mutex::new(Box::new(content))),
+                Arc::new(Mutex::new(Box::new(player_bar))),
+                Arc::new(Mutex::new(Box::new(ripple))),
+            ],
+        )
     }
 
     fn update(&mut self) {}

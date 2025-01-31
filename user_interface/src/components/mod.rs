@@ -7,16 +7,17 @@ pub use window::WindowComponent;
 
 use crate::state::{Dispatcher, EventHandler, State};
 
-mod window;
-mod navbar;
 mod content;
-mod tile_list;
-mod tile_list_item;
 mod detail_list;
 mod detail_list_item;
 mod empty_info;
+mod navbar;
 mod player_bar;
 mod ripple;
+mod shutdown_timer;
+mod tile_list;
+mod tile_list_item;
+mod window;
 
 pub type Children = Vec<Arc<Mutex<Box<dyn EventHandler>>>>;
 

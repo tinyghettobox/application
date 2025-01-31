@@ -1,6 +1,4 @@
 use gtk4::glib::clone;
-use gtk4::glib::property::PropertyGet;
-use gtk4::prelude::{BoxExt, ObjectExt};
 use std::sync::{Arc, Mutex};
 use tracing::{error, warn};
 
@@ -20,7 +18,8 @@ pub struct DetailListItemComponent {
 impl EventHandler for DetailListItemComponent {
     fn on_event(&mut self, event: &Event) {
         match event {
-            Event::LibraryEntryChanged | Event::PlayStateChanged | Event::TrackChanged | Event::TrackPlayed => {
+            Event::LibraryEntryChanged => self.check_library_entry(),
+            Event::PlayStateChanged | Event::TrackChanged | Event::TrackPlayed => {
                 self.update();
             }
             _ => {}
@@ -36,7 +35,7 @@ impl Component<Option<()>> for DetailListItemComponent {
     fn new(state: Arc<Mutex<State>>, dispatcher: Arc<Mutex<Dispatcher>>, params: Option<()>) -> Self {
         let (widget, children) = Self::render(state.clone(), dispatcher.clone(), params);
 
-        let mut component = Self {
+        let component = Self {
             widget: Arc::new(widget.clone()),
             children,
             state,
@@ -73,6 +72,9 @@ impl Component<Option<()>> for DetailListItemComponent {
     }
 
     fn update(&mut self) {
+        if self.library_entry.lock().expect("could not lock").is_none() {
+            return;
+        }
         let library_entry_id = match self.library_entry.lock().expect("could not lock").as_ref() {
             Some(entry) => entry.id,
             None => {
@@ -110,6 +112,10 @@ impl Component<Option<()>> for DetailListItemComponent {
     fn get_widget(&self) -> DetailListItemWidget {
         (*self.widget).clone()
     }
+}
+
+impl DetailListItemComponent {
+    pub fn check_library_entry(&self) {}
 }
 
 /**

@@ -1,7 +1,7 @@
-use std::sync::{Arc, Mutex};
-use crate::components::{Children, Component};
 use crate::components::empty_info::widget::EmptyInfoWidget;
+use crate::components::{Children, Component};
 use crate::state::{Dispatcher, Event, EventHandler, State};
+use std::sync::{Arc, Mutex};
 
 pub struct EmptyInfoComponent {
     pub widget: EmptyInfoWidget,
@@ -9,7 +9,7 @@ pub struct EmptyInfoComponent {
 }
 
 impl EventHandler for EmptyInfoComponent {
-    fn on_event(&mut self, _event: &Event) { }
+    fn on_event(&mut self, _event: &Event) {}
 
     fn get_children(&self) -> Vec<Arc<Mutex<Box<dyn EventHandler>>>> {
         self.children.clone()
@@ -23,11 +23,15 @@ impl Component<Option<()>> for EmptyInfoComponent {
     }
 
     #[allow(refining_impl_trait)]
-    fn render(_state: Arc<Mutex<State>>, _dispatcher: Arc<Mutex<Dispatcher>>, _params: Option<()>) -> (EmptyInfoWidget, Children) {
+    fn render(
+        _state: Arc<Mutex<State>>,
+        _dispatcher: Arc<Mutex<Dispatcher>>,
+        _params: Option<()>,
+    ) -> (EmptyInfoWidget, Children) {
         (EmptyInfoWidget::new(), vec![])
     }
 
-    fn update(&mut self) { }
+    fn update(&mut self) {}
 
     #[allow(refining_impl_trait)]
     fn get_widget(&self) -> EmptyInfoWidget {

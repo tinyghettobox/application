@@ -4,7 +4,6 @@ use crate::state::{Action, Dispatcher, Event, EventHandler, State};
 use crate::util::debouncer::Debouncer;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
-use tracing::warn;
 
 pub struct PlayerBarComponent {
     pub(crate) widget: PlayerBarWidget,

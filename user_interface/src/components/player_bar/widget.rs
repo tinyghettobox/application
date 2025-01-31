@@ -1,9 +1,9 @@
-use gtk4::{CompositeTemplate, gio, glib};
 use gtk4::gdk::Texture;
-use gtk4::glib::{Bytes, object_subclass, Propagation};
 use gtk4::glib::subclass::InitializingObject;
+use gtk4::glib::{object_subclass, Bytes, Propagation};
 use gtk4::prelude::*;
 use gtk4::subclass::prelude::*;
+use gtk4::{gio, glib, CompositeTemplate};
 use tracing::warn;
 
 #[derive(Default, CompositeTemplate)]
@@ -91,11 +91,7 @@ impl PlayerBarWidget {
     }
 
     pub fn set_paused(&self, paused: bool) {
-        let icon_name = if paused {
-            "play"
-        } else {
-            "pause"
-        };
+        let icon_name = if paused { "play" } else { "pause" };
         self.imp().play_toggle_button.set_icon_name(icon_name);
     }
 
@@ -125,8 +121,6 @@ impl PlayerBarWidget {
     }
 
     pub fn connect_volume_change(&self, callback: impl Fn(f64) + 'static) {
-        self.imp().volume_button.connect_value_changed(move |_scale, value| {
-            callback(value)
-        });
+        self.imp().volume_button.connect_value_changed(move |_scale, value| callback(value));
     }
 }

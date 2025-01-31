@@ -1,5 +1,6 @@
-use database::{DatabaseConnection, LibraryEntryRepository, SystemConfigRepository};
+use chrono::Utc;
 use database::model::library_entry::Model as LibraryEntry;
+use database::{DatabaseConnection, LibraryEntryRepository, SystemConfigRepository};
 
 pub struct State {
     pub started: bool,
@@ -10,6 +11,8 @@ pub struct State {
     pub paused: bool,
     pub progress: f64,
     pub volume: f64,
+    pub monitor_active: bool,
+    pub last_activity: i64,
 }
 
 impl State {
@@ -34,7 +37,9 @@ impl State {
             playing_library_entry: None,
             paused: true,
             progress: 0.0,
-            started: false
+            started: false,
+            monitor_active: true,
+            last_activity: Utc::now().timestamp(),
         }
     }
 }

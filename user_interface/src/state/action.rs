@@ -1,8 +1,9 @@
+use chrono::Utc;
+use std::process::Command;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
-
 use tokio::sync::Mutex as AsyncMutex;
-use tracing::{debug, error, warn};
+use tracing::{debug, error, info, warn};
 
 use database::model::library_entry::Variant;
 use database::{model::library_entry::Model as LibraryEntry, LibraryEntryRepository, SystemConfigRepository};
@@ -23,6 +24,9 @@ pub enum Action {
     SetProgress(f64), // 0-1
     SetPlayingTrack(Option<LibraryEntry>),
     SetVolume(f64),
+    ToggleMonitor(bool),
+    Shutdown,
+    TrackActivity,
 }
 
 #[derive(Debug)]
@@ -33,7 +37,9 @@ pub enum Event {
     TrackPlayed,
     TrackChanged,
     VolumeChanged,
+    MonitorToggled,
     Error(String),
+    Dummy,
 }
 
 pub trait EventHandler {
@@ -235,6 +241,31 @@ impl Action {
                 };
 
                 dispatcher.lock().unwrap().dispatch_event(event);
+            }
+            Action::ToggleMonitor(active) => {
+                let mut state = state.lock().expect("could not lock");
+
+                if cfg!(target_arch = "arm") {
+                    info!("Toggling display");
+                    let result = Command::new("vcgencmd").arg("display_power").arg((active as i32).to_string()).spawn();
+
+                    if result.is_err() {
+                        error!("Could not toggle display: {:?}", result);
+                    }
+                }
+
+                state.monitor_active = active;
+                dispatcher.lock().unwrap().dispatch_event(Event::MonitorToggled);
+            }
+            Action::Shutdown => {
+                if cfg!(target_arch = "arm") {
+                    info!("Shutting down");
+                    Command::new("shutdown").arg("now").spawn().expect("could not shutdown");
+                }
+            }
+            Action::TrackActivity => {
+                let mut state = state.lock().expect("could not lock");
+                state.last_activity = Utc::now().timestamp();
             }
         }
     }

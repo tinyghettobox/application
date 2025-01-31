@@ -1,15 +1,11 @@
-use std::cell::RefCell;
-use std::sync::{Arc, Mutex};
-
 use super::component::ListenerComponent;
-use crate::state::{Action, Dispatcher};
 use database::model::library_entry::Model as LibraryEntry;
 use gtk4::glib::object_subclass;
 use gtk4::glib::subclass::InitializingObject;
-use gtk4::prelude::{GestureExt, ObjectExt, WidgetExt};
+use gtk4::prelude::{GestureExt, WidgetExt};
 use gtk4::subclass::prelude::*;
 use gtk4::{glib, CompositeTemplate, GestureClick};
-use tracing::info;
+use std::cell::RefCell;
 
 #[derive(Default, CompositeTemplate)]
 #[template(file = "./detail_list_item.ui")]

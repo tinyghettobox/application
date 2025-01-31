@@ -1,5 +1,5 @@
-mod widget;
 mod component;
+mod widget;
 
 pub use component::DetailListItemComponent;
-pub use widget::{DetailListItemWidget, DetailListItemState};
+pub use widget::DetailListItemWidget;

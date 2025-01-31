@@ -1,11 +1,10 @@
 extern crate gtk4;
 
-use std::sync::{Arc, Mutex};
-
 use gtk4::gdk::Display;
 use gtk4::gio::resources_register_include;
-use gtk4::prelude::{ApplicationExt, ApplicationExtManual, GtkWindowExt, WidgetExt};
-use gtk4::{glib, Application, CssProvider, IconTheme, TextDirection};
+use gtk4::prelude::{ApplicationExt, ApplicationExtManual};
+use gtk4::{glib, Application, CssProvider, IconTheme};
+use std::sync::{Arc, Mutex};
 use tracing::info;
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::filter::Targets;
@@ -28,10 +27,12 @@ const APP_ID: &str = "org.tinyghettobox.gui";
 #[tokio::main]
 async fn main() -> glib::ExitCode {
     tracing_subscriber::registry()
+        .with(console_subscriber::ConsoleLayer::builder().spawn())
         .with(
             tracing_subscriber::fmt::layer().with_filter(
                 Targets::new()
                     .with_default(LevelFilter::DEBUG)
+                    // .with_target("user_interface::state::dispatcher", LevelFilter::DEBUG)
                     .with_target("ureq", LevelFilter::INFO)
                     .with_target("rustls", LevelFilter::INFO), // .with_target("user_interface::state", LevelFilter::INFO)
             ),
@@ -45,6 +46,7 @@ async fn main() -> glib::ExitCode {
     let connection = connect().await.expect("Could not connect to database");
     let state = Arc::new(Mutex::new(State::new(connection.clone()).await));
     let dispatcher = Arc::new(Mutex::new(Dispatcher::new()));
+
     let player = Player::new(connection.clone(), state.lock().unwrap().volume).await;
 
     {

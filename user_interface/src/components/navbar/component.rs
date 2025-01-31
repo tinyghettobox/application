@@ -1,7 +1,7 @@
-use std::sync::{Arc, Mutex};
-use crate::components::{Children, Component};
 use crate::components::navbar::widget::NavbarWidget;
+use crate::components::{Children, Component};
 use crate::state::{Action, Dispatcher, Event, EventHandler, State};
+use std::sync::{Arc, Mutex};
 
 pub struct NavbarComponent {
     pub widget: NavbarWidget,
@@ -25,21 +25,26 @@ impl EventHandler for NavbarComponent {
 impl Component<Option<()>> for NavbarComponent {
     fn new(state: Arc<Mutex<State>>, dispatcher: Arc<Mutex<Dispatcher>>, params: Option<()>) -> Self {
         let (widget, children) = Self::render(state.clone(), dispatcher.clone(), params);
-        let mut component = NavbarComponent { state, widget, children };
+        let mut component = NavbarComponent {
+            state,
+            widget,
+            children,
+        };
         component.update();
         component
     }
 
     #[allow(refining_impl_trait)]
-    fn render(state: Arc<Mutex<State>>, dispatcher: Arc<Mutex<Dispatcher>>, _params: Option<()>) -> (NavbarWidget, Children) {
+    fn render(
+        state: Arc<Mutex<State>>,
+        dispatcher: Arc<Mutex<Dispatcher>>,
+        _params: Option<()>,
+    ) -> (NavbarWidget, Children) {
         let navbar = NavbarWidget::new();
         navbar.connect_back_clicked(move |_| {
             let parent_id = state.lock().unwrap().library_entry.parent_id;
 
-            dispatcher
-                .lock()
-                .unwrap()
-                .dispatch_action(Action::Select(parent_id.unwrap()));
+            dispatcher.lock().unwrap().dispatch_action(Action::Select(parent_id.unwrap()));
         });
 
         (navbar, vec![])

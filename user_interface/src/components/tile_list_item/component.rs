@@ -2,8 +2,8 @@ use std::sync::{Arc, Mutex};
 
 use tracing::{debug, error};
 
-use crate::components::{Children, Component};
 use crate::components::tile_list_item::widget::TileListItemWidget;
+use crate::components::{Children, Component};
 use crate::state::{Action, Dispatcher, Event, EventHandler, State};
 
 pub struct TileListItemComponent {
@@ -24,13 +24,22 @@ impl EventHandler for TileListItemComponent {
 impl Component<i32> for TileListItemComponent {
     fn new(state: Arc<Mutex<State>>, dispatcher: Arc<Mutex<Dispatcher>>, library_entry_id: i32) -> Self {
         let (widget, children) = Self::render(state.clone(), dispatcher.clone(), library_entry_id);
-        let mut component = Self { widget, state, children, library_entry_id };
+        let mut component = Self {
+            widget,
+            state,
+            children,
+            library_entry_id,
+        };
         component.update();
         component
     }
 
     #[allow(refining_impl_trait)]
-    fn render(state: Arc<Mutex<State>>, dispatcher: Arc<Mutex<Dispatcher>>, library_entry_id: i32) -> (TileListItemWidget, Children) {
+    fn render(
+        state: Arc<Mutex<State>>,
+        dispatcher: Arc<Mutex<Dispatcher>>,
+        library_entry_id: i32,
+    ) -> (TileListItemWidget, Children) {
         let widget = TileListItemWidget::new();
 
         {
@@ -43,15 +52,9 @@ impl Component<i32> for TileListItemComponent {
             let dispatcher = dispatcher.clone();
             let state = state.clone();
             widget.connect_play_clicked(move || {
-                let library_entry = state
-                    .lock()
-                    .unwrap()
-                    .library_entry
-                    .children
-                    .as_ref()
-                    .and_then(|children|
+                let library_entry = state.lock().unwrap().library_entry.children.as_ref().and_then(|children| {
                     children.iter().find(|library_entry| library_entry.id == library_entry_id).cloned()
-                    );
+                });
 
                 if let Some(library_entry) = library_entry {
                     dispatcher.lock().unwrap().dispatch_action(Action::Play(library_entry.id, None));
@@ -67,17 +70,25 @@ impl Component<i32> for TileListItemComponent {
 
         match &state.library_entry.children {
             Some(child_library_entry) => {
-                debug!("Searching id {} in {} children", self.library_entry_id, child_library_entry.len());
+                debug!(
+                    "Searching id {} in {} children",
+                    self.library_entry_id,
+                    child_library_entry.len()
+                );
                 match child_library_entry.iter().find(|entry| entry.id == self.library_entry_id) {
                     Some(entry) => {
-                        debug!("Entry {} has image size: {}", entry.id, entry.image.as_ref().unwrap_or(&vec![]).len());
+                        debug!(
+                            "Entry {} has image size: {}",
+                            entry.id,
+                            entry.image.as_ref().unwrap_or(&vec![]).len()
+                        );
                         self.widget.set_image(entry.image.clone());
                         self.widget.set_name(entry.name.to_string());
                     }
-                    None => error!("Passed library entry '{}' does not exist o.O???", self.library_entry_id)
+                    None => error!("Passed library entry '{}' does not exist o.O???", self.library_entry_id),
                 }
             }
-            None => error!("Library entry has no children o.O???")
+            None => error!("Library entry has no children o.O???"),
         }
     }
 

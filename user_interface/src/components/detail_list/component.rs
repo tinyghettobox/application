@@ -4,7 +4,7 @@ use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
 use gtk4::gio;
-use tracing::{error, warn};
+use tracing::error;
 
 use crate::components::detail_list::widget::DetailListWidget;
 use crate::components::{Children, Component};
@@ -31,7 +31,7 @@ impl EventHandler for DetailListComponent {
 
 impl Component<Option<()>> for DetailListComponent {
     fn new(state: Arc<Mutex<State>>, dispatcher: Arc<Mutex<Dispatcher>>, params: Option<()>) -> Self {
-        let mut children = Rc::new(RefCell::new(vec![]));
+        let children = Rc::new(RefCell::new(vec![]));
         let (widget, _) = Self::render(state.clone(), dispatcher.clone(), params);
         widget.set_factory(state.clone(), dispatcher.clone(), children.clone());
 

@@ -1,7 +1,7 @@
 use std::collections::VecDeque;
 use std::ops::Add;
-use std::sync::{Arc, Mutex};
 use std::sync::mpsc::{channel, Sender};
+use std::sync::{Arc, Mutex};
 use std::thread::{sleep, spawn};
 use std::time::{Duration, Instant};
 
@@ -49,14 +49,14 @@ where
             }
         });
 
-        Debouncer {
-            buffer,
-            sender,
-        }
+        Debouncer { buffer, sender }
     }
 
     pub fn add(&self, data: D) {
-        self.buffer.lock().unwrap().push_back(Data { triggered_at: Instant::now(), data });
+        self.buffer.lock().unwrap().push_back(Data {
+            triggered_at: Instant::now(),
+            data,
+        });
         if let Err(error) = self.sender.send(()) {
             error!("Could not notify debouncer thread: {}", error);
         }

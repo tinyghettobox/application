@@ -2,9 +2,9 @@ use std::sync::{Arc, Mutex};
 
 use tracing::{error, info};
 
-use crate::components::{Children, Component};
 use crate::components::tile_list::widget::TileListWidget;
 use crate::components::tile_list_item::TileListItemComponent;
+use crate::components::{Children, Component};
 use crate::state::{Dispatcher, Event, EventHandler, State};
 
 #[derive(Clone)]
@@ -31,14 +31,23 @@ impl EventHandler for TileListComponent {
 impl Component<Option<()>> for TileListComponent {
     fn new(state: Arc<Mutex<State>>, dispatcher: Arc<Mutex<Dispatcher>>, params: Option<()>) -> Self {
         let (widget, children) = Self::render(state.clone(), dispatcher.clone(), params);
-        let mut component = Self { widget, state, dispatcher, children };
+        let mut component = Self {
+            widget,
+            state,
+            dispatcher,
+            children,
+        };
         component.update();
         Self::start_lazy_loading(&component);
         component
     }
 
     #[allow(refining_impl_trait)]
-    fn render(_state: Arc<Mutex<State>>, _dispatcher: Arc<Mutex<Dispatcher>>, _params: Option<()>) -> (TileListWidget, Children) {
+    fn render(
+        _state: Arc<Mutex<State>>,
+        _dispatcher: Arc<Mutex<Dispatcher>>,
+        _params: Option<()>,
+    ) -> (TileListWidget, Children) {
         let widget = TileListWidget::new();
 
         (widget, vec![])
@@ -71,18 +80,16 @@ impl TileListComponent {
     }
 
     fn append_list_items(&mut self, start_index: usize, amount: usize) {
-        let library_entry_ids = self.state
-            .lock()
-            .unwrap()
-            .library_entry
-            .children
-            .as_ref()
-            .map(|children| children.iter().skip(start_index).take(amount).map(|entry| entry.id).collect::<Vec<i32>>());
+        let library_entry_ids =
+            self.state.lock().unwrap().library_entry.children.as_ref().map(|children| {
+                children.iter().skip(start_index).take(amount).map(|entry| entry.id).collect::<Vec<i32>>()
+            });
 
         match library_entry_ids {
             Some(library_entry_ids) => {
                 info!("Creating {} tiles", library_entry_ids.len());
-                let child_components = library_entry_ids.into_iter()
+                let child_components = library_entry_ids
+                    .into_iter()
                     .map(|library_entry_id| {
                         TileListItemComponent::new(self.state.clone(), self.dispatcher.clone(), library_entry_id)
                     })
