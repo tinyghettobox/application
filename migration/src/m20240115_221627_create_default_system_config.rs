@@ -29,7 +29,7 @@ impl MigrationTrait for Migration {
                 audio_device,
                 volume,
                 max_volume,
-                led_on_off_shim_pin,
+                led_pin,
                 led_brightness,
                 led_brightness_dimmed,
                 power_off_btn_delay

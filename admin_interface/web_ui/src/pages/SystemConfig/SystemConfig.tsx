@@ -38,12 +38,12 @@ export default function SystemConfig() {
       powerOnVolume: 40, // ???
       maxVolume: 100, // self handled
       // power
-      ledOnOffShimPin: 25, // command x
+      ledPin: 25, // command x
       ledBrightness: 100, // script mupi_start_led.sh
       ledBrightnessDimmed: 10, // script mupi_start_led.sh
       powerOffBtnDelay: 2, // script handled
-      powerPin: 4,
-      triggerPin: 17,
+      powerOffPin: 4,
+      cutPin: 17,
     }
   });
 

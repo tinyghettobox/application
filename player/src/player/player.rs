@@ -3,7 +3,6 @@ use std::time::Duration;
 
 use tokio::sync::Mutex;
 use tokio::time::sleep;
-use tracing::error;
 use tracing::log::info;
 
 use database::model::library_entry::Variant;
@@ -29,7 +28,6 @@ where
     T: Fn(Option<LibraryEntry>) + 'static + Sync + Send,
     E: Fn(LibraryEntry) + 'static + Sync + Send,
 {
-    conn: DatabaseConnection,
     spotify: Arc<Mutex<SpotifyPlayTarget>>,
     local: Arc<Mutex<LocalPlayTarget>>,
     remote: Arc<Mutex<RemotePlayTarget>>,
@@ -50,7 +48,6 @@ where
         let spotify_manager = SpotifyManager::new(&conn).await;
 
         let player = Arc::new(Mutex::new(Self {
-            conn: conn.clone(),
             spotify: Arc::new(Mutex::new(SpotifyPlayTarget::new(spotify_manager, volume).await)),
             local: Arc::new(Mutex::new(LocalPlayTarget::new(conn.clone(), volume).await)),
             remote: Arc::new(Mutex::new(RemotePlayTarget::new(conn.clone(), volume))),

@@ -2,10 +2,10 @@ use std::collections::HashSet;
 use std::time::Duration;
 
 use chrono::{DateTime, Utc};
-use rspotify::{AuthCodeSpotify, Credentials, Token};
 use rspotify::clients::BaseClient;
+use rspotify::{AuthCodeSpotify, Credentials, Token};
 use tokio::time::sleep;
-use tracing::{debug, error, info, warn};
+use tracing::{error, info, warn};
 
 use database::{DatabaseConnection, SpotifyConfigRepository};
 
@@ -18,8 +18,8 @@ pub struct SpotifyManager {
 impl SpotifyManager {
     pub async fn new(conn: &DatabaseConnection) -> Self {
         let config = SpotifyConfigRepository::get(conn).await.expect("Could not get spotify config");
-        let expired_at = config.expired_at
-            .map(|date| date.parse::<DateTime<Utc>>().expect("Expired at should be a valid date"));
+        let expired_at =
+            config.expired_at.map(|date| date.parse::<DateTime<Utc>>().expect("Expired at should be a valid date"));
         let token = Token {
             access_token: config.access_token.to_owned().unwrap_or("".to_owned()),
             refresh_token: config.refresh_token.to_owned(),
@@ -34,7 +34,7 @@ impl SpotifyManager {
                     "user-read-private",
                     "user-read-email",
                 ]
-                    .map(|s| s.to_string()),
+                .map(|s| s.to_string()),
             ),
         };
 
@@ -66,7 +66,8 @@ impl SpotifyManager {
                 sleep(Duration::from_secs(5)).await;
                 {
                     let config = SpotifyConfigRepository::get(&self_.conn).await.expect("Could not get spotify config");
-                    let config_expired_at = config.expired_at
+                    let config_expired_at = config
+                        .expired_at
                         .map(|date| date.parse::<DateTime<Utc>>().expect("Expired at should be a valid date"));
 
                     let mut current_token = self_.client.get_token().lock().unwrap().clone();
@@ -95,7 +96,7 @@ impl SpotifyManager {
                                 "user-read-private",
                                 "user-read-email",
                             ]
-                                .map(|s| s.to_string()),
+                            .map(|s| s.to_string()),
                         ),
                     };
 
@@ -122,14 +123,19 @@ impl SpotifyManager {
                             continue;
                         }
                     };
-                    let mut config = SpotifyConfigRepository::get(&self_.conn).await.expect("Could not get spotify config");
+                    let mut config =
+                        SpotifyConfigRepository::get(&self_.conn).await.expect("Could not get spotify config");
                     if let Some(token) = new_token.as_ref() {
-                        if !token.access_token.is_empty() && token.access_token != config.access_token.unwrap_or("".to_string()) {
+                        if !token.access_token.is_empty()
+                            && token.access_token != config.access_token.unwrap_or("".to_string())
+                        {
                             info!("Updating spotify access token");
                             config.access_token = Some(token.access_token.to_owned());
                             config.refresh_token = token.refresh_token.clone();
                             config.expired_at = token.expires_at.clone().map(|date| date.to_rfc3339());
-                            SpotifyConfigRepository::update(&self_.conn, config).await.expect("Could not save spotify token");
+                            SpotifyConfigRepository::update(&self_.conn, config)
+                                .await
+                                .expect("Could not save spotify token");
                         } else {
                             info!("Access token did not yet change");
                         }

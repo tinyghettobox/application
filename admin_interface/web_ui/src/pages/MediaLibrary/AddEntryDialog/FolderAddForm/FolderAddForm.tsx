@@ -18,8 +18,8 @@ import {Delete, Download, Upload} from "@mui/icons-material";
 import {useAddEntryState} from "@/pages/MediaLibrary/AddEntryDialog/useAddEntryState";
 import {ChangeEvent, useEffect, useState} from "react";
 import {notify} from "@/components/Notification";
-import FolderAvatar from "@/components/FolderAvatar";
 import {cropImage} from "@/pages/MediaLibrary/AddEntryDialog/helper";
+import ImageEditor from "@/pages/MediaLibrary/AddEntryDialog/FolderAddForm/ImageEditor";
 
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
@@ -108,13 +108,13 @@ export default function FolderAddForm() {
 
         <Grid container alignItems={'center'}>
           <Grid item xs={3} textAlign={'center'}>
-            <Badge
-              badgeContent={!!folder?.image &&
-                <IconButton size="small" onClick={handleRemoveImage}><Delete/></IconButton>}
-              anchorOrigin={{vertical: 'bottom', horizontal: 'right'}}
-            >
-              <FolderAvatar folder={folder} sx={{width: 128, height: 128}}/>
-            </Badge>
+            <div style={{width: '134px', margin: '16px auto 0'}}>
+              {/* TODO implement / fix image editor */}
+              <ImageEditor folder={folder}/>
+              {!!folder?.image &&
+                <IconButton size="small" onClick={handleRemoveImage}><Delete/></IconButton>
+              }
+            </div>
           </Grid>
           <Grid item xs={9}>
             <Stack divider={<Divider><Typography variant="caption">or</Typography></Divider>} gap={2}>

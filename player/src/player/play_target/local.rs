@@ -170,10 +170,16 @@ impl Seek for BytesMediaSource {
         };
 
         if new_position < 0 {
-            return Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, "Seek position to low"));
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "Seek position to low",
+            ));
         }
         if new_position as usize > self.bytes.len() {
-            return Err(std::io::Error::new(std::io::ErrorKind::InvalidInput, "Seek position to high"));
+            return Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "Seek position to high",
+            ));
         }
 
         self.position = new_position as u64;

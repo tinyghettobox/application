@@ -88,6 +88,6 @@ pub fn set_overclock_sd_card(overclock: bool) -> Result<(), Problem> {
     }
 }
 
-pub fn set_led_on_off_shim_pin(pin: i32) -> Result<(), Problem> {
+pub fn set_led_pin(pin: i32) -> Result<(), Problem> {
     run!("sudo sed -i 's/--gpio \\d+/--gpio {pin}/' /etc/init.d/pi-blaster.boot.sh")
 }

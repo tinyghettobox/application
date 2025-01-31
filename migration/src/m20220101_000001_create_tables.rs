@@ -31,7 +31,7 @@ impl MigrationTrait for Migration {
                         audio_device TEXT NOT NULL,
                         volume INTEGER NOT NULL,
                         max_volume INTEGER NOT NULL,
-                        led_on_off_shim_pin INTEGER NOT NULL,
+                        led_pin INTEGER NOT NULL,
                         led_brightness INTEGER NOT NULL,
                         led_brightness_dimmed INTEGER NOT NULL,
                         power_off_btn_delay INTEGER NOT NULL
@@ -65,8 +65,8 @@ impl MigrationTrait for Migration {
                         parent_id INTEGER,
                         variant TEXT NOT NULL,
                         name TEXT NOT NULL,
-                        image BLOB,
                         played_at TEXT,
+                        image BLOB,
                         FOREIGN KEY (parent_id) REFERENCES library_entry (id) ON DELETE CASCADE ON UPDATE CASCADE
                     )
                 "#,
@@ -81,9 +81,9 @@ impl MigrationTrait for Migration {
                         library_entry_id INTEGER NOT NULL,
                         title TEXT NOT NULL,
                         url TEXT,
-                        file BLOB,
                         spotify_id TEXT,
                         spotify_type TEXT,
+                        file BLOB,
                         FOREIGN KEY (library_entry_id) REFERENCES library_entry (id) ON DELETE CASCADE ON UPDATE CASCADE
                     )
                 "#,

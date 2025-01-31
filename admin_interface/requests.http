@@ -25,10 +25,12 @@ Content-Type: application/json
   "audio_device": "hifiberry-dac",
   "volume": 50,
   "max_volume": 100,
-  "led_on_off_shim_pin": 0,
+  "led_pin": 0,
   "led_brightness": 100,
   "led_brightness_dimmed": 10,
-  "power_off_btn_delay": 2
+  "power_off_btn_delay": 2,
+  "power_off_pin": 4,
+  "cut_pin": 4
 }
 
 ###

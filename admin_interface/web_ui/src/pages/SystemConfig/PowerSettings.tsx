@@ -66,15 +66,16 @@ export default function PowerSettings({control}: Props) {
           </div>
           <div>
             <Controller
-              name={'ledOnOffShimPin'}
+              name={'ledPin'}
               control={control}
               render={({field, fieldState}) =>
                 <FormControl error={fieldState.invalid}>
-                  <InputLabel id={"led-on-off-shim-pin-label"}>LED GPIO OnOffShim</InputLabel>
+                  <InputLabel id={"led-pin-label"}>LED GPIO OnOffShim</InputLabel>
                   <Select
                     variant="outlined"
-                    labelId={"led-on-off-shim-pin-label"}
+                    labelId={"led-pin-label"}
                     label={"LED GPIO OnOffShim"} {...field}>
+                    <MenuItem value={0}>None</MenuItem>
                     <MenuItem value={4}>GPIO 4</MenuItem>
                     <MenuItem value={17}>GPIO 17</MenuItem>
                     <MenuItem value={18}>GPIO 18</MenuItem>
@@ -157,6 +158,65 @@ export default function PowerSettings({control}: Props) {
                     </Grid>
                   </Grid>
                   <FormHelperText sx={{ml: 0}}>Brightness of dimmed power button led in percent</FormHelperText>
+                </FormControl>
+              }
+            />
+          </div>
+          <div>
+            <Controller
+              name={'powerOffPin'}
+              control={control}
+              render={({field, fieldState}) =>
+                <FormControl error={fieldState.invalid}>
+                  <InputLabel id={"power-off-pin-label"}>Power Off GPIO Pin (OnOffShim)</InputLabel>
+                  <Select
+                    variant="outlined"
+                    labelId={"power-off-pin-label"}
+                    label={"Power Off GPIO Pin (OnOffShim)"} {...field}>
+                    <MenuItem value={4}>GPIO 4</MenuItem>
+                    <MenuItem value={17}>GPIO 17</MenuItem>
+                    <MenuItem value={18}>GPIO 18</MenuItem>
+                    <MenuItem value={21}>GPIO 21</MenuItem>
+                    <MenuItem value={21}>GPIO 21</MenuItem>
+                    <MenuItem value={22}>GPIO 22</MenuItem>
+                    <MenuItem value={23}>GPIO 23</MenuItem>
+                    <MenuItem value={24}>GPIO 24</MenuItem>
+                    <MenuItem value={25}>GPIO 25</MenuItem>
+                    <MenuItem value={27}>GPIO 27</MenuItem>
+                  </Select>
+                  <FormHelperText sx={{ml: 0}}>
+                    Which GPIO pin to use for telling OnOffShim to power off. Usually pin 4.
+                  </FormHelperText>
+                </FormControl>
+              }
+            />
+          </div>
+          <div>
+            <Controller
+              name={'cutPin'}
+              control={control}
+              render={({field, fieldState}) =>
+                <FormControl error={fieldState.invalid}>
+                  <InputLabel id={"cut-pin-label"}>Cut GPIO Pin (OnOffShim)</InputLabel>
+                  <Select
+                    variant="outlined"
+                    labelId={"cut-pin-label"}
+                    label={"Cut GPIO Pin (OnOffShim)"} {...field}>
+                    <MenuItem value={4}>GPIO 4</MenuItem>
+                    <MenuItem value={17}>GPIO 17</MenuItem>
+                    <MenuItem value={18}>GPIO 18</MenuItem>
+                    <MenuItem value={21}>GPIO 21</MenuItem>
+                    <MenuItem value={21}>GPIO 21</MenuItem>
+                    <MenuItem value={22}>GPIO 22</MenuItem>
+                    <MenuItem value={23}>GPIO 23</MenuItem>
+                    <MenuItem value={24}>GPIO 24</MenuItem>
+                    <MenuItem value={25}>GPIO 25</MenuItem>
+                    <MenuItem value={27}>GPIO 27</MenuItem>
+                  </Select>
+                  <FormHelperText sx={{ml: 0}}>
+                    Which GPIO pin to use for telling OnOffShim to cut the power. This is different to power off pin as this is set low by the system and tells
+                    on off shim to fully cut power.
+                  </FormHelperText>
                 </FormControl>
               }
             />

@@ -1,10 +1,10 @@
-use std::sync::{Arc, Mutex};
-use crate::components::{Children, Component};
 use crate::components::content::widget::ContentWidget;
 use crate::components::detail_list::DetailListComponent;
 use crate::components::empty_info::EmptyInfoComponent;
 use crate::components::tile_list::TileListComponent;
+use crate::components::{Children, Component};
 use crate::state::{Dispatcher, Event, EventHandler, State};
+use std::sync::{Arc, Mutex};
 
 pub struct ContentComponent {
     pub widget: ContentWidget,
@@ -28,13 +28,21 @@ impl EventHandler for ContentComponent {
 impl Component<Option<()>> for ContentComponent {
     fn new(state: Arc<Mutex<State>>, dispatcher: Arc<Mutex<Dispatcher>>, params: Option<()>) -> Self {
         let (widget, children) = Self::render(state.clone(), dispatcher.clone(), params);
-        let mut component = ContentComponent { state, widget, children };
+        let mut component = ContentComponent {
+            state,
+            widget,
+            children,
+        };
         component.update();
         component
     }
 
     #[allow(refining_impl_trait)]
-    fn render(state: Arc<Mutex<State>>, dispatcher: Arc<Mutex<Dispatcher>>, _params: Option<()>) -> (ContentWidget, Children) {
+    fn render(
+        state: Arc<Mutex<State>>,
+        dispatcher: Arc<Mutex<Dispatcher>>,
+        _params: Option<()>,
+    ) -> (ContentWidget, Children) {
         let widget = ContentWidget::new();
 
         let tile_list = TileListComponent::new(state.clone(), dispatcher.clone(), None);
@@ -45,7 +53,14 @@ impl Component<Option<()>> for ContentComponent {
         widget.append_child("detail_list", &detail_list.get_widget());
         widget.append_child("empty_info", &empty_info.get_widget());
 
-        (widget, vec![Arc::new(Mutex::new(Box::new(tile_list))), Arc::new(Mutex::new(Box::new(detail_list))), Arc::new(Mutex::new(Box::new(empty_info)))])
+        (
+            widget,
+            vec![
+                Arc::new(Mutex::new(Box::new(tile_list))),
+                Arc::new(Mutex::new(Box::new(detail_list))),
+                Arc::new(Mutex::new(Box::new(empty_info))),
+            ],
+        )
     }
 
     fn update(&mut self) {

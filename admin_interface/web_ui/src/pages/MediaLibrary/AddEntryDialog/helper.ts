@@ -18,6 +18,23 @@ export async function cropImage(image: File | Blob, width: number, height: numbe
   });
 }
 
+export async function resizeImage(image: File | Blob, x: number, y: number, width: number, height: number): Promise<number[]> {
+  return new Promise((resolve, reject) => {
+    new Compressor(image, {
+      width,
+      height,
+      resize: 'cover',
+      mimeType: 'image/jpeg',
+      async success(file: File | Blob) {
+        resolve(Array.from(new Uint8Array(await file.arrayBuffer())));
+      },
+      error(error: Error) {
+        reject(error);
+      }
+    });
+  });
+}
+
 export async function fileToBinary(file: File): Promise<number[]> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();

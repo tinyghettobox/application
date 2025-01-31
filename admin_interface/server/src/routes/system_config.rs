@@ -67,8 +67,8 @@ fn run_update_commands(updated_model: Model, changed_fields: Vec<String>) -> Res
     if changed_fields.contains(&"audio_device".to_string()) {
         crate::commands::set_audio_device(updated_model.audio_device.clone())?;
     }
-    if changed_fields.contains(&"led_on_off_shim_pin".to_string()) {
-        crate::commands::set_led_on_off_shim_pin(updated_model.led_on_off_shim_pin.clone())?;
+    if changed_fields.contains(&"led_pin".to_string()) {
+        crate::commands::set_led_pin(updated_model.led_pin.clone())?;
     }
     Ok(())
 }

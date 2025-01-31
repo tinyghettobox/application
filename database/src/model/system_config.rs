@@ -30,10 +30,12 @@ pub struct Model {
     pub audio_device: String,
     pub volume: u8,
     pub max_volume: u8,
-    pub led_on_off_shim_pin: i32,
+    pub led_pin: i32,
     pub led_brightness: i32,
     pub led_brightness_dimmed: i32,
     pub power_off_btn_delay: i32,
+    pub power_off_pin: i32,
+    pub cut_pin: i32,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
@@ -42,4 +44,3 @@ pub enum Relation {}
 impl ActiveModelBehavior for ActiveModel {}
 
 with_change_tracking!(ActiveModel);
-
