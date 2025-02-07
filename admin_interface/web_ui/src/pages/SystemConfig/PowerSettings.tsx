@@ -195,7 +195,9 @@ export default function PowerSettings({control}: Props) {
             <Controller
               name={'cutPin'}
               control={control}
-              render={({field, fieldState}) =>
+              render={({field, fieldState}) => {
+                debugger;
+                return 
                 <FormControl error={fieldState.invalid}>
                   <InputLabel id={"cut-pin-label"}>Cut GPIO Pin (OnOffShim)</InputLabel>
                   <Select

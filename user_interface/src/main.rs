@@ -24,12 +24,16 @@ mod util;
 
 const APP_ID: &str = "org.tinyghettobox.gui";
 
-#[tokio::main]
+#[tokio::main(flavor = "multi_thread")]
 async fn main() -> glib::ExitCode {
     tracing_subscriber::registry()
         .with(console_subscriber::ConsoleLayer::builder().spawn())
         .with(tracing_subscriber::fmt::layer().with_filter(
-            Targets::new().with_default(LevelFilter::DEBUG), // .with_target("user_interface::state::dispatcher", LevelFilter::DEBUG)
+            Targets::new().with_default(LevelFilter::TRACE)
+            .with_target("stream_download", LevelFilter::DEBUG)
+            .with_target("runtime", LevelFilter::INFO)
+            .with_target("sqlx::query", LevelFilter::INFO)
+            .with_target("tokio", LevelFilter::INFO)
                                                              // .with_target("ureq", LevelFilter::INFO)
                                                              // .with_target("rustls", LevelFilter::INFO), // .with_target("user_interface::state", LevelFilter::INFO)
         ))

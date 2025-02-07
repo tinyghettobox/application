@@ -27,6 +27,12 @@ impl Default for Progress {
 
 impl Progress {
     pub fn as_f64(&self) -> f64 {
+        // For infinite streams the duration will be u64::MAX / sample rate
+        // Infinite streams should be always at 100% progress allowing to seek back
+        if self.duration > Duration::from_secs(i32::MAX as u64) {
+            return 100.0
+        }
+
         self.position.as_secs_f64() / self.duration.as_secs_f64() * 100.0
     }
 }

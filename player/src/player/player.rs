@@ -3,7 +3,8 @@ use std::time::Duration;
 
 use tokio::sync::Mutex;
 use tokio::time::sleep;
-use tracing::log::info;
+use tracing::debug;
+use tracing::log::{info, error};
 
 use database::model::library_entry::Variant;
 use database::{model::library_entry::Model as LibraryEntry, DatabaseConnection};
@@ -91,6 +92,14 @@ where
     }
 
     async fn play_track(&mut self, library_entry: LibraryEntry) -> Result<Option<LibraryEntry>, String> {
+        if let Some(current_track) = self.current_track.lock().await.as_mut() {
+            if current_track.playing {
+                debug!("Stopping currently playing track");
+                current_track.target.lock().await.stop().await?;
+                current_track.playing = false;
+            }
+        }
+
         let mut new_track = self.get_play_target(&library_entry).map(|target| Track {
             library_entry: library_entry.clone(),
             target,
@@ -99,7 +108,12 @@ where
         });
 
         if let Some(new_track) = new_track.as_mut() {
-            new_track.target.lock().await.play(&new_track.library_entry).await?;
+            new_track.target.lock().await.play(&new_track.library_entry).await.map_err(
+                |error| {
+                    error!("#### Failed to play track: {}", error);
+                    error
+                }
+            )?;
             sleep(Duration::from_secs(1)).await; // Let spotify api catch up with playing
             new_track.progress = new_track.target.lock().await.get_progress().await?;
             new_track.progress.position = Duration::from_secs(0); // Spotify returns weird position

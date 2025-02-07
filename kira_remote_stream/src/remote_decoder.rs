@@ -8,8 +8,10 @@ impl RemoteStreamDecoder {
         let stream = RemoteMediaSource::from_url(url)
             .await
             .map_err(|error| format!("Could not create remote media source: {}", error))?;
-        let decoder = SymphoniaDecoder::new(Box::new(stream))
-            .map_err(|error| format!("Could not create remote decoder: {}", error))?;
+        let decoder = tokio::task::spawn_blocking(move || {
+            SymphoniaDecoder::new(Box::new(stream))
+                .map_err(|error| format!("Could not create remote decoder: {}", error))
+        }).await.unwrap()?;
 
         Ok(decoder)
     }

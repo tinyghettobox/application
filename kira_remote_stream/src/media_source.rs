@@ -1,14 +1,16 @@
 use std::io::{Read, Seek, SeekFrom};
+use std::num::NonZeroUsize;
 use stream_download::http::reqwest::{Client, Url};
 
 use stream_download::http::HttpStream;
 use stream_download::source::SourceStream;
+use stream_download::storage::bounded::BoundedStorageProvider;
 use stream_download::storage::memory::MemoryStorageProvider;
 use stream_download::{Settings, StreamDownload};
 use symphonia::core::io::MediaSource;
 
 pub struct RemoteMediaSource {
-    reader: StreamDownload<MemoryStorageProvider>,
+    reader: StreamDownload<BoundedStorageProvider<MemoryStorageProvider>>,
     content_length: Option<u64>,
 }
 
@@ -20,8 +22,13 @@ impl RemoteMediaSource {
             .map_err(|error| format!("Could not create stream: {}", error))?;
 
         let content_length = stream.content_length();
+        // let bitrate: u64 = stream.header("Icy-Br").unwrap_or("320").parse().unwrap_or(320);
 
-        let reader = StreamDownload::from_stream(stream, MemoryStorageProvider::default(), Settings::default())
+        let reader = StreamDownload::from_stream(
+            stream, 
+            BoundedStorageProvider::new(MemoryStorageProvider, NonZeroUsize::new(512 * 1024).unwrap()),
+             Settings::default().prefetch_bytes(320 / 8 * 1024 * 5)
+            )
             .await
             .map_err(|error| format!("Could start download: {}", error))?;
 

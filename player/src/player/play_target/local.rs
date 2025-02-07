@@ -35,7 +35,7 @@ impl LocalPlayTarget {
 }
 
 fn percent_to_decibel(value: f64) -> Value<Decibels> {
-    Fixed(Decibels((30.0 * ((value / 100.0) * 0.99 + 0.01).log10()) as f32))
+    Fixed(Decibels((30.0 * (value * 0.99 + 0.01).log10()) as f32))
 }
 
 #[async_trait]
@@ -110,6 +110,7 @@ impl PlayTarget for LocalPlayTarget {
     }
 
     async fn set_volume(&mut self, volume: f64) -> Result<(), String> {
+        self.volume = volume;
         self.sound_handle
             .lock()
             .map_err(|e| format!("Could not lock sound handle: {}", e))?
