@@ -60,10 +60,11 @@ impl KiraDecoder for SymphoniaDecoder {
     }
 
     fn seek(&mut self, index: usize) -> Result<usize, Self::Error> {
+        let time = index as u64 / self.sample_rate as u64;
         let seeked_to = self.format_reader.seek(
             SeekMode::Accurate,
             SeekTo::TimeStamp {
-                ts: index.try_into().expect("could not convert usize into u64"),
+                ts: time,
                 track_id: self.track_id,
             },
         )?;

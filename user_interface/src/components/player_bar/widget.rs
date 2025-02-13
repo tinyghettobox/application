@@ -4,6 +4,7 @@ use gtk4::glib::{object_subclass, Bytes, Propagation};
 use gtk4::prelude::*;
 use gtk4::subclass::prelude::*;
 use gtk4::{gio, glib, CompositeTemplate};
+use player::Progress;
 use tracing::warn;
 
 #[derive(Default, CompositeTemplate)]
@@ -63,8 +64,10 @@ impl PlayerBarWidget {
         self.imp().wrapper.set_visible(visible);
     }
 
-    pub fn set_progress(&self, progress: f64) {
-        self.imp().progress_bar.adjustment().set_value(progress);
+    pub fn set_progress(&self, progress: Progress) {
+        let adjustment = self.imp().progress_bar.adjustment();
+        adjustment.set_value(progress.position.as_secs_f64());
+        adjustment.set_upper(progress.duration.as_secs_f64())
     }
 
     pub fn set_image(&self, buffer: Option<Vec<u8>>) {

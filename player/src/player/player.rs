@@ -4,7 +4,7 @@ use std::time::Duration;
 use tokio::sync::Mutex;
 use tokio::time::sleep;
 use tracing::debug;
-use tracing::log::{info, error};
+use tracing::log::{error, info};
 
 use database::model::library_entry::Variant;
 use database::{model::library_entry::Model as LibraryEntry, DatabaseConnection};
@@ -108,12 +108,10 @@ where
         });
 
         if let Some(new_track) = new_track.as_mut() {
-            new_track.target.lock().await.play(&new_track.library_entry).await.map_err(
-                |error| {
-                    error!("#### Failed to play track: {}", error);
-                    error
-                }
-            )?;
+            new_track.target.lock().await.play(&new_track.library_entry).await.map_err(|error| {
+                error!("#### Failed to play track: {}", error);
+                error
+            })?;
             sleep(Duration::from_secs(1)).await; // Let spotify api catch up with playing
             new_track.progress = new_track.target.lock().await.get_progress().await?;
             new_track.progress.position = Duration::from_secs(0); // Spotify returns weird position
@@ -172,9 +170,9 @@ where
         Ok(())
     }
 
-    pub async fn seek_to(&mut self, percent: f64) -> Result<Option<Progress>, String> {
+    pub async fn seek_to(&mut self, timestamp: f64) -> Result<Option<Progress>, String> {
         if let Some(track) = self.current_track.lock().await.as_mut() {
-            let position = Duration::from_secs_f64(track.progress.duration.as_secs_f64() * percent / 100.0);
+            let position = Duration::from_secs_f64(timestamp);
             let mut target_lock = track.target.lock().await;
             target_lock.seek_to(position).await?;
 

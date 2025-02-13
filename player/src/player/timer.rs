@@ -39,6 +39,10 @@ impl PlayerTimer {
 
                     (track.library_entry.variant, track.progress.clone())
                 };
+                // For infinite streams there is no track end so we skip that part
+                if !progress.is_finite {
+                    continue;
+                }
 
                 // For spotify we want to add tracks to queue before they end to ensure seamless playing
                 if matches!(variant, Variant::Spotify) {

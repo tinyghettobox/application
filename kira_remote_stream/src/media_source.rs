@@ -10,7 +10,7 @@ use stream_download::{Settings, StreamDownload};
 use symphonia::core::io::MediaSource;
 
 pub struct RemoteMediaSource {
-    reader: StreamDownload<BoundedStorageProvider<MemoryStorageProvider>>,
+    reader: StreamDownload<MemoryStorageProvider>,
     content_length: Option<u64>,
 }
 
@@ -25,12 +25,13 @@ impl RemoteMediaSource {
         // let bitrate: u64 = stream.header("Icy-Br").unwrap_or("320").parse().unwrap_or(320);
 
         let reader = StreamDownload::from_stream(
-            stream, 
-            BoundedStorageProvider::new(MemoryStorageProvider, NonZeroUsize::new(512 * 1024).unwrap()),
-             Settings::default().prefetch_bytes(320 / 8 * 1024 * 5)
-            )
-            .await
-            .map_err(|error| format!("Could start download: {}", error))?;
+            stream,
+            // BoundedStorageProvider::new(MemoryStorageProvider, NonZeroUsize::new(512 * 1024).unwrap()),
+            MemoryStorageProvider::default(),
+            Settings::default().prefetch_bytes(320 / 8 * 1024 * 5),
+        )
+        .await
+        .map_err(|error| format!("Could start download: {}", error))?;
 
         Ok(RemoteMediaSource { reader, content_length })
     }
@@ -38,7 +39,9 @@ impl RemoteMediaSource {
 
 impl Read for RemoteMediaSource {
     fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
-        self.reader.read(buf)
+        let len = self.reader.read(buf)?;
+
+        Ok(len)
     }
 }
 
@@ -50,7 +53,7 @@ impl Seek for RemoteMediaSource {
 
 impl MediaSource for RemoteMediaSource {
     fn is_seekable(&self) -> bool {
-        self.content_length.is_some()
+        true
     }
 
     fn byte_len(&self) -> Option<u64> {

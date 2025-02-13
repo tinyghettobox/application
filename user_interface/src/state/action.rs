@@ -21,7 +21,7 @@ pub enum Action {
     PrevTrack,
     SetPlayedAt,
     Seek(f64),
-    SetProgress(f64), // 0-1
+    SetProgress(Progress), // 0-1
     SetPlayingTrack(Option<LibraryEntry>),
     SetVolume(f64),
     ToggleMonitor(bool),
@@ -155,7 +155,7 @@ impl Action {
                 let mut state = state.lock().unwrap();
                 state.playing_library_entry = library_entry.clone();
                 state.paused = library_entry.is_none();
-                state.progress = 0.0;
+                state.progress = Progress::default();
 
                 dispatcher.lock().unwrap().dispatch_event(Event::TrackChanged);
             }
@@ -189,13 +189,13 @@ impl Action {
                             Some(track) => {
                                 state.playing_library_entry = Some(track.clone());
                                 state.paused = false;
-                                state.progress = 0.0;
+                                state.progress = Progress::default();
                                 Event::TrackChanged
                             }
                             None => {
                                 state.playing_library_entry = None;
                                 state.paused = true;
-                                state.progress = 0.0;
+                                state.progress = Progress::default();
                                 Event::PlayStateChanged
                             }
                         }
@@ -208,11 +208,11 @@ impl Action {
                 state.lock().unwrap().progress = progress;
                 dispatcher.lock().unwrap().dispatch_event(Event::ProgressChanged);
             }
-            Action::Seek(percent) => {
+            Action::Seek(timestamp) => {
                 let mut player_guard = player.lock().await;
-                let event = match player_guard.seek_to(percent).await {
+                let event = match player_guard.seek_to(timestamp).await {
                     Ok(Some(progress)) => {
-                        state.lock().unwrap().progress = progress.as_f64();
+                        state.lock().unwrap().progress = progress;
                         Event::ProgressChanged
                     }
                     Ok(None) => Event::ProgressChanged,

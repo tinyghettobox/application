@@ -1,6 +1,7 @@
 use chrono::Utc;
 use database::model::library_entry::Model as LibraryEntry;
 use database::{DatabaseConnection, LibraryEntryRepository, SystemConfigRepository};
+use player::Progress;
 
 pub struct State {
     pub started: bool,
@@ -9,7 +10,7 @@ pub struct State {
     pub active_view: String,
     pub playing_library_entry: Option<LibraryEntry>,
     pub paused: bool,
-    pub progress: f64,
+    pub progress: Progress,
     pub volume: f64,
     pub monitor_active: bool,
     pub last_activity: i64,
@@ -36,7 +37,7 @@ impl State {
             volume,
             playing_library_entry: None,
             paused: true,
-            progress: 0.0,
+            progress: Progress::default(),
             started: false,
             monitor_active: true,
             last_activity: Utc::now().timestamp(),

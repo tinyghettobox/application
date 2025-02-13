@@ -132,6 +132,7 @@ impl PlayTarget for LocalPlayTarget {
         Ok(Progress {
             position: Duration::from_secs_f64(progress),
             duration: self.duration,
+            is_finite: true,
         })
     }
 

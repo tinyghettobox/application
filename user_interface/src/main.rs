@@ -57,7 +57,7 @@ async fn main() -> glib::ExitCode {
         tokio::spawn(async move {
             let mut player = player.lock().await;
             let handle_progress_change = move |progress: Progress| {
-                dispatcher1.clone().lock().unwrap().dispatch_action(Action::SetProgress(progress.as_f64()));
+                dispatcher1.clone().lock().unwrap().dispatch_action(Action::SetProgress(progress));
             };
             let handle_track_change = move |library_entry: Option<LibraryEntry>| {
                 dispatcher2.lock().unwrap().dispatch_action(Action::SetPlayingTrack(library_entry));

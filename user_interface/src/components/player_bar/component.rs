@@ -102,7 +102,7 @@ impl Component<Option<()>> for PlayerBarComponent {
 impl PlayerBarComponent {
     pub fn update_progress(&self) {
         let state = self.state.lock().unwrap();
-        self.widget.set_progress(state.progress);
+        self.widget.set_progress(state.progress.clone());
     }
 
     pub fn update_track(&self) {

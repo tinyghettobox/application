@@ -1,7 +1,9 @@
 use std::time::Duration;
 
 use async_trait::async_trait;
-use rspotify::model::{AdditionalType, AlbumId, ArtistId, EpisodeId, IdError, PlayableItem, PlayContextId, PlaylistId, ShowId, TrackId};
+use rspotify::model::{
+    AdditionalType, AlbumId, ArtistId, EpisodeId, IdError, PlayContextId, PlayableItem, PlaylistId, ShowId, TrackId,
+};
 use rspotify::prelude::{OAuthClient, PlayableId};
 use tracing::{debug, error};
 
@@ -26,7 +28,10 @@ impl SpotifyPlayTarget {
 
     fn get_play_id(&self, track: &LibraryEntry) -> Result<SpotifyId, String> {
         if !matches!(track.variant, Variant::Spotify) {
-            error!("Attempted to play non-Spotify track on Spotify play target: {}", track.id);
+            error!(
+                "Attempted to play non-Spotify track on Spotify play target: {}",
+                track.id
+            );
             return Err("Track is not a Spotify track".to_string());
         }
 
@@ -43,8 +48,7 @@ impl SpotifyPlayTarget {
             return Ok(device_id.to_owned());
         }
 
-        let devices = self.manager.client.device()
-            .map_err(|e| format!("Failed to get device ID: {}", e))?;
+        let devices = self.manager.client.device().map_err(|e| format!("Failed to get device ID: {}", e))?;
 
         debug!("Found spotify devices: {:?}", devices);
 
@@ -52,7 +56,8 @@ impl SpotifyPlayTarget {
             return Err("No devices found".to_string());
         }
 
-        self.device_id = devices.iter()
+        self.device_id = devices
+            .iter()
             .find(|device| device.is_active && device.name.contains("TinyGhettoBox"))
             .unwrap_or(&devices[0])
             .id
@@ -89,15 +94,13 @@ impl PlayTarget for SpotifyPlayTarget {
     async fn pause(&mut self) -> Result<(), String> {
         let device_id = self.get_device_id()?;
         let device_id = Some(device_id.as_str());
-        self.manager.client.pause_playback(device_id)
-            .map_err(|e| format!("Failed to pause playback: {}", e))
+        self.manager.client.pause_playback(device_id).map_err(|e| format!("Failed to pause playback: {}", e))
     }
 
     async fn resume(&mut self) -> Result<(), String> {
         let device_id = self.get_device_id()?;
         let device_id = Some(device_id.as_str());
-        self.manager.client.resume_playback(device_id, None)
-            .map_err(|e| format!("Failed to resume playback: {}", e))
+        self.manager.client.resume_playback(device_id, None).map_err(|e| format!("Failed to resume playback: {}", e))
     }
 
     async fn stop(&mut self) -> Result<(), String> {
@@ -107,21 +110,26 @@ impl PlayTarget for SpotifyPlayTarget {
     async fn seek_to(&mut self, position: Duration) -> Result<(), String> {
         let device_id = self.get_device_id()?;
         let device_id = Some(device_id.as_str());
-        let duration = chrono::Duration::from_std(position).map_err(|e| format!("Failed to convert duration: {}", e))?;
-        self.manager.client.seek_track(duration, device_id)
-            .map_err(|e| format!("Failed to seek track: {}", e))
+        let duration =
+            chrono::Duration::from_std(position).map_err(|e| format!("Failed to convert duration: {}", e))?;
+        self.manager.client.seek_track(duration, device_id).map_err(|e| format!("Failed to seek track: {}", e))
     }
 
     async fn set_volume(&mut self, volume: f64) -> Result<(), String> {
         let device_id = self.get_device_id()?;
         let device_id = Some(device_id.as_str());
 
-        self.manager.client.volume((volume * 100.0) as u8, device_id)
+        self.manager
+            .client
+            .volume((volume * 100.0) as u8, device_id)
             .map_err(|e| format!("Failed to set volume: {}", e))
     }
 
     async fn get_progress(&self) -> Result<Progress, String> {
-        let playback = self.manager.client.current_playback(None, None::<Vec<&AdditionalType>>)
+        let playback = self
+            .manager
+            .client
+            .current_playback(None, None::<Vec<&AdditionalType>>)
             .map_err(|e| format!("Failed to get current playback position: {}", e))?
             .ok_or("No current playback returned".to_string())?;
 
@@ -131,7 +139,8 @@ impl PlayTarget for SpotifyPlayTarget {
             .to_std()
             .map_err(|e| format!("Failed to convert chrono duration: {}", e))?;
 
-        let duration = playback.item
+        let duration = playback
+            .item
             .ok_or("No item reported".to_string())
             .map(|item| match item {
                 PlayableItem::Track(track) => track.duration,
@@ -143,6 +152,7 @@ impl PlayTarget for SpotifyPlayTarget {
         Ok(Progress {
             position: progress,
             duration,
+            is_finite: true,
         })
     }
 
@@ -150,7 +160,6 @@ impl PlayTarget for SpotifyPlayTarget {
         Box::new(self.clone())
     }
 }
-
 
 enum SpotifyId<'a> {
     Playable(PlayableId<'a>),
@@ -161,12 +170,18 @@ impl<'a> SpotifyId<'a> {
     fn from(spotify_type: String, spotify_id: String) -> Result<Self, IdError> {
         match spotify_type.as_str() {
             "track" => Ok(SpotifyId::Playable(PlayableId::Track(TrackId::from_id(spotify_id)?))),
-            "episode" => Ok(SpotifyId::Playable(PlayableId::Episode(EpisodeId::from_id(spotify_id)?))),
-            "artist" => Ok(SpotifyId::Context(PlayContextId::Artist(ArtistId::from_id(spotify_id)?))),
+            "episode" => Ok(SpotifyId::Playable(PlayableId::Episode(EpisodeId::from_id(
+                spotify_id,
+            )?))),
+            "artist" => Ok(SpotifyId::Context(PlayContextId::Artist(ArtistId::from_id(
+                spotify_id,
+            )?))),
             "album" => Ok(SpotifyId::Context(PlayContextId::Album(AlbumId::from_id(spotify_id)?))),
-            "playlist" => Ok(SpotifyId::Context(PlayContextId::Playlist(PlaylistId::from_id(spotify_id)?))),
+            "playlist" => Ok(SpotifyId::Context(PlayContextId::Playlist(PlaylistId::from_id(
+                spotify_id,
+            )?))),
             "show" => Ok(SpotifyId::Context(PlayContextId::Show(ShowId::from_id(spotify_id)?))),
-            _ => Err(IdError::InvalidType)
+            _ => Err(IdError::InvalidType),
         }
     }
 }
