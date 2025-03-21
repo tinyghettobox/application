@@ -19,4 +19,4 @@ script = "docker run -ti -v .:/project/tinyghettobox/ -v /mnt/h/Data/projects/ki
 script = "podman run -ti -v .:/project/tinyghettobox/ -v /mnt/h/Data/projects/kira:/project/kira -v ~/.cargo:/.cargo cross_compile"
 
 [tasks.build-deb]
-script = "cargo deb -p tinyghettobox --target aarch64-unknown-linux-gnu --no-build"
+script = "docker run -ti -v .:/project/tinyghettobox/ -v /mnt/h/Data/projects/kira:/project/kira -v ~/.cargo:/.cargo cross_compile make -C debian"

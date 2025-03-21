@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# Stop the systemd services
+systemctl stop tgb.user-interface.service
+systemctl stop tgb.admin-interface.service
+systemctl stop spotifyd
+
+# Disable the systemd services
+systemctl disable tgb.user-interface.service
+systemctl disable tgb.admin-interface.service
+systemctl disable spotifyd
+
+exit 0
