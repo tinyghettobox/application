@@ -1,6 +1,8 @@
+use std::cell::RefCell;
+use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
-use tracing::{error, info};
+use tracing::error;
 
 use crate::components::tile_list::widget::TileListWidget;
 use crate::components::tile_list_item::TileListItemComponent;
@@ -10,7 +12,7 @@ use crate::state::{Dispatcher, Event, EventHandler, State};
 #[derive(Clone)]
 pub struct TileListComponent {
     pub widget: TileListWidget,
-    pub children: Vec<Arc<Mutex<Box<dyn EventHandler>>>>,
+    pub children: Rc<RefCell<Vec<Arc<Mutex<Box<dyn EventHandler>>>>>>,
     state: Arc<Mutex<State>>,
     dispatcher: Arc<Mutex<Dispatcher>>,
 }
@@ -24,13 +26,18 @@ impl EventHandler for TileListComponent {
     }
 
     fn get_children(&self) -> Vec<Arc<Mutex<Box<dyn EventHandler>>>> {
-        self.children.clone()
+        self.children.borrow().clone()
     }
 }
 
 impl Component<Option<()>> for TileListComponent {
-    fn new(state: Arc<Mutex<State>>, dispatcher: Arc<Mutex<Dispatcher>>, params: Option<()>) -> Self {
-        let (widget, children) = Self::render(state.clone(), dispatcher.clone(), params);
+    fn new(
+        state: Arc<Mutex<State>>,
+        dispatcher: Arc<Mutex<Dispatcher>>,
+        params: Option<()>,
+    ) -> Self {
+        let children = Rc::new(RefCell::new(vec![]));
+        let (widget, _) = Self::render(state.clone(), dispatcher.clone(), params);
         let mut component = Self {
             widget,
             state,
@@ -38,7 +45,7 @@ impl Component<Option<()>> for TileListComponent {
             children,
         };
         component.update();
-        Self::start_lazy_loading(&component);
+        component.start_lazy_loading();
         component
     }
 
@@ -58,6 +65,7 @@ impl Component<Option<()>> for TileListComponent {
             return;
         }
         self.widget.remove_children();
+        self.children.borrow_mut().clear();
         self.append_list_items(0, 12);
     }
 
@@ -68,30 +76,43 @@ impl Component<Option<()>> for TileListComponent {
 }
 
 impl TileListComponent {
-    fn start_lazy_loading(component: &Self) {
-        let component = component.clone();
-        let self_ = Arc::new(Mutex::new(component));
-        let widget = self_.lock().unwrap().widget.clone();
-        widget.connect_scroll_end(move || {
-            let mut self_ = self_.lock().unwrap();
+    fn start_lazy_loading(&self) {
+        let self_ = self.clone();
+
+        self.widget.connect_scroll_end(move || {
+            let mut self_ = self_.clone();
             let child_amount = self_.get_children().len();
             self_.append_list_items(child_amount, 6);
         });
     }
 
     fn append_list_items(&mut self, start_index: usize, amount: usize) {
-        let library_entry_ids =
-            self.state.lock().unwrap().library_entry.children.as_ref().map(|children| {
-                children.iter().skip(start_index).take(amount).map(|entry| entry.id).collect::<Vec<i32>>()
+        let library_entry_ids = self
+            .state
+            .lock()
+            .unwrap()
+            .library_entry
+            .children
+            .as_ref()
+            .map(|children| {
+                children
+                    .iter()
+                    .skip(start_index)
+                    .take(amount)
+                    .map(|entry| entry.id)
+                    .collect::<Vec<i32>>()
             });
 
         match library_entry_ids {
             Some(library_entry_ids) => {
-                info!("Creating {} tiles", library_entry_ids.len());
                 let child_components = library_entry_ids
                     .into_iter()
                     .map(|library_entry_id| {
-                        TileListItemComponent::new(self.state.clone(), self.dispatcher.clone(), library_entry_id)
+                        TileListItemComponent::new(
+                            self.state.clone(),
+                            self.dispatcher.clone(),
+                            library_entry_id,
+                        )
                     })
                     .collect::<Vec<TileListItemComponent>>();
 
@@ -100,10 +121,13 @@ impl TileListComponent {
                     child_widgets.push(comp.get_widget());
                 }
 
-                self.widget.set_children(&child_widgets, start_index as i32 / 3, 0);
+                self.widget
+                    .set_children(&child_widgets, start_index as i32 / 3, 0);
 
                 for child in child_components.into_iter() {
-                    self.children.push(Arc::new(Mutex::new(Box::new(child))))
+                    self.children
+                        .borrow_mut()
+                        .push(Arc::new(Mutex::new(Box::new(child))))
                 }
             }
             None => {

@@ -20,7 +20,10 @@ pub async fn get(conn: web::Data<DatabaseConnection>) -> impl Responder {
 }
 
 #[put("/api/system/config")]
-pub async fn update(conn: web::Data<DatabaseConnection>, json: web::Json<serde_json::Value>) -> Result<impl Responder> {
+pub async fn update(
+    conn: web::Data<DatabaseConnection>,
+    json: web::Json<serde_json::Value>,
+) -> Result<impl Responder> {
     match SystemConfigRepository::update_from_json(&conn, json.into_inner()).await {
         Ok((updated_model, changed_fields)) => {
             run_update_commands(updated_model.clone(), changed_fields)?;
@@ -69,6 +72,9 @@ fn run_update_commands(updated_model: Model, changed_fields: Vec<String>) -> Res
     }
     if changed_fields.contains(&"led_pin".to_string()) {
         crate::commands::set_led_pin(updated_model.led_pin.clone())?;
+    }
+    if changed_fields.contains(&"max_volume".to_string()) {
+        crate::commands::set_max_volume(updated_model.max_volume.clone())?;
     }
     Ok(())
 }

@@ -4,10 +4,8 @@ Wants=local-fs.target
 After=local-fs.target
 
 [Service]
-#Environment=WAYLAND_DISPLAY=wayland-1
-#Environment=XDG_RUNTIME_DIR=/run/user/1000
-#ExecStart=/usr/bin/tinyghettobox/user_interface
-ExecStart=xinit /usr/bin/tinyghettobox/user_interface
+WorkingDirectory=/srv/tinyghettobox
+ExecStart=xinit /srv/tinyghettobox/user_interface
 Restart=always
 RestartSec=20
 Type=simple

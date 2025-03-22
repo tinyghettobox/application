@@ -11,7 +11,6 @@ chrono = "0.4.31"
 database = { path = "../database" }
 kira = "0.10.2"
 kira-remote-stream = { path = "../kira_remote_stream" }
-rangemap = "1.4.0"
 rspotify = { version = "0.13.1", default-features = false, features = ["client-ureq", "ureq-rustls-tls"] }
 symphonia = "0.5.3"
 tokio = { version = "1.35.1", features = ["rt-multi-thread", "full", "tracing"] }

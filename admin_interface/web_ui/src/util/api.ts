@@ -47,7 +47,7 @@ async function api<T>(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: string, p
   return await response.text() as T;
 }
 
-export function upload(path: string, form: FormData, onProgress: (progress: number) => void, onLoad: (error?: string) => void): void {
+export function upload(path: string, form: FormData, onProgress: (progress: number) => void, onLoad: (error?: string, data?: unknown) => void): void {
   const xhr = new XMLHttpRequest();
   xhr.open('POST', path, true);
   xhr.upload.addEventListener('progress', (event: ProgressEvent) => {
@@ -56,12 +56,15 @@ export function upload(path: string, form: FormData, onProgress: (progress: numb
     }
   });
   xhr.upload.addEventListener('error', () => {
-    debugger;
     onLoad(xhr.statusText);
   });
   xhr.addEventListener('load', () => {
     if (xhr.status >= 200 && xhr.status < 300) {
-      onLoad();
+      try {
+        onLoad(undefined, JSON.parse(xhr.responseText));
+      } catch (e) {
+        onLoad(`${e}`)
+      }
     } else {
       onLoad(xhr.statusText);
     }
@@ -120,7 +123,7 @@ export async function postLibraryEntries(parent_id: number, entries: LibraryEntr
   return post<LibraryEntry[]>(`/api/library?parent_id=${parent_id}`, entries);
 }
 
-export function uploadLibraryEntryFile(file: File, onProgress: (progress: number) => void, onLoad: (error?: string) => void) {
+export function uploadLibraryEntryFile(file: File, onProgress: (progress: number) => void, onLoad: (error?: string, data?: unknown) => void) {
   const formData = new FormData();
   formData.append('name', file.name);
   formData.append('track', file);

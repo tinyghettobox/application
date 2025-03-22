@@ -30,7 +30,11 @@ impl EventHandler for ShutdownTimerComponent {
 }
 
 impl Component<Option<()>> for ShutdownTimerComponent {
-    fn new(state: Arc<Mutex<State>>, dispatcher: Arc<Mutex<Dispatcher>>, params: Option<()>) -> Self {
+    fn new(
+        state: Arc<Mutex<State>>,
+        dispatcher: Arc<Mutex<Dispatcher>>,
+        params: Option<()>,
+    ) -> Self {
         let (widget, children) = Self::render(state.clone(), dispatcher, params);
         let mut component = Self {
             children,
@@ -55,9 +59,15 @@ impl Component<Option<()>> for ShutdownTimerComponent {
             widget.connect_clicked(move || {
                 let monitor_active = state.lock().expect("could not lock").monitor_active;
                 if !monitor_active {
-                    dispatcher.lock().expect("could not lock").dispatch_action(Action::ToggleMonitor(true));
+                    dispatcher
+                        .lock()
+                        .expect("could not lock")
+                        .dispatch_action(Action::ToggleMonitor(true));
                 }
-                dispatcher.lock().expect("could not lock").dispatch_action(Action::TrackActivity);
+                dispatcher
+                    .lock()
+                    .expect("could not lock")
+                    .dispatch_action(Action::CaptureActivity);
             });
         }
 
@@ -66,10 +76,16 @@ impl Component<Option<()>> for ShutdownTimerComponent {
             let monitor_active = state.lock().expect("could not lock").monitor_active;
             let now = Utc::now().timestamp();
             if last_activity + DISPLAY_OFF_TIME < now && monitor_active {
-                dispatcher.lock().expect("could not lock").dispatch_action(Action::ToggleMonitor(false));
+                dispatcher
+                    .lock()
+                    .expect("could not lock")
+                    .dispatch_action(Action::ToggleMonitor(false));
             }
             if last_activity + SHUTDOWN_OFF_TIME < now {
-                dispatcher.lock().expect("could not lock").dispatch_action(Action::Shutdown);
+                dispatcher
+                    .lock()
+                    .expect("could not lock")
+                    .dispatch_action(Action::Shutdown);
             }
 
             glib::ControlFlow::Continue

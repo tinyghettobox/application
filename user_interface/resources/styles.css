@@ -181,3 +181,45 @@ popover.background arrow {
 .content .empty-info label {
     color: @color-accent;
 }
+
+.log-overlay {
+    background: @background;
+}
+
+.log-overlay-header {
+    min-height: 54px;
+    padding: 8px;
+}
+
+.log-overlay-header button {
+    background: transparent;
+    color: @color;
+    padding: 0 16px;
+    border: none;
+}
+
+.log-overlay .log-overlay-content label {
+    font-size: 16px;
+}
+.log-overlay-content .time {
+    padding: 0 4px;
+    color: @color-accent;
+}
+.log-overlay-content .level {
+    min-width: 50px;
+}
+.log-overlay-content .target {
+    color: @color-accent;
+}
+.log-overlay-content .debug {
+    color: #87c7ff;
+}
+.log-overlay-content .info {
+    color: #74ae14;
+}
+.log-overlay-content .warn {
+    color: #ffd300;
+}
+.log-overlay-content .error {
+    color: #ca1212;
+}

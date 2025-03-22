@@ -3,10 +3,12 @@ use std::process::Command;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tokio::sync::Mutex as AsyncMutex;
-use tracing::{debug, error, info, warn};
+use tracing::{debug, error, info, trace};
 
 use database::model::library_entry::Variant;
-use database::{model::library_entry::Model as LibraryEntry, LibraryEntryRepository, SystemConfigRepository};
+use database::{
+    model::library_entry::Model as LibraryEntry, LibraryEntryRepository, SystemConfigRepository,
+};
 use player::{Player, Progress};
 
 use crate::state::{Dispatcher, State};
@@ -25,8 +27,9 @@ pub enum Action {
     SetPlayingTrack(Option<LibraryEntry>),
     SetVolume(f64),
     ToggleMonitor(bool),
+    ToggleLogOverlay(bool),
     Shutdown,
-    TrackActivity,
+    CaptureActivity,
 }
 
 #[derive(Debug)]
@@ -38,6 +41,7 @@ pub enum Event {
     TrackChanged,
     VolumeChanged,
     MonitorToggled,
+    LogOverlayToggled,
     Error(String),
     Dummy,
 }
@@ -64,9 +68,13 @@ impl Action {
             }
             Action::Select(library_entry_id) => {
                 let connection = state.lock().unwrap().connection.clone();
-                let library_entry =
-                    LibraryEntryRepository::get(&connection, library_entry_id).await.unwrap_or_else(|error| {
-                        error!("Could not load library entry '{}': {}", library_entry_id, error);
+                let library_entry = LibraryEntryRepository::get(&connection, library_entry_id)
+                    .await
+                    .unwrap_or_else(|error| {
+                        error!(
+                            "Could not load library entry '{}': {}",
+                            library_entry_id, error
+                        );
                         None
                     });
 
@@ -75,17 +83,22 @@ impl Action {
                         error!("No library entry '{}' found", library_entry_id);
                     }
                     Some(library_entry) => {
-                        let variants = library_entry
-                            .children
-                            .as_ref()
-                            .map(|children| children.iter().map(|entry| entry.variant).collect::<Vec<Variant>>());
+                        debug!("size {}", std::mem::size_of_val(&library_entry));
+                        let variants = library_entry.children.as_ref().map(|children| {
+                            children
+                                .iter()
+                                .map(|entry| entry.variant)
+                                .collect::<Vec<Variant>>()
+                        });
 
                         let mut state = state.lock().unwrap();
                         match variants {
                             Some(variants) => {
                                 if variants.len() == 0 {
                                     state.active_view = "empty_info".to_string();
-                                } else if variants.contains(&Variant::Folder) || variants.contains(&Variant::Stream) {
+                                } else if variants.contains(&Variant::Folder)
+                                    || variants.contains(&Variant::Stream)
+                                {
                                     state.active_view = "tile_list".to_string();
                                 } else {
                                     state.active_view = "detail_list".to_string();
@@ -97,16 +110,27 @@ impl Action {
                         }
                         state.library_entry = library_entry;
 
-                        dispatcher.lock().unwrap().dispatch_event(Event::LibraryEntryChanged);
+                        dispatcher
+                            .lock()
+                            .unwrap()
+                            .dispatch_event(Event::LibraryEntryChanged);
                     }
                 }
             }
             Action::Play(parent_id, start_id) => {
                 let connection = state.lock().unwrap().connection.clone();
-                let event = match LibraryEntryRepository::get_tracks_in_parent(&connection, parent_id).await {
+                let event = match LibraryEntryRepository::get_tracks_in_parent(
+                    &connection,
+                    parent_id,
+                )
+                .await
+                {
                     Ok(library_entries) => {
                         let queue = if let Some(start_id) = start_id {
-                            library_entries.into_iter().skip_while(|entry| entry.id != start_id).collect()
+                            library_entries
+                                .into_iter()
+                                .skip_while(|entry| entry.id != start_id)
+                                .collect()
                         } else {
                             library_entries.into_iter().collect()
                         };
@@ -129,26 +153,38 @@ impl Action {
                 }
             }
             Action::SetPlayedAt => {
-                let library_entry =
-                    {
-                        let mut state = state.lock().unwrap();
-                        let library_entry_id = state.playing_library_entry.as_ref().map(|entry| entry.id).unwrap_or(-1);
-                        state.library_entry.children.as_mut().and_then(|children| {
-                            children.iter_mut().find(|c| c.id == library_entry_id).map(|c| c.clone())
-                        })
-                    };
+                let updated_library_entry = {
+                    let mut state = state.lock().unwrap();
+                    let library_entry_id = state
+                        .playing_library_entry
+                        .as_ref()
+                        .map(|entry| entry.id)
+                        .unwrap_or(-1);
+                    let library_entry = state
+                        .library_entry
+                        .children
+                        .as_mut()
+                        .and_then(|children| children.iter_mut().find(|c| c.id == library_entry_id))
+                        .expect("there should be a children with playing_library_id");
+                    library_entry.played_at = Some(Utc::now());
+                    library_entry.clone()
+                };
 
-                if let Some(mut entry) = library_entry {
-                    entry.played_at = Some(chrono::Utc::now());
-                    let connection = state.lock().unwrap().connection.clone();
-                    match LibraryEntryRepository::mark_played(&connection, entry.id, entry.played_at).await {
-                        Ok(_) => {
-                            dispatcher.lock().unwrap().dispatch_event(Event::TrackPlayed);
-                        }
-                        Err(error) => error!("Could not mark library entry as played: {}", error),
+                let connection = state.lock().unwrap().connection.clone();
+                match LibraryEntryRepository::mark_played(
+                    &connection,
+                    updated_library_entry.id,
+                    updated_library_entry.played_at,
+                )
+                .await
+                {
+                    Ok(_) => {
+                        dispatcher
+                            .lock()
+                            .unwrap()
+                            .dispatch_event(Event::TrackPlayed);
                     }
-                } else {
-                    warn!("Could not find library entry to mark as played")
+                    Err(error) => error!("Could not mark library entry as played: {}", error),
                 }
             }
             Action::SetPlayingTrack(library_entry) => {
@@ -157,7 +193,10 @@ impl Action {
                 state.paused = library_entry.is_none();
                 state.progress = Progress::default();
 
-                dispatcher.lock().unwrap().dispatch_event(Event::TrackChanged);
+                dispatcher
+                    .lock()
+                    .unwrap()
+                    .dispatch_event(Event::TrackChanged);
             }
             Action::TogglePlay => {
                 let result = if state.lock().unwrap().paused {
@@ -206,7 +245,10 @@ impl Action {
             }
             Action::SetProgress(progress) => {
                 state.lock().unwrap().progress = progress;
-                dispatcher.lock().unwrap().dispatch_event(Event::ProgressChanged);
+                dispatcher
+                    .lock()
+                    .unwrap()
+                    .dispatch_event(Event::ProgressChanged);
             }
             Action::Seek(timestamp) => {
                 let mut player_guard = player.lock().await;
@@ -229,12 +271,20 @@ impl Action {
                 let event = match player.lock().await.set_volume(volume).await {
                     Ok(_) => {
                         let connection = state.lock().unwrap().connection.clone();
-                        match SystemConfigRepository::set_volume(&connection, (volume * 100.0) as u8).await {
+                        match SystemConfigRepository::set_volume(
+                            &connection,
+                            (volume * 100.0) as u8,
+                        )
+                        .await
+                        {
                             Ok(_) => {
                                 state.lock().unwrap().volume = volume;
                                 Event::VolumeChanged
                             }
-                            Err(error) => Event::Error(format!("Could not save volume to database: {}", error)),
+                            Err(error) => Event::Error(format!(
+                                "Could not save volume to database: {}",
+                                error
+                            )),
                         }
                     }
                     Err(error) => Event::Error(format!("Could not change volume: {}", error)),
@@ -247,7 +297,10 @@ impl Action {
 
                 if cfg!(target_arch = "arm") {
                     info!("Toggling display");
-                    let result = Command::new("vcgencmd").arg("display_power").arg((active as i32).to_string()).spawn();
+                    let result = Command::new("vcgencmd")
+                        .arg("display_power")
+                        .arg((active as i32).to_string())
+                        .spawn();
 
                     if result.is_err() {
                         error!("Could not toggle display: {:?}", result);
@@ -255,17 +308,31 @@ impl Action {
                 }
 
                 state.monitor_active = active;
-                dispatcher.lock().unwrap().dispatch_event(Event::MonitorToggled);
+                dispatcher
+                    .lock()
+                    .unwrap()
+                    .dispatch_event(Event::MonitorToggled);
             }
             Action::Shutdown => {
                 if cfg!(target_arch = "arm") {
                     info!("Shutting down");
-                    Command::new("shutdown").arg("now").spawn().expect("could not shutdown");
+                    Command::new("shutdown")
+                        .arg("now")
+                        .spawn()
+                        .expect("could not shutdown");
                 }
             }
-            Action::TrackActivity => {
+            Action::CaptureActivity => {
                 let mut state = state.lock().expect("could not lock");
                 state.last_activity = Utc::now().timestamp();
+            }
+            Action::ToggleLogOverlay(visible) => {
+                let mut state = state.lock().expect("could not lock");
+                state.show_log_overlay = visible;
+                dispatcher
+                    .lock()
+                    .expect("could not lock")
+                    .dispatch_event(Event::LogOverlayToggled);
             }
         }
     }

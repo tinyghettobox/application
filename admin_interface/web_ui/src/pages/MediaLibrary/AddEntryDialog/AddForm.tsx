@@ -12,7 +12,7 @@ interface Props {
 }
 
 export default function AddForm({allowedVariant}: Props) {
-  const {setEntries, abort, submit} = useAddEntryState();
+  const {setEntries, abort, submit, entries} = useAddEntryState();
   const [sourceType, setSourceType] = useState<'folder' | 'file' | 'stream' | 'spotify' | 'all'>(allowedVariant === 'folder' ?
     'folder' :
     'spotify'
@@ -31,7 +31,7 @@ export default function AddForm({allowedVariant}: Props) {
         </Grid>
         <Grid item xs={6} sx={{textAlign: 'right'}}>
           <Button sx={{mr: 2}} onClick={abort}>Cancel</Button>
-          <Button variant="contained" onClick={submit}>Submit</Button>
+          <Button variant="contained" onClick={submit} disabled={entries.length === 0}>Submit</Button>
         </Grid>
       </Grid>
       <FormControl fullWidth>
@@ -44,21 +44,21 @@ export default function AddForm({allowedVariant}: Props) {
           sx={{pb: 1}}
           row
         >
-          <FormControlLabel control={<Radio />} label={'Folder'} value={'folder'} disabled={allowedVariant && allowedVariant !== 'folder'} />
+          <FormControlLabel control={<Radio/>} label={'Folder'} value={'folder'} disabled={allowedVariant && allowedVariant !== 'folder'}/>
           <FormControlLabel
-            control={<Radio />}
+            control={<Radio/>}
             label={'Spotify'}
             value={'spotify'}
           />
-          <FormControlLabel control={<Radio />} label={'File'} value={'file'} disabled={allowedVariant === 'folder'} />
-          <FormControlLabel control={<Radio />} label={'Stream'} value={'stream'} disabled={allowedVariant === 'folder'} />
+          <FormControlLabel control={<Radio/>} label={'File'} value={'file'} disabled={allowedVariant === 'folder'}/>
+          <FormControlLabel control={<Radio/>} label={'Stream'} value={'stream'} disabled={allowedVariant === 'folder'}/>
         </RadioGroup>
       </FormControl>
 
-      {sourceType === 'folder' && <FolderAddForm />}
-      {sourceType === 'spotify' && <SpotifyAddForm allowedVariant={allowedVariant} />}
-      {sourceType === 'stream' && <StreamAddForm />}
-      {sourceType === 'file' && <FileAddForm />}
+      {sourceType === 'folder' && <FolderAddForm/>}
+      {sourceType === 'spotify' && <SpotifyAddForm allowedVariant={allowedVariant}/>}
+      {sourceType === 'stream' && <StreamAddForm/>}
+      {sourceType === 'file' && <FileAddForm/>}
     </>
   )
 }

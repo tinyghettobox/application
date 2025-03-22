@@ -1,6 +1,6 @@
 pub mod debouncer;
+pub mod memory_subscriber;
 pub mod ripple;
-
 // pub struct DeadlockCheck {
 //     stopped: Arc<AtomicBool>,
 // }

@@ -1,9 +1,9 @@
-use gtk4::{glib, prelude::*, CompositeTemplate, TemplateChild};
 use gtk4::gdk::Texture;
-use gtk4::glib::{object_subclass};
+use gtk4::glib::object_subclass;
 use gtk4::glib::Bytes;
-use gtk4::subclass::prelude::*;
 use gtk4::subclass::prelude::ObjectSubclassIsExt;
+use gtk4::subclass::prelude::*;
+use gtk4::{glib, prelude::*, CompositeTemplate, TemplateChild};
 use tracing::warn;
 
 #[derive(Default, CompositeTemplate)]
@@ -16,9 +16,10 @@ pub struct NavbarWidgetImp {
     #[template_child]
     pub label: TemplateChild<gtk4::Label>,
     #[template_child]
-    pub back_button: TemplateChild<gtk4::Button>
+    pub back_button: TemplateChild<gtk4::Button>,
+    #[template_child]
+    pub show_log_button: TemplateChild<gtk4::Button>,
 }
-
 
 #[object_subclass]
 impl ObjectSubclass for NavbarWidgetImp {
@@ -74,5 +75,9 @@ impl NavbarWidget {
 
     pub fn connect_back_clicked(&self, callback: impl Fn(&gtk4::Button) + 'static) {
         self.imp().back_button.connect_clicked(callback);
+    }
+
+    pub fn connect_show_log_clicked(&self, callback: impl Fn(&gtk4::Button) + 'static) {
+        self.imp().show_log_button.connect_clicked(callback);
     }
 }

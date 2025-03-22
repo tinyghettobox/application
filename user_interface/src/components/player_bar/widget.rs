@@ -98,17 +98,20 @@ impl PlayerBarWidget {
         self.imp().play_toggle_button.set_icon_name(icon_name);
     }
 
-    pub fn set_volume(&self, volume: f64) {
+    pub fn set_volume(&self, volume: f64, max_volume: f64) {
         let adjustment = self.imp().volume_button.adjustment();
         adjustment.set_value(volume);
+        adjustment.set_upper(max_volume);
         self.imp().volume_button.set_adjustment(&adjustment);
     }
 
     pub fn connect_seek(&self, callback: impl Fn(f64) + 'static) {
-        self.imp().progress_bar.connect_change_value(move |_scale, _scroll_type, new_value| {
-            callback(new_value);
-            Propagation::Proceed
-        });
+        self.imp()
+            .progress_bar
+            .connect_change_value(move |_scale, _scroll_type, new_value| {
+                callback(new_value);
+                Propagation::Proceed
+            });
     }
 
     pub fn connect_back_clicked(&self, callback: impl Fn() + 'static) {
@@ -116,14 +119,20 @@ impl PlayerBarWidget {
     }
 
     pub fn connect_play_toggle_clicked(&self, callback: impl Fn() + 'static) {
-        self.imp().play_toggle_button.connect_clicked(move |_| callback());
+        self.imp()
+            .play_toggle_button
+            .connect_clicked(move |_| callback());
     }
 
     pub fn connect_forward_clicked(&self, callback: impl Fn() + 'static) {
-        self.imp().forward_button.connect_clicked(move |_| callback());
+        self.imp()
+            .forward_button
+            .connect_clicked(move |_| callback());
     }
 
     pub fn connect_volume_change(&self, callback: impl Fn(f64) + 'static) {
-        self.imp().volume_button.connect_value_changed(move |_scale, value| callback(value));
+        self.imp()
+            .volume_button
+            .connect_value_changed(move |_scale, value| callback(value));
     }
 }

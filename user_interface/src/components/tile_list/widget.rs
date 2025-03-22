@@ -1,8 +1,8 @@
-use gtk4::{Adjustment, CompositeTemplate, glib, Widget};
 use gtk4::glib::object_subclass;
 use gtk4::glib::subclass::InitializingObject;
 use gtk4::prelude::{AdjustmentExt, GridExt, IsA, WidgetExt};
 use gtk4::subclass::prelude::*;
+use gtk4::{glib, Adjustment, CompositeTemplate, Widget};
 use tracing::warn;
 
 #[derive(Default, CompositeTemplate)]
@@ -45,7 +45,6 @@ impl TileListWidget {
     }
 
     pub fn remove_children(&self) {
-        tracing::debug!("Calling remove");
         let grid = self.imp().grid.get();
         let mut child = grid.first_child();
         while let Some(widget) = child.as_ref() {
@@ -53,9 +52,15 @@ impl TileListWidget {
             grid.remove(widget);
             child = next_child;
         }
+        self.imp().scroll_window.vadjustment().set_value(0.0);
     }
 
-    pub fn set_children(&self, children: &Vec<impl IsA<Widget>>, start_row: i32, start_column: i32) {
+    pub fn set_children(
+        &self,
+        children: &Vec<impl IsA<Widget>>,
+        start_row: i32,
+        start_column: i32,
+    ) {
         let grid = self.imp().grid.get();
 
         for (index, child) in children.iter().enumerate() {
@@ -76,7 +81,9 @@ impl TileListWidget {
             let scroll_height = adjustment.upper();
 
             let last_child_bounds = {
-                let rect = grid.last_child().and_then(|child| child.compute_bounds(&child));
+                let rect = grid
+                    .last_child()
+                    .and_then(|child| child.compute_bounds(&child));
                 match rect {
                     Some(rect) => rect,
                     None => {
@@ -91,6 +98,9 @@ impl TileListWidget {
             }
         };
 
-        self.imp().scroll_window.vadjustment().connect_value_changed(on_scroll);
+        self.imp()
+            .scroll_window
+            .vadjustment()
+            .connect_value_changed(on_scroll);
     }
 }

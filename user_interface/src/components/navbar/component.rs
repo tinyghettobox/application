@@ -23,7 +23,11 @@ impl EventHandler for NavbarComponent {
 }
 
 impl Component<Option<()>> for NavbarComponent {
-    fn new(state: Arc<Mutex<State>>, dispatcher: Arc<Mutex<Dispatcher>>, params: Option<()>) -> Self {
+    fn new(
+        state: Arc<Mutex<State>>,
+        dispatcher: Arc<Mutex<Dispatcher>>,
+        params: Option<()>,
+    ) -> Self {
         let (widget, children) = Self::render(state.clone(), dispatcher.clone(), params);
         let mut component = NavbarComponent {
             state,
@@ -41,11 +45,26 @@ impl Component<Option<()>> for NavbarComponent {
         _params: Option<()>,
     ) -> (NavbarWidget, Children) {
         let navbar = NavbarWidget::new();
-        navbar.connect_back_clicked(move |_| {
-            let parent_id = state.lock().unwrap().library_entry.parent_id;
 
-            dispatcher.lock().unwrap().dispatch_action(Action::Select(parent_id.unwrap()));
-        });
+        {
+            let dispatcher = dispatcher.clone();
+            navbar.connect_back_clicked(move |_| {
+                let parent_id = state.lock().unwrap().library_entry.parent_id;
+                dispatcher
+                    .lock()
+                    .unwrap()
+                    .dispatch_action(Action::Select(parent_id.unwrap()));
+            });
+        }
+        {
+            let dispatcher = dispatcher.clone();
+            navbar.connect_show_log_clicked(move |_| {
+                dispatcher
+                    .lock()
+                    .unwrap()
+                    .dispatch_action(Action::ToggleLogOverlay(true));
+            })
+        }
 
         (navbar, vec![])
     }

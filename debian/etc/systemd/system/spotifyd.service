@@ -7,7 +7,7 @@ Wants=network-online.target
 After=tgb.user_interface.service
 
 [Service]
-ExecStart=/usr/bin/tinyghettobox/spotifyd --no-daemon
+ExecStart=/srv/tinyghettobox/spotifyd --no-daemon
 Restart=always
 RestartSec=12
 

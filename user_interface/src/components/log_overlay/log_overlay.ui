@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="TinyGhettoBoxLogOverlay" parent="GtkBox">
+    <child>
+      <object class="GtkOverlay">
+        <child type="overlay">
+          <object class="GtkBox" id="overlay">
+            <style>
+              <class name="log-overlay"/>
+            </style>
+            <property name="orientation">vertical</property>
+            <property name="vexpand">true</property>
+            <property name="hexpand">true</property>
+            <!-- header -->
+            <child>
+              <object class="GtkBox">
+                <style>
+                  <class name="log-overlay-header"/>
+                </style>
+                <property name="hexpand">true</property>
+                <child>
+                  <object class="GtkButton" id="close_button">
+                    <property name="hexpand">true</property>
+                    <property name="halign">end</property>
+                    <property name="icon-name">radio</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+            <child>
+              <object class="GtkScrolledWindow">
+                <style>
+                  <class name="log-overlay-content"/>
+                </style>
+                <child>
+                  <object class="GtkListView" id="list">
+                    <style>
+                      <class name="log-list"/>
+                    </style>
+                    <property name="orientation">vertical</property>
+                    <property name="halign">fill</property>
+                    <property name="hexpand">true</property>
+                    <property name="vexpand">true</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkBox" id="container">
+            <property name="orientation">vertical</property>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>

@@ -34,7 +34,7 @@ impl MigrationTrait for Migration {
                 led_brightness_dimmed,
                 power_off_btn_delay
             )
-            VALUES (1, 60, 5, 2, 'tinyghettobox', 'schedutil', false, true, false, true, true, 0, 0, 100, 800, 480, 'hifiberry-dac', 50, 100, 0, 100, 10, 2);
+            VALUES (1, 60, 5, 2, 'tinyghettobox', 'schedutil', false, true, false, true, true, 0, 0, 100, 800, 480, 'hifiberry-dac', 15, 60, 0, 100, 10, 2);
         "#).await?;
 
         Ok(())
@@ -42,7 +42,8 @@ impl MigrationTrait for Migration {
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let conn = manager.get_connection();
-        conn.execute_unprepared("DELETE FROM system_config WHERE id = 1").await?;
+        conn.execute_unprepared("DELETE FROM system_config WHERE id = 1")
+            .await?;
 
         Ok(())
     }

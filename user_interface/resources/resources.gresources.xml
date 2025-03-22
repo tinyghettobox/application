@@ -17,5 +17,7 @@
     <file compressed="true">icons/scalable/actions/volume-full-symbolic.svg</file>
     <file compressed="true">icons/scalable/actions/volume-off-symbolic.svg</file>
     <file compressed="true">icons/scalable/actions/check-symbolic.svg</file>
+    <file compressed="true">icons/scalable/actions/radio-symbolic.svg</file>
+    <file compressed="true">icons/scalable/actions/close-symbolic.svg</file>
   </gresource>
 </gresources>

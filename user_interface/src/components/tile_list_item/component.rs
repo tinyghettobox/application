@@ -14,7 +14,12 @@ pub struct TileListItemComponent {
 }
 
 impl EventHandler for TileListItemComponent {
-    fn on_event(&mut self, _event: &Event) {}
+    fn on_event(&mut self, event: &Event) {
+        match event {
+            Event::PlayStateChanged => self.update_play_state(),
+            _ => {}
+        }
+    }
 
     fn get_children(&self) -> Vec<Arc<Mutex<Box<dyn EventHandler>>>> {
         self.children.clone()
@@ -22,7 +27,11 @@ impl EventHandler for TileListItemComponent {
 }
 
 impl Component<i32> for TileListItemComponent {
-    fn new(state: Arc<Mutex<State>>, dispatcher: Arc<Mutex<Dispatcher>>, library_entry_id: i32) -> Self {
+    fn new(
+        state: Arc<Mutex<State>>,
+        dispatcher: Arc<Mutex<Dispatcher>>,
+        library_entry_id: i32,
+    ) -> Self {
         let (widget, children) = Self::render(state.clone(), dispatcher.clone(), library_entry_id);
         let mut component = Self {
             widget,
@@ -46,38 +55,62 @@ impl Component<i32> for TileListItemComponent {
             let state = state.clone();
             let dispatcher = dispatcher.clone();
             widget.connect_clicked(move || {
-                let library_entry = state.lock().unwrap().library_entry.children.as_ref().and_then(|children| {
-                    children.iter().find(|library_entry| library_entry.id == library_entry_id).cloned()
-                });
+                let library_entry = state
+                    .lock()
+                    .unwrap()
+                    .library_entry
+                    .children
+                    .as_ref()
+                    .and_then(|children| {
+                        children
+                            .iter()
+                            .find(|library_entry| library_entry.id == library_entry_id)
+                            .cloned()
+                    });
                 // We use tile list component also for stream list to show them with an image. Thus playing the stream instead of selecting
                 if let Some(library_entry) = library_entry {
                     if let Variant::Stream = library_entry.variant {
-                        dispatcher
-                            .lock()
-                            .unwrap()
-                            .dispatch_action(Action::Play(library_entry.parent_id.unwrap(), Some(library_entry.id)));
+                        dispatcher.lock().unwrap().dispatch_action(Action::Play(
+                            library_entry.parent_id.unwrap(),
+                            Some(library_entry.id),
+                        ));
                         return;
                     }
                 }
-                dispatcher.lock().unwrap().dispatch_action(Action::Select(library_entry_id));
+                dispatcher
+                    .lock()
+                    .unwrap()
+                    .dispatch_action(Action::Select(library_entry_id));
             });
         }
         {
             let dispatcher = dispatcher.clone();
             let state = state.clone();
             widget.connect_play_clicked(move || {
-                let library_entry = state.lock().unwrap().library_entry.children.as_ref().and_then(|children| {
-                    children.iter().find(|library_entry| library_entry.id == library_entry_id).cloned()
-                });
+                let library_entry = state
+                    .lock()
+                    .unwrap()
+                    .library_entry
+                    .children
+                    .as_ref()
+                    .and_then(|children| {
+                        children
+                            .iter()
+                            .find(|library_entry| library_entry.id == library_entry_id)
+                            .cloned()
+                    });
 
                 if let Some(library_entry) = library_entry {
                     if let Variant::Stream = library_entry.variant {
+                        dispatcher.lock().unwrap().dispatch_action(Action::Play(
+                            library_entry.parent_id.unwrap(),
+                            Some(library_entry.id),
+                        ));
+                    } else {
                         dispatcher
                             .lock()
                             .unwrap()
-                            .dispatch_action(Action::Play(library_entry.parent_id.unwrap(), Some(library_entry.id)));
-                    } else {
-                        dispatcher.lock().unwrap().dispatch_action(Action::Play(library_entry.id, None));
+                            .dispatch_action(Action::Play(library_entry.id, None));
                     }
                 }
             });
@@ -96,7 +129,10 @@ impl Component<i32> for TileListItemComponent {
                     self.library_entry_id,
                     child_library_entry.len()
                 );
-                match child_library_entry.iter().find(|entry| entry.id == self.library_entry_id) {
+                match child_library_entry
+                    .iter()
+                    .find(|entry| entry.id == self.library_entry_id)
+                {
                     Some(entry) => {
                         debug!(
                             "Entry {} has image size: {}",
@@ -106,7 +142,10 @@ impl Component<i32> for TileListItemComponent {
                         self.widget.set_image(entry.image.clone());
                         self.widget.set_name(entry.name.to_string());
                     }
-                    None => error!("Passed library entry '{}' does not exist o.O???", self.library_entry_id),
+                    None => error!(
+                        "Passed library entry '{}' does not exist o.O???",
+                        self.library_entry_id
+                    ),
                 }
             }
             None => error!("Library entry has no children o.O???"),
@@ -116,5 +155,20 @@ impl Component<i32> for TileListItemComponent {
     #[allow(refining_impl_trait)]
     fn get_widget(&self) -> TileListItemWidget {
         self.widget.clone()
+    }
+}
+
+impl TileListItemComponent {
+    pub fn update_play_state(&self) {
+        let playing_library_entry_id = self
+            .state
+            .lock()
+            .unwrap()
+            .playing_library_entry
+            .as_ref()
+            .unwrap()
+            .id;
+        self.widget
+            .set_playing(playing_library_entry_id == self.library_entry_id);
     }
 }

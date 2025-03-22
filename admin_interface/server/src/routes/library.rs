@@ -1,12 +1,12 @@
-use crate::file_cache::FileCache;
 use actix_multipart::form::tempfile::TempFile;
 use actix_multipart::form::text::Text;
 use actix_multipart::form::MultipartForm;
-use actix_web::{delete, get, post, put, web, Responder};
-use database::model::library_entry::Variant;
+use actix_web::{delete, get, post, put, web, HttpResponse, Responder};
+use database::model::track_source::CreateModel;
 use database::{
-    model::library_entry::CreateModel as LibraryEntryCreateModel, model::library_entry::Model as LibraryEntry,
-    DatabaseConnection, DbErr, LibraryEntryRepository,
+    model::library_entry::CreateModel as LibraryEntryCreateModel,
+    model::library_entry::Model as LibraryEntry, DatabaseConnection, DbErr, LibraryEntryRepository,
+    TrackSourceRepository,
 };
 use serde::Deserialize;
 use tracing::{error, info};
@@ -17,20 +17,23 @@ pub struct GetParams {
 }
 
 #[get("/api/library/{id}")]
-pub async fn get(conn: web::Data<DatabaseConnection>, params: web::Path<GetParams>) -> impl Responder {
+pub async fn get(
+    conn: web::Data<DatabaseConnection>,
+    params: web::Path<GetParams>,
+) -> impl Responder {
     let id = params.id;
     info!("Getting library entry: {:?}", id);
     match LibraryEntryRepository::get(&conn, id.unwrap_or(0)).await {
         Ok(model) => match model {
-            Some(model) => actix_web::HttpResponse::Ok().json(model),
-            None => actix_web::HttpResponse::NotFound().finish(),
+            Some(model) => HttpResponse::Ok().json(model),
+            None => HttpResponse::NotFound().finish(),
         },
         Err(error) => match error {
-            DbErr::Json(msg) => actix_web::HttpResponse::BadRequest().body(msg),
-            DbErr::RecordNotFound(_) => actix_web::HttpResponse::NotFound().finish(),
+            DbErr::Json(msg) => HttpResponse::BadRequest().body(msg),
+            DbErr::RecordNotFound(_) => HttpResponse::NotFound().finish(),
             _ => {
                 error!("Failed to get library entry: {:?}", error);
-                actix_web::HttpResponse::InternalServerError().finish()
+                HttpResponse::InternalServerError().finish()
             }
         },
     }
@@ -46,13 +49,13 @@ pub async fn update(
     let entry = entry.into_inner();
 
     match LibraryEntryRepository::update(&conn, id, entry).await {
-        Ok(model) => actix_web::HttpResponse::Ok().json(model),
+        Ok(model) => HttpResponse::Ok().json(model),
         Err(error) => match error {
-            DbErr::Json(msg) => actix_web::HttpResponse::BadRequest().body(msg),
-            DbErr::RecordNotFound(_) => actix_web::HttpResponse::NotFound().finish(),
+            DbErr::Json(msg) => HttpResponse::BadRequest().body(msg),
+            DbErr::RecordNotFound(_) => HttpResponse::NotFound().finish(),
             _ => {
                 error!("Failed to update library entry: {:?}", error);
-                actix_web::HttpResponse::InternalServerError().finish()
+                HttpResponse::InternalServerError().finish()
             }
         },
     }
@@ -67,14 +70,29 @@ pub struct UploadForm {
 
 #[post("/api/library/upload")]
 pub async fn upload(
-    file_cache: web::Data<FileCache>,
+    conn: web::Data<DatabaseConnection>,
     MultipartForm(form): MultipartForm<UploadForm>,
 ) -> impl Responder {
-    std::fs::read(form.track.file.path())
-        .map_err(|error| format!("could not read temp file: {}", error))
-        .and_then(|binary| file_cache.add(form.name.clone(), binary.clone()))
-        .map(|_| actix_web::HttpResponse::Ok().finish())
-        .unwrap_or_else(|error| actix_web::HttpResponse::BadRequest().body(error))
+    let binary = match std::fs::read(form.track.file.path()) {
+        Ok(binary) => binary,
+        Err(error) => {
+            return HttpResponse::BadRequest().body(format!("could not read temp file: {}", error));
+        }
+    };
+
+    let track_source = TrackSourceRepository::create(
+        conn.as_ref(),
+        None,
+        CreateModel::new_file(form.name.clone(), binary),
+    )
+    .await;
+
+    match track_source {
+        Ok(source) => HttpResponse::Ok().json(source),
+        Err(error) => {
+            HttpResponse::BadRequest().body(format!("could not create track source: {}", error))
+        }
+    }
 }
 
 #[derive(Deserialize)]
@@ -85,25 +103,17 @@ pub struct PostQuery {
 #[post("/api/library")]
 pub async fn create(
     conn: web::Data<DatabaseConnection>,
-    file_cache: web::Data<FileCache>,
     query: web::Query<PostQuery>,
     entries: web::Json<Vec<LibraryEntryCreateModel>>,
 ) -> impl Responder {
-    let entries = match enrich_entries_with_cached_files(&file_cache, entries.into_inner()) {
-        Ok(entries) => entries,
-        Err(error) => {
-            return actix_web::HttpResponse::BadRequest().body(error);
-        }
-    };
-
-    match LibraryEntryRepository::create(&conn, query.parent_id, entries).await {
-        Ok(models) => actix_web::HttpResponse::Ok().json(models),
+    match LibraryEntryRepository::create(&conn, query.parent_id, entries.into_inner()).await {
+        Ok(models) => HttpResponse::Ok().json(models),
         Err(error) => match error {
-            DbErr::Json(msg) => actix_web::HttpResponse::BadRequest().body(msg),
-            DbErr::RecordNotFound(_) => actix_web::HttpResponse::NotFound().finish(),
+            DbErr::Json(msg) => HttpResponse::BadRequest().body(msg),
+            DbErr::RecordNotFound(_) => HttpResponse::NotFound().finish(),
             _ => {
                 error!("Failed to create library entry: {:?}", error);
-                actix_web::HttpResponse::InternalServerError().finish()
+                HttpResponse::InternalServerError().finish()
             }
         },
     }
@@ -114,40 +124,18 @@ pub async fn delete(conn: web::Data<DatabaseConnection>, id: web::Path<i32>) -> 
     match LibraryEntryRepository::delete(&conn, id.into_inner()).await {
         Ok(deleted) => {
             if deleted {
-                actix_web::HttpResponse::Ok().finish()
+                HttpResponse::Ok().finish()
             } else {
-                actix_web::HttpResponse::NotFound().finish()
+                HttpResponse::NotFound().finish()
             }
         }
         Err(error) => match error {
-            DbErr::Json(msg) => actix_web::HttpResponse::BadRequest().body(msg),
-            DbErr::RecordNotFound(_) => actix_web::HttpResponse::NotFound().finish(),
+            DbErr::Json(msg) => HttpResponse::BadRequest().body(msg),
+            DbErr::RecordNotFound(_) => HttpResponse::NotFound().finish(),
             _ => {
                 error!("Failed to delete library entry: {:?}", error);
-                actix_web::HttpResponse::InternalServerError().finish()
+                HttpResponse::InternalServerError().finish()
             }
         },
     }
-}
-
-fn enrich_entries_with_cached_files(
-    file_cache: &web::Data<FileCache>,
-    entries: Vec<LibraryEntryCreateModel>,
-) -> Result<Vec<LibraryEntryCreateModel>, String> {
-    let mut new_entries = vec![];
-    for mut entry in entries.clone() {
-        if let Some(children) = entry.children.as_mut() {
-            entry.children = Some(enrich_entries_with_cached_files(file_cache, children.clone())?);
-        }
-        if let Variant::File = entry.variant {
-            if let Some(track_source) = entry.track_source.as_mut() {
-                if track_source.file.is_none() {
-                    let uploaded_file = file_cache.get(track_source.title.clone())?;
-                    track_source.file = Some(uploaded_file);
-                }
-            }
-        }
-        new_entries.push(entry);
-    }
-    Ok(new_entries)
 }

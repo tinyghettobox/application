@@ -1,4 +1,4 @@
-import {ChangeEvent, useRef, useState} from "react";
+import {ChangeEvent, useReducer, useRef, useState} from "react";
 import {Box, FormControl, Grid, IconButton, InputLabel, OutlinedInput} from "@mui/material";
 import {Check, Delete} from "@mui/icons-material";
 import {useAddEntryState} from "@/pages/MediaLibrary/AddEntryDialog/useAddEntryState";
@@ -24,7 +24,6 @@ export default function StreamAddForm() {
     if (!newStreamName || !newStreamUrl) {
       return;
     }
-    debugger;
     addEntry({variant: 'stream', name: newStreamName, trackSource: {title: newStreamName, url: newStreamUrl}, sortKey: getNextSortKey()});
     setNewStreamUrl('');
     setNewStreamName('');
@@ -74,6 +73,7 @@ export default function StreamAddForm() {
               <InputLabel>{index + 1}. Stream URL</InputLabel>
               <OutlinedInput
                 label={`${index + 1}. Stream URL`}
+                placeholder={`https://....`}
                 onChange={(event) => handleUrlChange(event, entry)}
                 value={entry.trackSource?.url}
               />
@@ -81,7 +81,7 @@ export default function StreamAddForm() {
           </Grid>
           <Grid item xs={1}>
             <IconButton onClick={() => removeEntry(entry)} edge="end">
-              <Delete />
+              <Delete/>
             </IconButton>
           </Grid>
         </Grid>
@@ -108,8 +108,8 @@ export default function StreamAddForm() {
           </FormControl>
         </Grid>
         <Grid item xs={1}>
-          <IconButton onClick={handleAdd} edge="end" disabled={!newStreamName || !newStreamUrl}>
-            <Check />
+          <IconButton onClick={handleAdd} edge="end" disabled={!newStreamName || !newStreamUrl} color="primary">
+            <Check/>
           </IconButton>
         </Grid>
       </Grid>

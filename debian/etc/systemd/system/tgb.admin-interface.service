@@ -5,8 +5,9 @@ After=local-fs.target
 
 [Service]
 Environment="PORT=80"
-Environment="UI_PATH=/var/www/admin_interface/web_ui"
-ExecStart=/usr/bin/tinyghettobox/admin_interface
+WorkingDirectory=/srv/tinyghettobox
+Environment="UI_PATH=/srv/tinyghettobox/admin_interface_ui"
+ExecStart=/srv/tinyghettobox/admin_interface_server
 Restart=always
 RestartSec=20
 Type=simple

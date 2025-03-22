@@ -7,7 +7,6 @@ import {Variant} from "@db-models/Variant";
 import {LibraryEntry} from "@db-models/LibraryEntry";
 import {useAddEntryState} from "@/pages/MediaLibrary/AddEntryDialog/useAddEntryState";
 import {searchResultToLibraryEntry} from "@/pages/MediaLibrary/AddEntryDialog/SpotifyAddForm/helper";
-import {ItemTypes} from "@fostertheweb/spotify-web-sdk";
 import {arrayToBase64} from "@/util/base64";
 
 interface Props {
@@ -16,13 +15,13 @@ interface Props {
   allowedVariant?: Variant
 }
 
-function getChildType(parentType: string): ItemTypes {
+function getChildType(parentType: string): string {
   const childType = {
     'artist': 'album',
     'album': 'track',
     'playlist': 'track',
     'show': 'episode'
-  }[parentType] as ItemTypes;
+  }[parentType] as string;
 
   if (!childType) {
     throw new Error(`No child type known for ${parentType}`);
@@ -32,7 +31,7 @@ function getChildType(parentType: string): ItemTypes {
 }
 
 async function loadChildren(itemType: string, id: string, offset = 0) {
-  const params = new URLSearchParams({ parent_type: itemType, parent_id: id, offset: `${offset}` });
+  const params = new URLSearchParams({parent_type: itemType, parent_id: id, offset: `${offset}`});
   const response = await fetch(`/api/spotify/children?${params}`);
   if (response.status !== 200) {
     notify('error', `Failed to fetch: ${await response.text()}`);

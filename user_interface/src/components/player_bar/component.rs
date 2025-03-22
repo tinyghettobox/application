@@ -31,7 +31,11 @@ impl EventHandler for PlayerBarComponent {
 }
 
 impl Component<Option<()>> for PlayerBarComponent {
-    fn new(state: Arc<Mutex<State>>, dispatcher: Arc<Mutex<Dispatcher>>, params: Option<()>) -> Self {
+    fn new(
+        state: Arc<Mutex<State>>,
+        dispatcher: Arc<Mutex<Dispatcher>>,
+        params: Option<()>,
+    ) -> Self {
         let (widget, children) = Self::render(state.clone(), dispatcher.clone(), params);
         let mut component = Self {
             widget,
@@ -53,32 +57,47 @@ impl Component<Option<()>> for PlayerBarComponent {
         {
             let dispatcher = dispatcher.clone();
             widget.connect_play_toggle_clicked(move || {
-                dispatcher.lock().unwrap().dispatch_action(Action::TogglePlay);
+                dispatcher
+                    .lock()
+                    .unwrap()
+                    .dispatch_action(Action::TogglePlay);
             });
         }
         {
             let dispatcher = dispatcher.clone();
             widget.connect_back_clicked(move || {
-                dispatcher.lock().unwrap().dispatch_action(Action::PrevTrack);
+                dispatcher
+                    .lock()
+                    .unwrap()
+                    .dispatch_action(Action::PrevTrack);
             });
         }
         {
             let dispatcher = dispatcher.clone();
             widget.connect_forward_clicked(move || {
-                dispatcher.lock().unwrap().dispatch_action(Action::NextTrack);
+                dispatcher
+                    .lock()
+                    .unwrap()
+                    .dispatch_action(Action::NextTrack);
             });
         }
         {
             let dispatcher = dispatcher.clone();
             let debouncer = Debouncer::new(Duration::from_millis(500), move |progress| {
-                dispatcher.lock().unwrap().dispatch_action(Action::Seek(progress));
+                dispatcher
+                    .lock()
+                    .unwrap()
+                    .dispatch_action(Action::Seek(progress));
             });
             widget.connect_seek(move |progress| debouncer.add(progress));
         }
         {
             let dispatcher = dispatcher.clone();
             let debouncer = Debouncer::new(Duration::from_millis(500), move |volume| {
-                dispatcher.lock().unwrap().dispatch_action(Action::SetVolume(volume));
+                dispatcher
+                    .lock()
+                    .unwrap()
+                    .dispatch_action(Action::SetVolume(volume));
             });
             widget.connect_volume_change(move |volume: f64| debouncer.add(volume));
         }
@@ -109,9 +128,20 @@ impl PlayerBarComponent {
         let state = self.state.lock().unwrap();
         if let Some(playing_library_entry) = state.playing_library_entry.as_ref() {
             self.widget.set_visibility(true);
-            self.widget.set_image(playing_library_entry.image.clone().or(playing_library_entry.parent_image.clone()));
-            self.widget.set_track_name(playing_library_entry.name.clone());
-            self.widget.set_folder_name(playing_library_entry.parent_name.clone().unwrap_or("".to_string()));
+            self.widget.set_image(
+                playing_library_entry
+                    .image
+                    .clone()
+                    .or(playing_library_entry.parent_image.clone()),
+            );
+            self.widget
+                .set_track_name(playing_library_entry.name.clone());
+            self.widget.set_folder_name(
+                playing_library_entry
+                    .parent_name
+                    .clone()
+                    .unwrap_or("".to_string()),
+            );
         } else {
             self.widget.set_visibility(false);
         }
@@ -124,6 +154,6 @@ impl PlayerBarComponent {
 
     pub fn update_volume(&self) {
         let state = self.state.lock().unwrap();
-        self.widget.set_volume(state.volume);
+        self.widget.set_volume(state.volume, state.max_volume);
     }
 }

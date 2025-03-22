@@ -1,9 +1,9 @@
-use gtk4::{CompositeTemplate, GestureClick, glib};
 use gtk4::gdk::Texture;
-use gtk4::glib::{Bytes, object_subclass};
 use gtk4::glib::subclass::InitializingObject;
+use gtk4::glib::{object_subclass, Bytes};
 use gtk4::prelude::{ButtonExt, GestureExt, WidgetExt};
 use gtk4::subclass::prelude::*;
+use gtk4::{glib, CompositeTemplate, GestureClick, GestureLongPress};
 use tracing::warn;
 
 #[derive(Default, CompositeTemplate)]
@@ -67,7 +67,17 @@ impl TileListItemWidget {
         self.imp().label.set_label(&name);
     }
 
+    pub fn set_playing(&self, playing: bool) {
+        if playing {
+            self.imp().wrapper.add_css_class("playing");
+        } else {
+            self.imp().wrapper.remove_css_class("playing");
+        }
+    }
+
     pub fn connect_clicked(&self, callback: impl Fn() + Send + Sync + 'static) {
+        // let gesture = GestureLongPress::new();
+        // gesture.set_delay_factor(0.0);
         let gesture = GestureClick::new();
         gesture.connect_released(move |gesture, _, _, _| {
             gesture.set_state(gtk4::EventSequenceState::Claimed);

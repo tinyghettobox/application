@@ -11,7 +11,6 @@ import {
   Select, Typography
 } from "@mui/material";
 import {useState} from "react";
-import {ItemTypes} from "@fostertheweb/spotify-web-sdk";
 import SpotifyPlaylist from "./SpotifyPlaylist";
 import {Controller, useForm} from "react-hook-form";
 import {SearchOutlined, EastOutlined} from "@mui/icons-material";
@@ -26,7 +25,7 @@ interface Props {
   allowedVariant?: Variant;
 }
 
-const SEARCH_TYPES = ['artist', 'album', 'playlist', 'track', 'show', 'episode'] as ItemTypes[];
+const SEARCH_TYPES = ['artist', 'album', 'playlist', 'track', 'show', 'episode'];
 
 export default function SpotifyAddForm({allowedVariant}: Props) {
   const {getNextSortKey} = useAddEntryState();
@@ -36,7 +35,7 @@ export default function SpotifyAddForm({allowedVariant}: Props) {
     handleSubmit,
     watch,
     formState
-  } = useForm<{ search: string, searchType: ItemTypes }>({
+  } = useForm<{ search: string, searchType: string }>({
     mode: "onTouched",
     defaultValues: {search: '', searchType: SEARCH_TYPES[0]}
   });
@@ -64,7 +63,7 @@ export default function SpotifyAddForm({allowedVariant}: Props) {
 
     const entries: LibraryEntry[] = [];
     for (const searchResultItem of searchResult.items) {
-      entries.push(await searchResultToLibraryEntry(searchResultItem, formData.searchType as ItemTypes, getNextSortKey()));
+      entries.push(await searchResultToLibraryEntry(searchResultItem, formData.searchType, getNextSortKey()));
     }
 
     setSearchResult({loading: false, data: entries});
@@ -99,7 +98,7 @@ export default function SpotifyAddForm({allowedVariant}: Props) {
                       variant="outlined"
                       labelId="search-type"
                       label={'Search type'}
-                      onChange={(event) => onChange(event.target.value as ItemTypes)}
+                      onChange={(event) => onChange(event.target.value)}
                       {...field}
                     >
                       {SEARCH_TYPES.map(type =>

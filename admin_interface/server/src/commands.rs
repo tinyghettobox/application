@@ -74,7 +74,7 @@ pub fn set_audio_device(device: String) -> Result<(), Problem> {
     run!("sudo /boot/dietpi/func/dietpi-set_hardware soundcard '{device}'")
 }
 
-pub fn _set_volume(volume: i32) -> Result<(), Problem> {
+pub fn set_max_volume(volume: u8) -> Result<(), Problem> {
     run!("sudo /usr/bin/amixer sset Master '{volume}%'")
 }
 

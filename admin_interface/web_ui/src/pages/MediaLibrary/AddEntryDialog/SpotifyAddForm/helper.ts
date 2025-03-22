@@ -1,6 +1,5 @@
 import {LibraryEntry} from "@db-models/LibraryEntry";
 import {cropImage} from "@/pages/MediaLibrary/AddEntryDialog/helper";
-import {ItemTypes} from "@fostertheweb/spotify-web-sdk";
 
 interface SearchResultItem {
   id: string,
@@ -9,7 +8,7 @@ interface SearchResultItem {
   type: string,
 }
 
-export async function searchResultToLibraryEntry(item: SearchResultItem, type: ItemTypes, sortKey: number): Promise<LibraryEntry> {
+export async function searchResultToLibraryEntry(item: SearchResultItem, type: string, sortKey: number): Promise<LibraryEntry> {
   let image: number[] | undefined = undefined;
   if (item.images?.[0]?.url) {
     const response = await fetch(item.images?.[0]?.url);

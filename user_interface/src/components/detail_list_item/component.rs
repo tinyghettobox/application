@@ -32,7 +32,11 @@ impl EventHandler for DetailListItemComponent {
 }
 
 impl Component<Option<()>> for DetailListItemComponent {
-    fn new(state: Arc<Mutex<State>>, dispatcher: Arc<Mutex<Dispatcher>>, params: Option<()>) -> Self {
+    fn new(
+        state: Arc<Mutex<State>>,
+        dispatcher: Arc<Mutex<Dispatcher>>,
+        params: Option<()>,
+    ) -> Self {
         let (widget, children) = Self::render(state.clone(), dispatcher.clone(), params);
 
         let component = Self {
@@ -47,11 +51,17 @@ impl Component<Option<()>> for DetailListItemComponent {
             #[strong]
             component,
             move || {
-                let library_entry =
-                    component.library_entry.lock().expect("could not lock").clone().expect("No library entry set");
+                let library_entry = component
+                    .library_entry
+                    .lock()
+                    .expect("could not lock")
+                    .clone()
+                    .expect("No library entry set");
                 let dispatcher = dispatcher.clone();
                 dispatcher.lock().unwrap().dispatch_action(Action::Play(
-                    library_entry.parent_id.expect("A children should have a parent"),
+                    library_entry
+                        .parent_id
+                        .expect("A children should have a parent"),
                     Some(library_entry.id),
                 ));
             }
@@ -82,17 +92,31 @@ impl Component<Option<()>> for DetailListItemComponent {
                 return;
             }
         };
-        let playing_library_entry_id = self.state.lock().unwrap().playing_library_entry.clone().map(|entry| entry.id);
-        let entry_with_position = self.state.lock().unwrap().library_entry.children.clone().and_then(|children| {
-            let position = children.iter().position(|child| child.id == library_entry_id);
-            position.and_then(move |pos| children.get(pos).cloned().map(|entry| (pos, entry)))
-        });
+        let playing_library_entry_id = self
+            .state
+            .lock()
+            .unwrap()
+            .playing_library_entry
+            .clone()
+            .map(|entry| entry.id);
+        let entry_with_position = self
+            .state
+            .lock()
+            .unwrap()
+            .library_entry
+            .children
+            .clone()
+            .and_then(|children| {
+                let position = children
+                    .iter()
+                    .position(|child| child.id == library_entry_id);
+                position.and_then(move |pos| children.get(pos).cloned().map(|entry| (pos, entry)))
+            });
 
         match entry_with_position {
             Some((position, entry)) => {
                 self.widget.set_position(position as u32);
                 self.widget.set_name(&entry.name);
-                tracing::debug!("entry_id: {}, playing id: {:?}", entry.id, playing_library_entry_id);
                 // Is this currently playing?
                 if entry.id == playing_library_entry_id.unwrap_or(-1) {
                     self.widget.set_state(DetailListItemState::Playing);
@@ -116,6 +140,32 @@ impl Component<Option<()>> for DetailListItemComponent {
 
 impl DetailListItemComponent {
     pub fn check_library_entry(&self) {}
+
+    // fn update_play_state(&self) {
+    //     let state = self.state.lock().unwrap();
+    //
+    //     let played_library_entry_id = state
+    //         .playing_library_entry
+    //         .clone()
+    //         .expect("playing_library_entry should be set")
+    //         .id;
+    //
+    //     let library_entry = self.library_entry.lock().unwrap().as_mut().unwrap();
+    //
+    //     if library_entry.id == played_library_entry_id {
+    //         let updated_library_entry = state.library_entry.clone().children.unwrap().iter().find(|child| child.id == library_entry.id).expect("could not find library entry");
+    //         *library_entry = updated_library_entry.clone();
+    //
+    //         if entry.id == playing_library_entry_id.unwrap_or(-1) {
+    //             self.widget.set_state(DetailListItemState::Playing);
+    //         } else if let Some(_) = entry.played_at.as_ref() {
+    //             self.widget.set_state(DetailListItemState::Played);
+    //         } else {
+    //             self.widget.set_state(DetailListItemState::None);
+    //         }
+    //
+    //     }
+    // }
 }
 
 /**

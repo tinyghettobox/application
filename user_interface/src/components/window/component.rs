@@ -4,6 +4,7 @@ use gtk4::prelude::GtkWindowExt;
 use gtk4::Application;
 
 use crate::components::content::ContentComponent;
+use crate::components::log_overlay::LogOverlayComponent;
 use crate::components::navbar::NavbarComponent;
 use crate::components::player_bar::PlayerBarComponent;
 use crate::components::ripple::RippleComponent;
@@ -31,7 +32,11 @@ impl EventHandler for WindowComponent {
 }
 
 impl Component<Option<()>> for WindowComponent {
-    fn new(state: Arc<Mutex<State>>, dispatcher: Arc<Mutex<Dispatcher>>, params: Option<()>) -> Self {
+    fn new(
+        state: Arc<Mutex<State>>,
+        dispatcher: Arc<Mutex<Dispatcher>>,
+        params: Option<()>,
+    ) -> Self {
         let (widget, children) = Self::render(state.clone(), dispatcher.clone(), params);
         let mut component = Self { widget, children };
         component.update();
@@ -45,18 +50,24 @@ impl Component<Option<()>> for WindowComponent {
         _params: Option<()>,
     ) -> (WindowWidget, Children) {
         let shutdown_timer = ShutdownTimerComponent::new(state.clone(), dispatcher.clone(), None);
+        let log_overlay = LogOverlayComponent::new(state.clone(), dispatcher.clone(), None);
         let ripple = RippleComponent::new(state.clone(), dispatcher.clone(), None);
         let navbar = NavbarComponent::new(state.clone(), dispatcher.clone(), None);
         let content = ContentComponent::new(state.clone(), dispatcher.clone(), None);
         let player_bar = PlayerBarComponent::new(state.clone(), dispatcher.clone(), None);
 
-        ripple.add_child(&navbar.get_widget());
-        ripple.add_child(&content.get_widget());
-        ripple.add_child(&player_bar.get_widget());
+        log_overlay.add_child(&navbar.get_widget());
+        log_overlay.add_child(&content.get_widget());
+        log_overlay.add_child(&player_bar.get_widget());
+
+        ripple.add_child(&log_overlay.get_widget());
 
         shutdown_timer.add_child(&ripple.get_widget());
 
         let widget = WindowWidget::new();
+        widget.connect_close_request(|_| {
+            std::process::exit(0);
+        });
 
         widget.set_child(Some(&shutdown_timer.get_widget()));
 
@@ -67,6 +78,7 @@ impl Component<Option<()>> for WindowComponent {
                 Arc::new(Mutex::new(Box::new(content))),
                 Arc::new(Mutex::new(Box::new(player_bar))),
                 Arc::new(Mutex::new(Box::new(ripple))),
+                Arc::new(Mutex::new(Box::new(log_overlay))),
             ],
         )
     }

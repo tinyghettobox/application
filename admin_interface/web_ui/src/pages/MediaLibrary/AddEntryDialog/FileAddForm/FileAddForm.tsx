@@ -7,6 +7,7 @@ import sortableListStyles from "../../SortableList.module.scss";
 import {LibraryEntry} from "@db-models/LibraryEntry";
 import {uploadLibraryEntryFile} from "@/util/api";
 import {notify} from "@/components/Notification";
+import {TrackSource} from "@db-models/TrackSource";
 
 
 const VisuallyHiddenInput = styled('input')({
@@ -21,6 +22,10 @@ const VisuallyHiddenInput = styled('input')({
   width: 1,
 });
 
+function isTrackSource(obj: unknown): obj is TrackSource {
+  return typeof obj === 'object' && obj !== null && ['id', 'title'].every(prop => Object.hasOwn(obj, prop))
+}
+
 export default function FileAddForm() {
   const {entries, setEntries, removeEntry, getNextSortKey} = useAddEntryState();
   const [uploadProgress, setUploadProgress] = useState<{ [name: string]: number }>({});
@@ -34,17 +39,26 @@ export default function FileAddForm() {
     const newEntries: LibraryEntry[] = [];
     for (let i = 0; i < event.target.files.length; i++) {
       const file = event.target.files?.[i] as File;
+      const trackSortKey = sortKey++;
 
-      newEntries.push({name: file.name, variant: 'file', trackSource: {title: file.name || ''}, sortKey: sortKey++});
+      newEntries.push({name: file.name, variant: 'file', trackSource: {title: file.name || ''}, sortKey: trackSortKey});
 
       uploadLibraryEntryFile(
         file,
         (progress) => {
-          setUploadProgress(prev => ({...prev, [file.name]: progress}));
+          setUploadProgress(prev => ({...prev, [file.name]: progress * 100}));
         },
-        (error) => {
+        (error, trackSource) => {
           if (error) {
             notify('error', `Failed to upload ${file.name}: ${error}`, 6000);
+          }
+          if (isTrackSource(trackSource)) {
+            setEntries(oldEntries => oldEntries.map(entry => {
+              if (entry.sortKey === trackSortKey) {
+                entry.trackSource = trackSource;
+              }
+              return entry;
+            }).slice(0))
           }
           setUploadProgress(prev => ({...prev, [file.name]: !error ? 100 : -1}));
         }
@@ -69,6 +83,7 @@ export default function FileAddForm() {
     removeEntry(entry);
   }
 
+  debugger
   return (
     <Box sx={{mt: 2}}>
       <Box sx={{textAlign: 'center', mb: 1}}>
@@ -96,7 +111,7 @@ export default function FileAddForm() {
                     ) : uploadProgress[entry.name] == -1 ? (
                       <ErrorOutline color={"error"}/>
                     ) : (
-                      <CircularProgress value={uploadProgress[entry.name] || 0}/>
+                      <CircularProgress value={uploadProgress[entry.name] || 0} variant="determinate"/>
                     )}
                   </ListItemAvatar>
                   <ListItemText

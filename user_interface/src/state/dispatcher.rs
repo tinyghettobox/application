@@ -31,8 +31,14 @@ impl Dispatcher {
         AR: Future<Output = ()> + Send,
         E: Fn(Event) + 'static,
     {
-        let mut action_receiver = self.action_receiver.take().expect("No action receiver yet set");
-        let mut event_receiver = self.event_receiver.take().expect("No event receiver yet set");
+        let mut action_receiver = self
+            .action_receiver
+            .take()
+            .expect("No action receiver yet set");
+        let mut event_receiver = self
+            .event_receiver
+            .take()
+            .expect("No event receiver yet set");
 
         tokio::spawn(async move {
             loop {
@@ -49,7 +55,7 @@ impl Dispatcher {
             glib::idle_add_local(move || match event_receiver.try_recv() {
                 Ok(event) => {
                     let event_name = format!("{:?}", event);
-                    debug!("Received event {:?}", event_name);
+                    debug!("Received event {}", event_name);
                     handle_event(event);
                     glib::ControlFlow::Continue
                 }
@@ -69,7 +75,7 @@ impl Dispatcher {
 
     pub fn dispatch_event(&self, event: Event) {
         let event_name = format!("{:?}", event);
-        debug!("Dispatching event {:?}", event_name);
+        debug!("Dispatching event {}", event_name);
         let event_sender = self.event_sender.clone();
         if let Err(error) = event_sender.send(event) {
             error!("Could not send event: {}", error);

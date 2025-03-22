@@ -25,6 +25,11 @@
             <property name="halign">start</property>
           </object>
         </child>
+        <child>
+          <object class="GtkButton" id="show_log_button">
+            <property name="icon-name">radio</property>
+          </object>
+        </child>
       </object>
     </child>
   </template>

@@ -1,10 +1,8 @@
 use std::io::{Read, Seek, SeekFrom};
-use std::num::NonZeroUsize;
 use stream_download::http::reqwest::{Client, Url};
 
 use stream_download::http::HttpStream;
 use stream_download::source::SourceStream;
-use stream_download::storage::bounded::BoundedStorageProvider;
 use stream_download::storage::memory::MemoryStorageProvider;
 use stream_download::{Settings, StreamDownload};
 use symphonia::core::io::MediaSource;
@@ -16,7 +14,9 @@ pub struct RemoteMediaSource {
 
 impl RemoteMediaSource {
     pub async fn from_url(url: String) -> Result<Self, String> {
-        let parsed_url = url.parse::<Url>().map_err(|error| format!("Could not parse url: {}", error))?;
+        let parsed_url = url
+            .parse::<Url>()
+            .map_err(|error| format!("Could not parse url: {}", error))?;
         let stream = HttpStream::<Client>::create(parsed_url)
             .await
             .map_err(|error| format!("Could not create stream: {}", error))?;
@@ -33,7 +33,10 @@ impl RemoteMediaSource {
         .await
         .map_err(|error| format!("Could start download: {}", error))?;
 
-        Ok(RemoteMediaSource { reader, content_length })
+        Ok(RemoteMediaSource {
+            reader,
+            content_length,
+        })
     }
 }
 

@@ -1,0 +1,8 @@
+Package: tinyghettobox
+Version: 1.0.0
+Architecture: arm64
+Maintainer: Thomas Schlage <your.email@example.com>
+Description: Tiny Ghetto Box application including user- and admin interface
+Section: misc
+Priority: optional
+Depends: systemd

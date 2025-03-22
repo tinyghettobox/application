@@ -5,7 +5,7 @@ import {Slider} from "@mui/material";
 
 interface Props {
   folder?: LibraryEntry;
-  onResize: (image: Array<number>) => void
+  onResize?: (image: Array<number>) => void
 }
 
 export default function ImageEditor({folder}: Props) {
@@ -23,16 +23,16 @@ export default function ImageEditor({folder}: Props) {
     let diffX = editStart.current.x === 0 ? 0 : event.pageX - editStart.current.x;
     let diffY = editStart.current.y === 0 ? 0 : event.pageY - editStart.current.y;
 
-    setState(old => ({ ...old, translate: {x: state.translate.x + diffX, y: state.translate.y + diffY} }));
+    setState(old => ({...old, translate: {x: state.translate.x + diffX, y: state.translate.y + diffY}}));
   }
 
   const handleEditStop = (event: MouseEvent) => {
     window.removeEventListener('mousemove', handleEdit);
     window.removeEventListener('mouseup', handleEditStop);
   }
-  
+
   const handleScaleChange = (_event: Event, value: number | number[]) => {
-    setState(old => ({ ...old, scale: Array.isArray(value) ? value[0] : value }));
+    setState(old => ({...old, scale: Array.isArray(value) ? value[0] : value}));
   }
 
   return (

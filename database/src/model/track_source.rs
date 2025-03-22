@@ -14,7 +14,7 @@ pub struct Model {
     #[serde(skip_deserializing)]
     pub id: i32,
     #[serde(skip)]
-    pub library_entry_id: i32,
+    pub library_entry_id: Option<i32>,
     pub title: String,
     #[ts(optional)]
     pub url: Option<String>,
@@ -90,6 +90,8 @@ impl<'a> Debug for FormatFile<'a> {
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct CreateModel {
+    pub id: Option<i32>,
+    pub library_entry_id: Option<i32>,
     pub title: String,
     pub url: Option<String>,
     pub file: Option<Vec<u8>>,
@@ -98,6 +100,20 @@ pub struct CreateModel {
 }
 
 impl CreateModel {
+    // Somehow the function is not recognized by rust as used, adding allow dead code
+    #[allow(dead_code)]
+    pub fn new_file(title: String, binary: Vec<u8>) -> CreateModel {
+        CreateModel {
+            id: None,
+            library_entry_id: None,
+            title,
+            url: None,
+            file: Some(binary),
+            spotify_id: None,
+            spotify_type: None,
+        }
+    }
+
     // Somehow the function is not recognized by rust as used, adding allow dead code
     #[allow(dead_code)]
     pub fn to_active_model(&self) -> ActiveModel {

@@ -541,11 +541,6 @@
   resolved "https://registry.yarnpkg.com/@floating-ui/utils/-/utils-0.2.1.tgz#16308cea045f0fc777b6ff20a9f25474dd8293d2"
   integrity sha512-9TANp6GPoMtYzQdt54kfAyMmz1+osLlXdg2ENroU7zzrtflTLrrC/lgrIfaSe+Wu0b89GKccT7vxXA0MoAIO+Q==
 
-"@fostertheweb/spotify-web-sdk@^1.2.3":
-  version "1.2.3"
-  resolved "https://registry.yarnpkg.com/@fostertheweb/spotify-web-sdk/-/spotify-web-sdk-1.2.3.tgz#f8fbc7f4d02b05303bb9384f204960dd990c0b32"
-  integrity sha512-QAZJvzAukUe0G/WHVc2c3Jk9HmVJqrQeJ34mehJLYt4qh6gzw4VMXssjuzHON4VvucRS6LGslr3ACrOOVwsImw==
-
 "@humanwhocodes/config-array@^0.11.10":
   version "0.11.14"
   resolved "https://registry.yarnpkg.com/@humanwhocodes/config-array/-/config-array-0.11.14.tgz#d78e481a039f7566ecc9660b4ea7fe6b1fec442b"
@@ -875,11 +870,6 @@
   version "0.16.8"
   resolved "https://registry.yarnpkg.com/@types/scheduler/-/scheduler-0.16.8.tgz#ce5ace04cfeabe7ef87c0091e50752e36707deff"
   integrity sha512-WZLiwShhwLRmeV6zH+GkbOFT6Z6VklCItrDioxUnv+u4Ll+8vKeFySoFyK/0ctcRpOmwAicELfmys1sDc/Rw+A==
-
-"@types/spotify-web-playback-sdk@^0.1.19":
-  version "0.1.19"
-  resolved "https://registry.yarnpkg.com/@types/spotify-web-playback-sdk/-/spotify-web-playback-sdk-0.1.19.tgz#0fe4a7bdab95321309e4bc8a3f2124c17dfd3578"
-  integrity sha512-Is7x9gMIMoERxE0uvb2SPFQoy5OR7nO1B24CJiaDAUIdq195OLTQedN95XJQtxB2mfm+zi2j3LvEtpPdHKnB3w==
 
 "@vitejs/plugin-react@^4.2.1":
   version "4.2.1"

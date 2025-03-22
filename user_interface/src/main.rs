@@ -17,6 +17,7 @@ use player::{Player, Progress};
 
 use crate::components::{Component, WindowComponent};
 use crate::state::{Action, Dispatcher, Event, EventHandler, State};
+use crate::util::memory_subscriber;
 
 mod components;
 mod state;
@@ -24,10 +25,24 @@ mod util;
 
 const APP_ID: &str = "org.tinyghettobox.gui";
 
+#[cfg(not(target_env = "msvc"))]
+use tikv_jemallocator::Jemalloc;
+
+#[cfg(not(target_env = "msvc"))]
+#[global_allocator]
+static GLOBAL: Jemalloc = Jemalloc;
+
 #[tokio::main(flavor = "multi_thread")]
 async fn main() -> glib::ExitCode {
-    tracing_subscriber::registry()
-        .with(console_subscriber::ConsoleLayer::builder().spawn())
+    if cfg!(not(target_env = "msvc")) {
+        println!("Loading jemalloc");
+    }
+
+    let log_messages = Arc::new(Mutex::new(vec![]));
+    let subscriber = tracing_subscriber::registry()
+        .with(memory_subscriber::MemorySubscriber::new(
+            log_messages.clone(),
+        ))
         .with(
             tracing_subscriber::fmt::layer().with_filter(
                 Targets::new()
@@ -36,17 +51,25 @@ async fn main() -> glib::ExitCode {
                     .with_target("runtime", LevelFilter::INFO)
                     .with_target("sqlx::query", LevelFilter::INFO)
                     .with_target("tokio", LevelFilter::INFO), // .with_target("ureq", LevelFilter::INFO)
-                                                              // .with_target("rustls", LevelFilter::INFO), // .with_target("user_interface::state", LevelFilter::INFO)
+                                                              // .with_target("rustls", LevelFilter::INFO),
+                                                              // .with_target("user_interface::state", LevelFilter::INFO)
             ),
-        )
-        .init();
+        );
+
+    #[cfg(debug_assertions)]
+    let subscriber = subscriber.with(console_subscriber::ConsoleLayer::builder().spawn());
+
+    subscriber.init();
 
     info!("Starting user interface");
 
-    resources_register_include!("composite_templates.gresource").expect("Failed to register resources.");
+    resources_register_include!("composite_templates.gresource")
+        .expect("Failed to register resources.");
 
     let connection = connect().await.expect("Could not connect to database");
-    let state = Arc::new(Mutex::new(State::new(connection.clone()).await));
+    let state = Arc::new(Mutex::new(
+        State::new(connection.clone(), log_messages.clone()).await,
+    ));
     let dispatcher = Arc::new(Mutex::new(Dispatcher::new()));
 
     let player = Player::new(connection.clone(), state.lock().unwrap().volume).await;
@@ -59,13 +82,23 @@ async fn main() -> glib::ExitCode {
         tokio::spawn(async move {
             let mut player = player.lock().await;
             let handle_progress_change = move |progress: Progress| {
-                dispatcher1.clone().lock().unwrap().dispatch_action(Action::SetProgress(progress));
+                dispatcher1
+                    .clone()
+                    .lock()
+                    .unwrap()
+                    .dispatch_action(Action::SetProgress(progress));
             };
             let handle_track_change = move |library_entry: Option<LibraryEntry>| {
-                dispatcher2.lock().unwrap().dispatch_action(Action::SetPlayingTrack(library_entry));
+                dispatcher2
+                    .lock()
+                    .unwrap()
+                    .dispatch_action(Action::SetPlayingTrack(library_entry));
             };
             let handle_track_end = move |_library_entry: LibraryEntry| {
-                dispatcher3.lock().unwrap().dispatch_action(Action::SetPlayedAt);
+                dispatcher3
+                    .lock()
+                    .unwrap()
+                    .dispatch_action(Action::SetPlayedAt);
             };
 
             player.connect_progress_changed(handle_progress_change);
