@@ -1,5 +1,6 @@
 #### Todo
 
+- fix display off timer and shutdown
 - Check memory usage of user_interface when loading local file
 - ~~admin-interface server consumes high amount of memory when uploading files and does not free it~~
 - ~~icons are missing on user-interface on device~~
@@ -12,10 +13,14 @@
 - ~~progress of file upload is only a spinner and doesn't show real progress~~
 - stream urls should always have a schema
 - blurring a stream and having name and url should automatically press the add button
-- submit should be disabled as long no new entry is configured
+- ~~submit should be disabled as long no new entry is configured~~
 
+- Replace psplash with more flexible solution to use same png files as the initramfs does. Maybe add fbv to the image as well?
+- create a setup script which ensures the default state of the system config | or adjust the system config to follow the default state
 - what happens when using spotify search without configuring spotify?
     - spotify option should be disabled as long as there is no access token
+- make splash rotatable using -a flag on psplash service
+- implement theming support
 - when an error occurs the event handler in user_interface seem to be stuck. Actions are dispatched but nothing is handled. Example was playing a local file
   without file content leading to an error and clicking again on a file did nothing
 - Make boot of image fast and stable
