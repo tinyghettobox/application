@@ -1,29 +1,32 @@
-@define-color primary-color #1B6D9B;
-@define-color background #21242D;
-@define-color background-accent #272A34;
-@define-color color white;
-@define-color color-accent #aaa;
-@define-color button-disabled-color #777;
-@define-color button-active-background #555;
-@define-color list-separator #333;
+:root {
+    --primary-color: #1B6D9B;
+    --background: #21242D;
+    --background-accent: #272A34;
+    --color: #fff;
+    --color-accent: #aaa;
+    --button-disabled-color: #777;
+    --button-active-background: #555;
+    --list-separator: #333;
+    --font-family: 'Quicksand', Verdana;
+}
 
 window.background {
-    background: @background;
+    background: var(--background);
 }
 
 window.background > box label {
-    color: @color;
-    font-family: 'Quicksand', Verdana, sans-serif;
+    color: var(--color);
+    font-family: var(--font-family), sans-serif;
     font-weight: 500;
     font-size: 20px;
 }
 
 window.background > box button:active {
-    background: @button-active-background;
+    background: var(--button-active-background);
 }
 
 window.background > box button:disabled {
-    color: @button-disabled-color;
+    color: var(--button-disabled-color);
 }
 
 window.background > box button:not(:active) {
@@ -44,7 +47,7 @@ listview row:focus {
 
 .navbar .wrapper {
     padding: 8px;
-    background: @background-accent;
+    background: var(--background-accent);
     box-shadow: 0 1px 6px rgba(0, 0, 0, .2);
 }
 
@@ -58,7 +61,7 @@ listview row:focus {
 
 .navbar .play-button {
     border-radius: 50px;
-    background: @primary-color;
+    background: var(--primary-color);
     color: white;
 }
 
@@ -81,12 +84,12 @@ window.background .navbar label {
 }
 
 .tile-item .play-button {
-    background: @primary-color;
+    background: var(--primary-color);
     border: none;
     border-radius: 50px;
     min-width: 42px;
     min-height: 42px;
-    color: @text-color;
+    color: var(--text-color);
     box-shadow: 0 1px 2px #000;
 }
 
@@ -107,7 +110,7 @@ window.background .navbar label {
 }
 
 .detail-list row:not(:first-child) {
-    border-top: 1px solid @list-separator;
+    border-top: 1px solid var(--list-separator);
 }
 
 .detail-list-item {
@@ -116,15 +119,15 @@ window.background .navbar label {
 
 .detail-list-item .position {
     margin-right: 24px;
-    color: @color-accent;
+    color: var(--color-accent);
 }
 
 .detail-list-item .status-icon.playing {
-    color: @primary-color;
+    color: var(--primary-color);
 }
 
 .detail-list-item .status-icon.played {
-    color: @color-accent;
+    color: var(--color-accent);
 }
 
 .player-bar.hidden {
@@ -132,7 +135,7 @@ window.background .navbar label {
 }
 
 .player-bar .wrapper {
-    background: @background-accent;
+    background: var(--background-accent);
     box-shadow: 0 -1px 6px rgba(0, 0, 0, .2);
 }
 
@@ -154,13 +157,13 @@ window.background .navbar label {
 }
 
 .player-bar .wrapper .folder-name {
-    color: @color-accent;
+    color: var(--color-accent);
 }
 
 .player-bar .action-buttons button {
     background: transparent;
     border: none;
-    color: @color;
+    color: var(--color);
     min-width: 42px;
     margin: 0;
     border-radius: 40px;
@@ -172,18 +175,19 @@ window.background .navbar label {
 
 popover.background contents,
 popover.background arrow {
-    background: @background-accent;
+    background: var(--background-accent);
 }
+
 .scale-popup scale {
     min-height: 180px;
 }
 
 .content .empty-info label {
-    color: @color-accent;
+    color: var(--color-accent);
 }
 
 .log-overlay {
-    background: @background;
+    background: var(--background);
 }
 
 .log-overlay-header {
@@ -193,7 +197,7 @@ popover.background arrow {
 
 .log-overlay-header button {
     background: transparent;
-    color: @color;
+    color: var(--color);
     padding: 0 16px;
     border: none;
 }
@@ -201,25 +205,32 @@ popover.background arrow {
 .log-overlay .log-overlay-content label {
     font-size: 16px;
 }
+
 .log-overlay-content .time {
     padding: 0 4px;
-    color: @color-accent;
+    color: var(--color-accent);
 }
+
 .log-overlay-content .level {
     min-width: 50px;
 }
+
 .log-overlay-content .target {
-    color: @color-accent;
+    color: var(--color-accent);
 }
+
 .log-overlay-content .debug {
     color: #87c7ff;
 }
+
 .log-overlay-content .info {
     color: #74ae14;
 }
+
 .log-overlay-content .warn {
     color: #ffd300;
 }
+
 .log-overlay-content .error {
     color: #ca1212;
 }
