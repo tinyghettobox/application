@@ -8,7 +8,6 @@ members = [
     "player",
     "user_interface",
     "debian",
-    "spotifyd"
 ]
 
 #[profile.dev]

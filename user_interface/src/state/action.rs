@@ -3,7 +3,7 @@ use std::process::Command;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tokio::sync::Mutex as AsyncMutex;
-use tracing::{debug, error, info, trace};
+use tracing::{debug, error, info};
 
 use database::model::library_entry::Variant;
 use database::{
@@ -83,7 +83,6 @@ impl Action {
                         error!("No library entry '{}' found", library_entry_id);
                     }
                     Some(library_entry) => {
-                        debug!("size {}", std::mem::size_of_val(&library_entry));
                         let variants = library_entry.children.as_ref().map(|children| {
                             children
                                 .iter()
@@ -295,7 +294,7 @@ impl Action {
             Action::ToggleMonitor(active) => {
                 let mut state = state.lock().expect("could not lock");
 
-                if cfg!(target_arch = "arm") {
+                if cfg!(target_os = "linux") {
                     info!("Toggling display");
                     let result = Command::new("vcgencmd")
                         .arg("display_power")
@@ -314,7 +313,7 @@ impl Action {
                     .dispatch_event(Event::MonitorToggled);
             }
             Action::Shutdown => {
-                if cfg!(target_arch = "arm") {
+                if cfg!(target_os = "linux") {
                     info!("Shutting down");
                     Command::new("shutdown")
                         .arg("now")
