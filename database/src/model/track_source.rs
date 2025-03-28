@@ -1,6 +1,5 @@
 use sea_orm::entity::prelude::*;
 use sea_orm::ActiveValue::Set;
-use sea_orm::Iterable;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Formatter};
 use ts_rs::TS;
@@ -50,19 +49,6 @@ impl Related<super::library_entry::Entity> for Entity {
 }
 
 impl ActiveModelBehavior for ActiveModel {}
-
-impl ActiveModel {
-    pub fn update_from_model(&mut self, model: Model) {
-        for column in Column::iter() {
-            let old_value = self.get(column);
-            let new_value = model.get(column);
-
-            if &new_value != old_value.as_ref() {
-                self.set(column, new_value);
-            }
-        }
-    }
-}
 
 impl Debug for Model {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {

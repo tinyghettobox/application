@@ -25,6 +25,3 @@ glib-build-tools = "0.20.0"
 [features]
 gtk4_8 = ["gtk4/v4_8"]
 gtk4_12 = ["gtk4/v4_12"]
-
-[profile.release]
-debug = 1

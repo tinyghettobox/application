@@ -34,10 +34,6 @@ static GLOBAL: Jemalloc = Jemalloc;
 
 #[tokio::main(flavor = "multi_thread")]
 async fn main() -> glib::ExitCode {
-    if cfg!(not(target_env = "msvc")) {
-        println!("Loading jemalloc");
-    }
-
     let log_messages = Arc::new(Mutex::new(vec![]));
     let subscriber = tracing_subscriber::registry()
         .with(memory_subscriber::MemorySubscriber::new(
@@ -46,7 +42,7 @@ async fn main() -> glib::ExitCode {
         .with(
             tracing_subscriber::fmt::layer().with_filter(
                 Targets::new()
-                    .with_default(LevelFilter::TRACE)
+                    .with_default(LevelFilter::DEBUG)
                     .with_target("stream_download", LevelFilter::DEBUG)
                     .with_target("runtime", LevelFilter::INFO)
                     .with_target("sqlx::query", LevelFilter::INFO)

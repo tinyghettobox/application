@@ -130,6 +130,7 @@ impl<'a> Debug for FormatImage<'a> {
 }
 
 impl ActiveModel {
+    #[allow(dead_code)]
     pub fn update_from_model(&mut self, model: Model) {
         for column in Column::iter() {
             let old_value = self.get(column);

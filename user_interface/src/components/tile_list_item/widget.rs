@@ -3,7 +3,7 @@ use gtk4::glib::subclass::InitializingObject;
 use gtk4::glib::{object_subclass, Bytes};
 use gtk4::prelude::{ButtonExt, GestureExt, WidgetExt};
 use gtk4::subclass::prelude::*;
-use gtk4::{glib, CompositeTemplate, GestureClick, GestureLongPress};
+use gtk4::{glib, CompositeTemplate, GestureClick};
 use tracing::warn;
 
 #[derive(Default, CompositeTemplate)]
