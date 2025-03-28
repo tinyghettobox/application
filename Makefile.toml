@@ -12,11 +12,10 @@ script = "docker build -t cross_compile ."
 script = "podman build -t cross_compile ."
 
 [tasks.build-binaries-docker]
-#script = "docker run -ti -v .:/project/tinyghettobox/ -v H:\\Data\\projects\\kira:/project/kira -v ~/.cargo:/.cargo cross_compile"
-script = "docker run -ti -v .:/project/tinyghettobox/ -v /mnt/h/Data/projects/kira:/project/kira -v ~/.cargo:/.cargo cross_compile"
+script = "docker run -ti -u $(id -u):$(id -g) -v .:/project/tinyghettobox/ -v /mnt/h/Data/projects/kira:/project/kira -v ~/.cargo:/.cargo cross_compile"
 
 [tasks.build-binaries-podman]
-script = "podman run -ti -v .:/project/tinyghettobox/ -v /mnt/h/Data/projects/kira:/project/kira -v ~/.cargo:/.cargo cross_compile"
+script = "podman run -ti -u $(id -u):$(id -g) -v .:/project/tinyghettobox/ -v /mnt/h/Data/projects/kira:/project/kira -v ~/.cargo:/.cargo cross_compile"
 
 [tasks.build-deb]
-script = "docker run -ti -v .:/project/tinyghettobox/ -v /mnt/h/Data/projects/kira:/project/kira -v ~/.cargo:/.cargo cross_compile make -C debian"
+script = "docker run -ti -u $(id -u):$(id -g) -v .:/project/tinyghettobox/ -v /mnt/h/Data/projects/kira:/project/kira -v ~/.cargo:/.cargo cross_compile make -C debian"
