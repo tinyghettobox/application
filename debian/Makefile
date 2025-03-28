@@ -6,7 +6,6 @@ BIN_SOURCE_DIR=$(TARGET_DIR)/release
 OUTPUT_DIR=$(TARGET_DIR)/debian
 INSTALL_DIR=$(OUTPUT_DIR)/srv/tinyghettobox
 SYSTEMD_DIR=$(OUTPUT_DIR)/etc/systemd/system
-SPOTIFYD_CONF_DIR=$(OUTPUT_DIR)/etc/spotifyd
 
 all: debian_package
 
@@ -18,13 +17,11 @@ create_dirs:
 	mkdir -p $(OUTPUT_DIR)/DEBIAN
 	mkdir -p $(INSTALL_DIR)
 	mkdir -p $(SYSTEMD_DIR)
-	mkdir -p $(SPOTIFYD_CONF_DIR)
 	mkdir -p $(OUTPUT_DIR)/srv/tinyghettobox/admin_interface_ui
 
 copy_binaries:
 	cp $(BIN_SOURCE_DIR)/admin_interface_server $(INSTALL_DIR)
 	cp $(BIN_SOURCE_DIR)/user_interface $(INSTALL_DIR)
-	cp $(BIN_SOURCE_DIR)/spotifyd $(INSTALL_DIR)
 
 copy_webui:
 	cp -r ../admin_interface/web_ui/dist/* $(OUTPUT_DIR)/srv/tinyghettobox/admin_interface_ui
@@ -32,8 +29,6 @@ copy_webui:
 copy_config:
 	cp ./etc/systemd/system/tgb.user-interface.service $(SYSTEMD_DIR)
 	cp ./etc/systemd/system/tgb.admin-interface.service $(SYSTEMD_DIR)
-	cp ./etc/systemd/system/spotifyd.service $(SYSTEMD_DIR)
-	cp ./etc/spotifyd/spotifyd.conf $(SPOTIFYD_CONF_DIR)
 
 copy_debian_config:
 	cp -r ./DEBIAN/* $(OUTPUT_DIR)/DEBIAN/
