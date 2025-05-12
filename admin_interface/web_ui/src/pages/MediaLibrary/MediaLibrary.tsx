@@ -9,6 +9,7 @@ import SortButton from "@/pages/MediaLibrary/SortButton";
 import AddEntryDialog from "@/pages/MediaLibrary/AddEntryDialog/AddEntryDialog";
 import {LibraryEntry} from "@db-models/LibraryEntry";
 import {useParams, Link} from "react-router-dom";
+import {notify} from "@/components/Notification";
 
 export default function MediaLibrary() {
   const params = useParams();
@@ -39,9 +40,9 @@ export default function MediaLibrary() {
     await deleteLibraryEntry(entry.id);
   }
 
-  const handleSortEnd = async (itemIds: string[]) => {
-    const sortedItems = itemIds.map((id, index) => {
-      const entry = libraryEntry?.children?.find(entry => entry.id?.toString() === id) as LibraryEntry;
+  const handleSortEnd = async (items: LibraryEntry[]) => {
+    const sortedItems = items.map((item, index) => {
+      const entry = libraryEntry?.children?.find(entry => entry.id === item.id) as LibraryEntry;
       entry.sortKey = index;
       return entry;
     });
@@ -112,12 +113,12 @@ export default function MediaLibrary() {
             )
           )}
           {!!libraryEntry &&
-            <AddEntryDialog parent={libraryEntry} open={dialogOpen} onClose={handleCloseAddDialog} allowedVariant={usedVariant} />
+            <AddEntryDialog parent={libraryEntry} open={dialogOpen} onClose={handleCloseAddDialog} allowedVariant={usedVariant}/>
           }
         </Box>
 
       ) : (
-        loading ? <CircularProgress /> : <Typography variant="h5">Error: {error}</Typography>
+        loading ? <CircularProgress/> : <Typography variant="h5">Error: {error}</Typography>
       )}
     </div>
   )

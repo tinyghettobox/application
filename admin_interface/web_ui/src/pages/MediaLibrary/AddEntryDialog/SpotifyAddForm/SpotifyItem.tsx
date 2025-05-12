@@ -89,7 +89,7 @@ export default function SpotifyItem({entry, parentSelected = false, allowedVaria
     loadingProgress: 0,
     loadingAdd: false,
     libraryEntry: entry,
-    childrenLoaded: !!entry.children,
+    childrenLoaded: entry.variant !== 'folder' || !!entry.children,
     showing: false
   });
 

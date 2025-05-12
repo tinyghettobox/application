@@ -26,32 +26,57 @@ export default function SortButton({libraryEntries, onSorted}: Props) {
   const [patternList, setPatternList] = useState(['^.*?(\\d+).*$']);
   const [direction, setDirection] = useState('asc');
 
-  const regexList = patternList.map(pattern => new RegExp(pattern, 'i'));
+  let regexList: RegExp[] = [];
+  let regexError = '';
+  try {
+    regexList = patternList.map(pattern => new RegExp(pattern, 'i'));
+  } catch (e) {
+    regexError = `Invalid regex: ${e}`;
+  }
   const sortedLibraryEntries = libraryEntries
     .slice(0)
-    .sort((a, b) =>
-      regexList
-        .map((regex, i) => {
-          const weight = regexList.length - i;
-          const matchA = a.name.match(regex);
-          const matchB = b.name.match(regex);
-          let valueA: string | number = (matchA ? (matchA[1] || matchA[0]) : a.name).replace(',', '.'); // Ensure english number format
-          let valueB: string | number = (matchB ? (matchB[1] || matchB[0]) : b.name).replace(',', '.'); // Ensure english number format
+    .sort((a, b) => {
+      for (let i = 0; i < regexList.length; i++) {
+        const regex = regexList[i];
+        let weight = (regexList.length - i) * 10 * (direction === 'asc' ? 1 : -1);
+        const matchA = a.name.match(regex);
+        const matchB = b.name.match(regex);
 
-          if (!Number.isNaN(Number(valueA))) {
-            valueA = Number(valueA);
+        if (!matchA && !matchB) {
+          continue;
+        }
+        if (matchA && !matchB) {
+          return weight * -1;
+        }
+        if (!matchA && matchB) {
+          return weight;
+        }
+        if (Array.isArray(matchA) && Array.isArray(matchB)) {
+          if (matchA[1] && !matchB[1]) {
+            return weight * -1;
           }
-          if (!Number.isNaN(Number(valueB))) {
-            valueB = Number(valueB);
+          if (!matchA[1] && matchB[1]) {
+            return weight;
           }
-
-          if (direction === 'desc') {
-            return valueA > valueB ? weight * -1 : weight;
+          if (matchA[1] && matchB[1]) {
+            const valueA = Number(matchA[1].replace(',', '.')); // Ensure english number format
+            const valueB = Number(matchB[1].replace(',', '.')); // Ensure english number format
+            if (!Number.isNaN(valueA) && !Number.isNaN(valueB)) {
+              return valueA > valueB ? weight : weight * -1;
+            }
+            if (Number.isNaN(valueA) && !Number.isNaN(valueB)) {
+              return weight * -1;
+            }
+            if (!Number.isNaN(valueA) && Number.isNaN(valueB)) {
+              return weight;
+            }
+            return matchA[1] > matchB[1] ? weight : weight * -1;
           }
-          return valueA > valueB ? weight : weight * -1;
-        })
-        .reduce((sum, weight) => sum + weight, 0)
-    )
+        }
+        console.warn(`Regex ${regex} matched but no captured group found. This should not happen. A: ${a.name}, B: ${b.name}`);
+      }
+      return a.name < b.name ? 1 : -1;
+    })
     .map((entry, index) => {
       entry.sortKey = index;
       return entry;
@@ -132,6 +157,7 @@ export default function SortButton({libraryEntries, onSorted}: Props) {
                 </Grid>
               </Grid>
             )}
+            {regexError && <Typography color={"error"}>{regexError}</Typography>}
           </Stack>
           <FormControl>
             <FormLabel id="direction-label">Direction</FormLabel>
@@ -150,8 +176,8 @@ export default function SortButton({libraryEntries, onSorted}: Props) {
           </div>
           <div className={styles.exampleList}>
             <Typography variant={"subtitle1"}>Example order</Typography>
-            <div>
-              {sortedLibraryEntries.slice(0, 5).map((entry, index) => (
+            <div style={{overflow: "auto", maxHeight: 300}}>
+              {sortedLibraryEntries.slice(0, 100).map((entry, index) => (
                 <div key={entry.id} className={styles.exampleItem}>{index + 1}. {entry.name}</div>
               ))}
             </div>

@@ -73,9 +73,9 @@ export default function FileAddForm() {
     ]);
   }
 
-  const handleDragEnd = (itemIds: string[]) => {
+  const handleDragEnd = (items: LibraryEntry[]) => {
     setEntries(entries =>
-      itemIds.map(id => entries.find(entry => entry.name === id) as LibraryEntry)
+      items.map(items => entries.find(entry => entry.name === item.id) as LibraryEntry)
     );
   };
 
@@ -83,7 +83,6 @@ export default function FileAddForm() {
     removeEntry(entry);
   }
 
-  debugger
   return (
     <Box sx={{mt: 2}}>
       <Box sx={{textAlign: 'center', mb: 1}}>
@@ -92,38 +91,40 @@ export default function FileAddForm() {
           <VisuallyHiddenInput type="file" name="image" accept="audio/*" multiple onChange={handleUpload}/>
         </Button>
       </Box>
-      <Sortable itemIds={(entries as LibraryEntry[]).map(entry => entry.name)} onDragEnd={handleDragEnd}>
-        <List>
-          {(entries as LibraryEntry[]).map((entry) =>
-            <SortableItem itemId={entry.name} key={entry.name}>
-              {(props, isDragging) => (
-                <ListItem
-                  {...props}
-                  className={[
-                    sortableListStyles.sortableListItem,
-                    isDragging ? sortableListStyles.isDragging : ''
-                  ].join(' ')}
-                  secondaryAction={<IconButton onClickCapture={() => handleDelete(entry)}><Delete/></IconButton>}
-                >
-                  <ListItemAvatar>
-                    {uploadProgress[entry.name] == 100 ? (
-                      <Check/>
-                    ) : uploadProgress[entry.name] == -1 ? (
-                      <ErrorOutline color={"error"}/>
-                    ) : (
-                      <CircularProgress value={uploadProgress[entry.name] || 0} variant="determinate"/>
-                    )}
-                  </ListItemAvatar>
-                  <ListItemText
-                    primary={entry.name}
-                    secondary={`Filename: ${entry.trackSource?.title || entry.name}`}
-                    sx={{wordWrap: 'break-word'}}
-                  />
-                </ListItem>
-              )}
-            </SortableItem>
-          )}
-        </List>
+      <Sortable items={(entries as LibraryEntry[])} onDragEnd={handleDragEnd} getItemIdCallback={item => item.name}>
+        {(visibleItems) => (
+          <List>
+            {(entries as LibraryEntry[]).map((entry) =>
+              <SortableItem itemId={entry.name} key={entry.name}>
+                {(props, isDragging) => (
+                  <ListItem
+                    {...props}
+                    className={[
+                      sortableListStyles.sortableListItem,
+                      isDragging ? sortableListStyles.isDragging : ''
+                    ].join(' ')}
+                    secondaryAction={<IconButton onClickCapture={() => handleDelete(entry)}><Delete/></IconButton>}
+                  >
+                    <ListItemAvatar>
+                      {uploadProgress[entry.name] == 100 ? (
+                        <Check/>
+                      ) : uploadProgress[entry.name] == -1 ? (
+                        <ErrorOutline color={"error"}/>
+                      ) : (
+                        <CircularProgress value={uploadProgress[entry.name] || 0} variant="determinate"/>
+                      )}
+                    </ListItemAvatar>
+                    <ListItemText
+                      primary={entry.name}
+                      secondary={`Filename: ${entry.trackSource?.title || entry.name}`}
+                      sx={{wordWrap: 'break-word'}}
+                    />
+                  </ListItem>
+                )}
+              </SortableItem>
+            )}
+          </List>
+        )}
       </Sortable>
     </Box>
   );

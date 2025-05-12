@@ -10,9 +10,9 @@ import {arrayToBase64} from "@/util/base64";
 export default function SpotifyPlaylist() {
   const {entries, setEntries, removeEntry} = useAddEntryState();
 
-  const handleDragEnd = (itemIds: string[]) => {
+  const handleDragEnd = (items: LibraryEntry[]) => {
     setEntries(entries =>
-      itemIds.map(id => entries.find(entry => getId(entry) === id) as LibraryEntry)
+      items.map(item => entries.find(entry => getId(entry) === item.id) as LibraryEntry)
     )
   }
 
@@ -29,28 +29,30 @@ export default function SpotifyPlaylist() {
       <Typography variant="h5" className={styles.title}>Playlist</Typography>
       {entries.length === 0 && <Typography variant="body2" sx={{mt: 2}}>No items added yet</Typography>}
 
-      <Sortable itemIds={entries.map(getId)} onDragEnd={handleDragEnd}>
-        <List>
-          {entries.map((entry, index) => (
-            <SortableItem itemId={getId(entry)} key={getId(entry)}>
-              {(props, isDragging) => (
-                <ListItem
-                  {...props}
-                  className={[
-                    sortableListStyles.sortableListItem,
-                    isDragging ? sortableListStyles.isDragging : ''
-                  ].join(' ')}
-                  secondaryAction={<IconButton onClickCapture={() => handleDelete(entry)}><Delete/></IconButton>}
-                >
-                  <ListItemAvatar>
-                    <Avatar src={`data:image/png;base64,${arrayToBase64(entry.image || [])}`} alt={`Avatar for ${entry.name}`}/>
-                  </ListItemAvatar>
-                  <ListItemText primary={<Typography variant="body2">{entry.name}</Typography>}/>
-                </ListItem>
-              )}
-            </SortableItem>
-          ))}
-        </List>
+      <Sortable items={entries} onDragEnd={handleDragEnd} getItemIdCallback={getId}>
+        {(visibleItems) => (
+          <List>
+            {entries.map((entry, index) => (
+              <SortableItem itemId={getId(entry)} key={getId(entry)}>
+                {(props, isDragging) => (
+                  <ListItem
+                    {...props}
+                    className={[
+                      sortableListStyles.sortableListItem,
+                      isDragging ? sortableListStyles.isDragging : ''
+                    ].join(' ')}
+                    secondaryAction={<IconButton onClickCapture={() => handleDelete(entry)}><Delete/></IconButton>}
+                  >
+                    <ListItemAvatar>
+                      <Avatar src={`data:image/png;base64,${arrayToBase64(entry.image || [])}`} alt={`Avatar for ${entry.name}`}/>
+                    </ListItemAvatar>
+                    <ListItemText primary={<Typography variant="body2">{entry.name}</Typography>}/>
+                  </ListItem>
+                )}
+              </SortableItem>
+            ))}
+          </List>
+        )}
       </Sortable>
     </div>
   )

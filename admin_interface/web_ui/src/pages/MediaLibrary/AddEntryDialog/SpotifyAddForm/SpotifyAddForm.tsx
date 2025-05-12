@@ -125,8 +125,9 @@ export default function SpotifyAddForm({allowedVariant}: Props) {
             searchResult.data.length !== 0 ?
               <div className={styles.resultList}>
                 <Typography variant="h5" className={styles.title}>{watch('searchType')}s</Typography>
-                {searchResult.data.map(item => <SpotifyItem key={item.name} entry={item}
-                                                            allowedVariant={allowedVariant}/>)}
+                {searchResult.data.map(item => (
+                  <SpotifyItem key={item.name} entry={item} allowedVariant={allowedVariant}/>
+                ))}
               </div>
               :
               formState.isSubmitted && <Typography>No search result yet</Typography>
