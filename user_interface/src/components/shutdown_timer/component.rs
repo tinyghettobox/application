@@ -1,14 +1,11 @@
 use super::widget::ShutdownTimerWidget;
 use crate::components::{Children, Component};
 use crate::state::{Action, Dispatcher, Event, EventHandler, State};
-use chrono::Utc;
 use gtk4::prelude::IsA;
 use gtk4::{glib, Widget};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
-
-const DISPLAY_OFF_TIME: i64 = 1 * 60;
-const SHUTDOWN_OFF_TIME: i64 = 60 * 60;
+use tracing::info;
 
 pub struct ShutdownTimerComponent {
     children: Vec<Arc<Mutex<Box<dyn EventHandler>>>>,
@@ -71,17 +68,21 @@ impl Component<Option<()>> for ShutdownTimerComponent {
             });
         }
 
+        let state = state.clone();
         glib::timeout_add_local(Duration::from_secs(1), move || {
-            let last_activity = state.lock().expect("could not lock").last_activity;
-            let monitor_active = state.lock().expect("could not lock").monitor_active;
-            let now = Utc::now().timestamp();
-            if last_activity + DISPLAY_OFF_TIME < now && monitor_active {
+            let state = state.lock().expect("could not lock");
+            let last_activity = state.last_activity;
+            let monitor_active = state.monitor_active;
+            let display_off_timeout = Duration::from_secs(state.display_off_timeout as u64 * 60);
+            let sleep_timeout = Duration::from_secs(state.sleep_timeout as u64 * 60);
+
+            if last_activity.elapsed() > display_off_timeout && monitor_active {
                 dispatcher
                     .lock()
                     .expect("could not lock")
                     .dispatch_action(Action::ToggleMonitor(false));
             }
-            if last_activity + SHUTDOWN_OFF_TIME < now {
+            if last_activity.elapsed() > sleep_timeout {
                 dispatcher
                     .lock()
                     .expect("could not lock")
@@ -96,6 +97,7 @@ impl Component<Option<()>> for ShutdownTimerComponent {
 
     fn update(&mut self) {
         let monitor_active = self.state.lock().expect("could not lock").monitor_active;
+        info!("Setting forward to {}", monitor_active);
         self.widget.set_forwards_clicks(monitor_active);
     }
 

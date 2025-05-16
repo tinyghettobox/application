@@ -79,6 +79,7 @@ impl Component<Option<()>> for WindowComponent {
                 Arc::new(Mutex::new(Box::new(player_bar))),
                 Arc::new(Mutex::new(Box::new(ripple))),
                 Arc::new(Mutex::new(Box::new(log_overlay))),
+                Arc::new(Mutex::new(Box::new(shutdown_timer))),
             ],
         )
     }

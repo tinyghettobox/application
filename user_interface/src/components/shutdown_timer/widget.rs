@@ -7,7 +7,9 @@ use gtk4::{glib, CompositeTemplate, GestureClick, PropagationPhase, Widget};
 #[template(file = "./shutdown_timer.ui")]
 pub struct ShutdownTimerWidgetImp {
     #[template_child]
-    container: TemplateChild<gtk4::Box>,
+    wrapper: TemplateChild<gtk4::Box>,
+    #[template_child]
+    inner: TemplateChild<gtk4::Box>,
 }
 
 #[object_subclass]
@@ -41,7 +43,7 @@ impl ShutdownTimerWidget {
     }
 
     pub fn add_child(&self, widget: &impl IsA<Widget>) {
-        self.imp().container.get().append(widget);
+        self.imp().inner.get().append(widget);
     }
 
     pub fn connect_clicked(&self, callback: impl Fn() + Send + Sync + 'static) {
@@ -51,10 +53,10 @@ impl ShutdownTimerWidget {
             gesture.set_state(gtk4::EventSequenceState::None);
             callback();
         });
-        self.imp().container.add_controller(gesture);
+        self.imp().wrapper.add_controller(gesture);
     }
 
     pub fn set_forwards_clicks(&self, forwards: bool) {
-        self.imp().container.get().set_can_target(forwards);
+        self.imp().inner.get().set_can_target(forwards);
     }
 }

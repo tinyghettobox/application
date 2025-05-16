@@ -25,15 +25,13 @@ mod util;
 
 const APP_ID: &str = "org.tinyghettobox.gui";
 
-#[cfg(not(target_env = "msvc"))]
-use tikv_jemallocator::Jemalloc;
-
-#[cfg(not(target_env = "msvc"))]
-#[global_allocator]
-static GLOBAL: Jemalloc = Jemalloc;
-
 #[tokio::main(flavor = "multi_thread")]
 async fn main() -> glib::ExitCode {
+    // Necessary for librespot since rustls 0.23.x
+    rustls::crypto::aws_lc_rs::default_provider()
+        .install_default()
+        .expect("Failed to install default provider");
+
     let log_messages = Arc::new(Mutex::new(vec![]));
     let subscriber = tracing_subscriber::registry()
         .with(memory_subscriber::MemorySubscriber::new(
@@ -46,9 +44,11 @@ async fn main() -> glib::ExitCode {
                     .with_target("stream_download", LevelFilter::DEBUG)
                     .with_target("runtime", LevelFilter::INFO)
                     .with_target("sqlx::query", LevelFilter::INFO)
-                    .with_target("tokio", LevelFilter::INFO), // .with_target("ureq", LevelFilter::INFO)
-                                                              // .with_target("rustls", LevelFilter::INFO),
-                                                              // .with_target("user_interface::state", LevelFilter::INFO)
+                    .with_target("tokio", LevelFilter::INFO)
+                    .with_target("ureq", LevelFilter::INFO)
+                    .with_target("ureq::unit", LevelFilter::DEBUG)
+                    .with_target("rustls", LevelFilter::INFO),
+                // .with_target("user_interface::state", LevelFilter::INFO)
             ),
         );
 
@@ -145,6 +145,10 @@ async fn main() -> glib::ExitCode {
                     move |event| Event::broadcast(event, window.clone()),
                 );
 
+                dispatcher
+                    .lock()
+                    .unwrap()
+                    .dispatch_action(Action::ToggleMonitor(true));
                 dispatcher.lock().unwrap().dispatch_action(Action::Started);
                 info!("Rendered");
             });

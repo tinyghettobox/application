@@ -160,15 +160,11 @@ impl Component<i32> for TileListItemComponent {
 
 impl TileListItemComponent {
     pub fn update_play_state(&self) {
-        let playing_library_entry_id = self
-            .state
-            .lock()
-            .unwrap()
-            .playing_library_entry
-            .as_ref()
-            .unwrap()
-            .id;
-        self.widget
-            .set_playing(playing_library_entry_id == self.library_entry_id);
+        let playing_library_entry = self.state.lock().unwrap().playing_library_entry.clone();
+
+        if let Some(playing_library_entry) = playing_library_entry {
+            self.widget
+                .set_playing(playing_library_entry.id == self.library_entry_id);
+        }
     }
 }

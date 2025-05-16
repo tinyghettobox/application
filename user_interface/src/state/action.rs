@@ -1,7 +1,7 @@
 use chrono::Utc;
 use std::process::Command;
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use tokio::sync::Mutex as AsyncMutex;
 use tracing::{debug, error, info};
 
@@ -129,9 +129,13 @@ impl Action {
                             library_entries
                                 .into_iter()
                                 .skip_while(|entry| entry.id != start_id)
+                                .skip_while(|entry| entry.played_at.is_some())
                                 .collect()
                         } else {
-                            library_entries.into_iter().collect()
+                            library_entries
+                                .into_iter()
+                                .skip_while(|entry| entry.played_at.is_some())
+                                .collect()
                         };
                         debug!("playing queue: {}", queue);
 
@@ -152,28 +156,39 @@ impl Action {
                 }
             }
             Action::SetPlayedAt => {
-                let updated_library_entry = {
-                    let mut state = state.lock().unwrap();
-                    let library_entry_id = state
-                        .playing_library_entry
-                        .as_ref()
-                        .map(|entry| entry.id)
-                        .unwrap_or(-1);
-                    let library_entry = state
-                        .library_entry
-                        .children
-                        .as_mut()
-                        .and_then(|children| children.iter_mut().find(|c| c.id == library_entry_id))
-                        .expect("there should be a children with playing_library_id");
-                    library_entry.played_at = Some(Utc::now());
-                    library_entry.clone()
+                let now = Utc::now();
+                let playing_library_entry_id = {
+                    let state = state.lock().unwrap();
+                    let playing_library_entry_id =
+                        state.playing_library_entry.as_ref().map(|entry| entry.id);
+
+                    match playing_library_entry_id {
+                        Some(id) => id,
+                        None => {
+                            error!("Trying to set track as played at but not library entry is currently known playing");
+                            return;
+                        }
+                    }
                 };
+                // If playing library entry is currently shown we want to update it
+                {
+                    let mut state = state.lock().unwrap();
+                    let library_entry =
+                        state.library_entry.children.as_mut().and_then(|children| {
+                            children
+                                .iter_mut()
+                                .find(|c| c.id == playing_library_entry_id)
+                        });
+                    if let Some(library_entry) = library_entry {
+                        library_entry.played_at = Some(now);
+                    }
+                }
 
                 let connection = state.lock().unwrap().connection.clone();
                 match LibraryEntryRepository::mark_played(
                     &connection,
-                    updated_library_entry.id,
-                    updated_library_entry.played_at,
+                    vec![playing_library_entry_id],
+                    Some(now),
                 )
                 .await
                 {
@@ -296,14 +311,25 @@ impl Action {
 
                 if cfg!(target_os = "linux") {
                     info!("Toggling display");
-                    let result = Command::new("vcgencmd")
-                        .arg("display_power")
-                        .arg((active as i32).to_string())
-                        .spawn();
 
-                    if result.is_err() {
-                        error!("Could not toggle display: {:?}", result);
-                    }
+                    std::fs::read_dir("/sys/class/backlight/")
+                        .unwrap()
+                        .filter_map(|dir| dir.ok())
+                        .filter_map(|dir| {
+                            let bl_power = dir.path().join("./bl_power");
+                            if bl_power.exists() {
+                                Some(bl_power)
+                            } else {
+                                None
+                            }
+                        })
+                        .for_each(|bl_power| {
+                            // 1 will set power to off and 0 to on
+                            let power_value = if active { "0" } else { "1" };
+                            if let Err(error) = std::fs::write(bl_power, power_value) {
+                                error!("Could not toggle display: {:?}", error);
+                            }
+                        });
                 }
 
                 state.monitor_active = active;
@@ -315,6 +341,7 @@ impl Action {
             Action::Shutdown => {
                 if cfg!(target_os = "linux") {
                     info!("Shutting down");
+                    tokio::time::sleep(Duration::from_secs(1)).await;
                     Command::new("shutdown")
                         .arg("now")
                         .spawn()
@@ -323,7 +350,7 @@ impl Action {
             }
             Action::CaptureActivity => {
                 let mut state = state.lock().expect("could not lock");
-                state.last_activity = Utc::now().timestamp();
+                state.last_activity = Instant::now();
             }
             Action::ToggleLogOverlay(visible) => {
                 let mut state = state.lock().expect("could not lock");
@@ -339,7 +366,6 @@ impl Action {
 
 impl Event {
     pub fn broadcast(event: Event, listener: Arc<Mutex<Box<dyn EventHandler>>>) {
-        debug!("Handling event {:?}", event);
         let mut listeners = vec![listener.clone()];
         while let Some(listener) = listeners.pop() {
             let mut listener = listener.lock().unwrap();

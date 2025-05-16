@@ -2,7 +2,11 @@
 <interface>
   <template class="TinyGhettoBoxShutdownTimer" parent="GtkBox">
     <child>
-      <object class="GtkBox" id="container"/>
+      <object class="GtkBox" id="wrapper">
+        <child>
+          <object class="GtkBox" id="inner"/>
+        </child>
+      </object>
     </child>
   </template>
 </interface>

@@ -1,6 +1,6 @@
 use gtk4::glib::clone;
 use std::sync::{Arc, Mutex};
-use tracing::{error, warn};
+use tracing::warn;
 
 use crate::components::detail_list_item::widget::{DetailListItemState, DetailListItemWidget};
 use crate::components::{Children, Component};
@@ -18,7 +18,6 @@ pub struct DetailListItemComponent {
 impl EventHandler for DetailListItemComponent {
     fn on_event(&mut self, event: &Event) {
         match event {
-            Event::LibraryEntryChanged => self.check_library_entry(),
             Event::PlayStateChanged | Event::TrackChanged | Event::TrackPlayed => {
                 self.update();
             }
@@ -113,21 +112,16 @@ impl Component<Option<()>> for DetailListItemComponent {
                 position.and_then(move |pos| children.get(pos).cloned().map(|entry| (pos, entry)))
             });
 
-        match entry_with_position {
-            Some((position, entry)) => {
-                self.widget.set_position(position as u32);
-                self.widget.set_name(&entry.name);
-                // Is this currently playing?
-                if entry.id == playing_library_entry_id.unwrap_or(-1) {
-                    self.widget.set_state(DetailListItemState::Playing);
-                } else if let Some(_) = entry.played_at.as_ref() {
-                    self.widget.set_state(DetailListItemState::Played);
-                } else {
-                    self.widget.set_state(DetailListItemState::None);
-                }
-            }
-            None => {
-                error!("Wanted to render detail list item but not having children? o.O");
+        if let Some((position, entry)) = entry_with_position {
+            self.widget.set_position(position as u32);
+            self.widget.set_name(&entry.name);
+            // Is this currently playing?
+            if entry.id == playing_library_entry_id.unwrap_or(-1) {
+                self.widget.set_state(DetailListItemState::Playing);
+            } else if let Some(_) = entry.played_at.as_ref() {
+                self.widget.set_state(DetailListItemState::Played);
+            } else {
+                self.widget.set_state(DetailListItemState::None);
             }
         }
     }
@@ -136,36 +130,6 @@ impl Component<Option<()>> for DetailListItemComponent {
     fn get_widget(&self) -> DetailListItemWidget {
         (*self.widget).clone()
     }
-}
-
-impl DetailListItemComponent {
-    pub fn check_library_entry(&self) {}
-
-    // fn update_play_state(&self) {
-    //     let state = self.state.lock().unwrap();
-    //
-    //     let played_library_entry_id = state
-    //         .playing_library_entry
-    //         .clone()
-    //         .expect("playing_library_entry should be set")
-    //         .id;
-    //
-    //     let library_entry = self.library_entry.lock().unwrap().as_mut().unwrap();
-    //
-    //     if library_entry.id == played_library_entry_id {
-    //         let updated_library_entry = state.library_entry.clone().children.unwrap().iter().find(|child| child.id == library_entry.id).expect("could not find library entry");
-    //         *library_entry = updated_library_entry.clone();
-    //
-    //         if entry.id == playing_library_entry_id.unwrap_or(-1) {
-    //             self.widget.set_state(DetailListItemState::Playing);
-    //         } else if let Some(_) = entry.played_at.as_ref() {
-    //             self.widget.set_state(DetailListItemState::Played);
-    //         } else {
-    //             self.widget.set_state(DetailListItemState::None);
-    //         }
-    //
-    //     }
-    // }
 }
 
 /**

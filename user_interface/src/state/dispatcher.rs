@@ -54,8 +54,6 @@ impl Dispatcher {
         glib::MainContext::default().spawn_local(async move {
             glib::idle_add_local(move || match event_receiver.try_recv() {
                 Ok(event) => {
-                    let event_name = format!("{:?}", event);
-                    debug!("Received event {}", event_name);
                     handle_event(event);
                     glib::ControlFlow::Continue
                 }

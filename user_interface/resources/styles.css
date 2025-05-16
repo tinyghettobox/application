@@ -1,32 +1,30 @@
-:root {
-    --primary-color: #1B6D9B;
-    --background: #21242D;
-    --background-accent: #272A34;
-    --color: #fff;
-    --color-accent: #aaa;
-    --button-disabled-color: #777;
-    --button-active-background: #555;
-    --list-separator: #333;
-    --font-family: 'Quicksand', Verdana;
-}
+@define-color primary-color #1B6D9B;
+@define-color background #21242D;
+@define-color background-accent #272A34;
+@define-color color #fff;
+@define-color color-accent #aaa;
+@define-color button-disabled-color #777;
+@define-color button-active-background #555;
+@define-color list-separator #333;
+
 
 window.background {
-    background: var(--background);
+    background: @background;
 }
 
 window.background > box label {
-    color: var(--color);
-    font-family: var(--font-family), sans-serif;
+    color: @color;
+    font-family: 'Quicksand', Verdana, sans-serif;
     font-weight: 500;
     font-size: 20px;
 }
 
 window.background > box button:active {
-    background: var(--button-active-background);
+    background: @button-active-background;
 }
 
 window.background > box button:disabled {
-    color: var(--button-disabled-color);
+    color: @button-disabled-color;
 }
 
 window.background > box button:not(:active) {
@@ -47,7 +45,7 @@ listview row:focus {
 
 .navbar .wrapper {
     padding: 8px;
-    background: var(--background-accent);
+    background: @background-accent;
     box-shadow: 0 1px 6px rgba(0, 0, 0, .2);
 }
 
@@ -61,7 +59,7 @@ listview row:focus {
 
 .navbar .play-button {
     border-radius: 50px;
-    background: var(--primary-color);
+    background: @primary-color;
     color: white;
 }
 
@@ -84,12 +82,12 @@ window.background .navbar label {
 }
 
 .tile-item .play-button {
-    background: var(--primary-color);
+    background: @primary-color;
     border: none;
     border-radius: 50px;
     min-width: 42px;
     min-height: 42px;
-    color: var(--text-color);
+    color: @text-color;
     box-shadow: 0 1px 2px #000;
 }
 
@@ -110,7 +108,7 @@ window.background .navbar label {
 }
 
 .detail-list row:not(:first-child) {
-    border-top: 1px solid var(--list-separator);
+    border-top: 1px solid @list-separator;
 }
 
 .detail-list-item {
@@ -119,15 +117,15 @@ window.background .navbar label {
 
 .detail-list-item .position {
     margin-right: 24px;
-    color: var(--color-accent);
+    color: @color-accent;
 }
 
 .detail-list-item .status-icon.playing {
-    color: var(--primary-color);
+    color: @primary-color;
 }
 
 .detail-list-item .status-icon.played {
-    color: var(--color-accent);
+    color: @color-accent;
 }
 
 .player-bar.hidden {
@@ -135,7 +133,7 @@ window.background .navbar label {
 }
 
 .player-bar .wrapper {
-    background: var(--background-accent);
+    background: @background-accent;
     box-shadow: 0 -1px 6px rgba(0, 0, 0, .2);
 }
 
@@ -157,13 +155,13 @@ window.background .navbar label {
 }
 
 .player-bar .wrapper .folder-name {
-    color: var(--color-accent);
+    color: @color-accent;
 }
 
 .player-bar .action-buttons button {
     background: transparent;
     border: none;
-    color: var(--color);
+    color: @color;
     min-width: 42px;
     margin: 0;
     border-radius: 40px;
@@ -175,7 +173,7 @@ window.background .navbar label {
 
 popover.background contents,
 popover.background arrow {
-    background: var(--background-accent);
+    background: @background-accent;
 }
 
 .scale-popup scale {
@@ -183,11 +181,11 @@ popover.background arrow {
 }
 
 .content .empty-info label {
-    color: var(--color-accent);
+    color: @color-accent;
 }
 
 .log-overlay {
-    background: var(--background);
+    background: @background;
 }
 
 .log-overlay-header {
@@ -197,7 +195,7 @@ popover.background arrow {
 
 .log-overlay-header button {
     background: transparent;
-    color: var(--color);
+    color: @color;
     padding: 0 16px;
     border: none;
 }
@@ -208,7 +206,7 @@ popover.background arrow {
 
 .log-overlay-content .time {
     padding: 0 4px;
-    color: var(--color-accent);
+    color: @color-accent;
 }
 
 .log-overlay-content .level {
@@ -216,7 +214,7 @@ popover.background arrow {
 }
 
 .log-overlay-content .target {
-    color: var(--color-accent);
+    color: @color-accent;
 }
 
 .log-overlay-content .debug {

@@ -15,13 +15,11 @@ tracing-subscriber = "0.3.18"
 console-subscriber = "0.4.1"
 tokio = { version = "1.35.1", features = ["rt-multi-thread"] }
 chrono = "0.4.35"
-
-[target.'cfg(not(target_env = "msvc"))'.dependencies]
-tikv-jemallocator = { version = "0.6.0", features = ["profiling"] }
+rustls = "0.23.26"
 
 [build-dependencies]
 glib-build-tools = "0.20.0"
 
 [features]
 gtk4_8 = ["gtk4/v4_8"]
-gtk4_12 = ["gtk4/v4_12"]
+gtk4_16 = ["gtk4/v4_16"]
