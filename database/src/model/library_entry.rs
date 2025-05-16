@@ -5,6 +5,7 @@ use sea_orm::ActiveValue::Set;
 use sea_orm::Iterable;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display, Formatter};
+use tracing::debug;
 use ts_rs::TS;
 
 #[derive(Clone, Copy, Debug, PartialEq, EnumIter, DeriveActiveEnum, Serialize, Deserialize, TS)]
@@ -40,7 +41,6 @@ impl Display for Variant {
 #[ts(export)]
 pub struct Model {
     #[sea_orm(primary_key)]
-    #[serde(skip_deserializing)]
     pub id: i32,
     #[ts(optional)]
     pub parent_id: Option<i32>,
@@ -133,11 +133,22 @@ impl ActiveModel {
     #[allow(dead_code)]
     pub fn update_from_model(&mut self, model: Model) {
         for column in Column::iter() {
+            if matches!(column, Column::Id) {
+                continue;
+            }
             let old_value = self.get(column);
             let new_value = model.get(column);
 
             if &new_value != old_value.as_ref() {
+                if !matches!(column, Column::Image) {
+                    debug!(
+                        "Updating column {:?} from {:?} to {:?}",
+                        column, old_value, &new_value
+                    );
+                }
                 self.set(column, new_value);
+            } else {
+                debug!("Ignoring column {:?} with {:?}", column, old_value);
             }
         }
     }
@@ -166,4 +177,10 @@ impl CreateModel {
         model.sort_key = Set(self.sort_key.clone());
         model
     }
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct BulkUpdateModel {
+    pub id: i32,
+    pub sort_key: Option<i32>,
 }

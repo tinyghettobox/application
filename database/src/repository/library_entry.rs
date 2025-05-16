@@ -1,16 +1,17 @@
 use std::collections::HashSet;
 
-use sea_orm::prelude::DateTimeUtc;
+use crate::model::library_entry::{
+    ActiveModel, BulkUpdateModel, Column, CreateModel, Entity, Model, ParentLink,
+};
+use crate::model::track_source::{Column as TrackSourceColumn, Entity as TrackSourceEntity};
+use crate::repository::track_source::TrackSourceRepository;
+use sea_orm::prelude::{DateTimeUtc, Expr};
 use sea_orm::ActiveValue::Set;
 use sea_orm::Order::Asc;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, ConnectionTrait, DatabaseConnection, DbBackend, DbErr,
-    EntityTrait, QueryFilter, QueryOrder, QuerySelect, Statement, TransactionTrait,
+    EntityTrait, QueryFilter, QueryOrder, QuerySelect, Statement, TransactionTrait, Value,
 };
-
-use crate::model::library_entry::{ActiveModel, Column, CreateModel, Entity, Model, ParentLink};
-use crate::model::track_source::{Column as TrackSourceColumn, Entity as TrackSourceEntity};
-use crate::repository::track_source::TrackSourceRepository;
 
 pub struct LibraryEntryRepository {}
 
@@ -86,20 +87,109 @@ impl LibraryEntryRepository {
         Ok(result.rows_affected > 0)
     }
 
+    pub async fn bulk_patch(
+        conn: &DatabaseConnection,
+        updates: Vec<BulkUpdateModel>,
+    ) -> Result<(), DbErr> {
+        let tx = conn.begin().await?;
+
+        for update in updates {
+            let mut model: ActiveModel = Entity::find_by_id(update.id)
+                .one(&tx)
+                .await?
+                .ok_or(DbErr::RecordNotFound(format!(
+                    "No library entry with id {} found",
+                    update.id
+                )))?
+                .into();
+
+            if let Some(sort_key) = update.sort_key {
+                model.sort_key = Set(sort_key);
+            }
+
+            model.update(&tx).await?;
+        }
+
+        tx.commit().await?;
+
+        Ok(())
+    }
+
+    /// Mark the given library entries as played including its children. Additionally the parent of
+    /// the given entries are checked if all children are played now. In case all are played the
+    /// parent is marked as played as well.
     pub async fn mark_played(
         conn: &DatabaseConnection,
-        library_entry_id: i32,
+        library_entry_ids: Vec<i32>,
         played_at: Option<DateTimeUtc>,
     ) -> Result<(), DbErr> {
-        let mut model: ActiveModel = Entity::find_by_id(library_entry_id)
-            .one(conn)
-            .await?
-            .ok_or(DbErr::RecordNotFound("No library entry found".to_string()))?
-            .into();
-        model.played_at = Set(played_at);
+        let tx = conn.begin().await?;
 
-        model.update(conn).await?;
-        Ok(())
+        // Determine all child entry ids and update their played at
+        let mut entries = Entity::find()
+            .filter(Column::Id.is_in(library_entry_ids.clone()))
+            .all(&tx)
+            .await?;
+
+        let mut parent_ids = library_entry_ids.clone();
+        loop {
+            let children = Entity::find()
+                .filter(Column::ParentId.is_in(parent_ids))
+                .all(&tx)
+                .await?;
+
+            if children.len() == 0 {
+                break;
+            }
+
+            parent_ids = children.iter().map(|child| child.id).collect::<Vec<i32>>();
+            entries.extend(children);
+        }
+
+        Entity::update_many()
+            .col_expr(Column::PlayedAt, Expr::value(played_at))
+            .filter(Column::Id.is_in(entries.iter().map(|c| c.id).collect::<Vec<i32>>()))
+            .exec(&tx)
+            .await?;
+
+        // Searching for parents and marking those as played which have all children now played
+        let parent_ids = entries
+            .iter()
+            .filter(|entry| library_entry_ids.contains(&entry.id))
+            .map(|entry| entry.parent_id.unwrap_or(-1))
+            .collect::<HashSet<_>>()
+            .into_iter()
+            .collect::<Vec<i32>>();
+
+        let completed_parents = Entity::find()
+            .from_raw_sql(Statement::from_sql_and_values(
+                DbBackend::Sqlite,
+                format!(
+                    r#"
+                        select parent.*
+                        from library_entry parent
+                        left join library_entry child on child.parent_id = parent.id
+                        where parent.id in ({}) and parent.played_at is null
+                        group by parent.id
+                        having sum(iif(child.played_at, 0, 1)) = 0
+                    "#,
+                    vec!["?"; parent_ids.len()].join(", ")
+                ),
+                parent_ids
+                    .into_iter()
+                    .map(Into::into)
+                    .collect::<Vec<Value>>(),
+            ))
+            .all(&tx)
+            .await?;
+
+        Entity::update_many()
+            .col_expr(Column::PlayedAt, Expr::value(played_at))
+            .filter(Column::Id.is_in(completed_parents.iter().map(|c| c.id).collect::<Vec<i32>>()))
+            .exec(&tx)
+            .await?;
+
+        tx.commit().await
     }
 
     pub async fn get_tracks_in_parent(
@@ -110,19 +200,19 @@ impl LibraryEntryRepository {
             .from_raw_sql(Statement::from_sql_and_values(
                 DbBackend::Sqlite,
                 r#"
-                WITH RECURSIVE library_hierarchy AS (
-                    SELECT *, substr('0000' || sort_key, -4, 4) as path
-                    FROM library_entry
-                    WHERE parent_id = ?
+                    WITH RECURSIVE library_hierarchy AS (
+                        SELECT *, substr('0000' || sort_key, -4, 4) as path
+                        FROM library_entry
+                        WHERE parent_id = ?
 
-                    UNION ALL
+                        UNION ALL
 
-                    SELECT le.*, lh.path || '.' || substr('0000' || le.sort_key, -4, 4)
-                    FROM library_entry le
-                    INNER JOIN library_hierarchy lh ON le.parent_id = lh.id
-                )
-                SELECT * FROM library_hierarchy WHERE variant != 'folder' ORDER BY path ASC;
-            "#,
+                        SELECT le.*, lh.path || '.' || substr('0000' || le.sort_key, -4, 4)
+                        FROM library_entry le
+                        INNER JOIN library_hierarchy lh ON le.parent_id = lh.id
+                    )
+                    SELECT * FROM library_hierarchy WHERE variant != 'folder' ORDER BY path ASC;
+                "#,
                 [library_entry_id.into()],
             ))
             .all(conn)

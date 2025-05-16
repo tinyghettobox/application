@@ -3,7 +3,5 @@
 systemctl daemon-reload
 systemctl enable tgb.user-interface.service
 systemctl enable tgb.admin-interface.service
-systemctl enable spotifyd.service
 systemctl start tgb.user-interface.service
 systemctl start tgb.admin-interface.service
-systemctl start spotifyd.service
