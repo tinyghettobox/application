@@ -10,6 +10,7 @@ use std::io::{Read, Seek, SeekFrom};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use symphonia::core::io::MediaSource;
+use tracing::debug;
 
 #[derive(Clone)]
 pub struct LocalPlayTarget {
@@ -25,7 +26,8 @@ impl LocalPlayTarget {
         Self {
             conn,
             manager: Arc::new(Mutex::new(
-                AudioManager::<DefaultBackend>::new(AudioManagerSettings::default()).expect("manager to be created"),
+                AudioManager::<DefaultBackend>::new(AudioManagerSettings::default())
+                    .expect("manager to be created"),
             )),
             sound_handle: Arc::new(Mutex::new(None)),
             volume,
@@ -35,16 +37,19 @@ impl LocalPlayTarget {
 }
 
 fn percent_to_decibel(value: f64) -> Value<Decibels> {
-    Fixed(Decibels((30.0 * (value * 0.99 + 0.01).log10()) as f32))
+    let db = Decibels::SILENCE.0 + Decibels::SILENCE.0.abs() * value.powf(2.0) as f32;
+    debug!("Setting decibels to {}", db);
+    Fixed(Decibels(db))
 }
 
 #[async_trait]
 impl PlayTarget for LocalPlayTarget {
     async fn play(&mut self, track: &LibraryEntry) -> Result<(), String> {
-        let file = TrackSourceRepository::get_file(&self.conn, track.track_source.as_ref().unwrap().id)
-            .await
-            .map_err(|e| format!("Could not get file: {}", e))?
-            .ok_or("Track source has no file set".to_string())?;
+        let file =
+            TrackSourceRepository::get_file(&self.conn, track.track_source.as_ref().unwrap().id)
+                .await
+                .map_err(|e| format!("Could not get file: {}", e))?
+                .ok_or("Track source has no file set".to_string())?;
 
         let media_source = BytesMediaSource::new(file.clone());
         let settings = StreamingSoundSettings::default().volume(percent_to_decibel(self.volume));
@@ -111,12 +116,15 @@ impl PlayTarget for LocalPlayTarget {
 
     async fn set_volume(&mut self, volume: f64) -> Result<(), String> {
         self.volume = volume;
-        self.sound_handle
+
+        let mut handle = self
+            .sound_handle
             .lock()
-            .map_err(|e| format!("Could not lock sound handle: {}", e))?
-            .as_mut()
-            .ok_or("No sound handle to set value".to_string())?
-            .set_volume(percent_to_decibel(volume), Tween::default());
+            .map_err(|e| format!("Could not lock sound handle: {}", e))?;
+
+        if let Some(handle) = handle.as_mut() {
+            handle.set_volume(percent_to_decibel(volume), Tween::default());
+        }
         Ok(())
     }
 

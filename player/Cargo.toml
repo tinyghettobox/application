@@ -7,11 +7,17 @@ edition = "2021"
 
 [dependencies]
 async-trait = "0.1.80"
+base64 = "0.22.1"
 chrono = "0.4.31"
 database = { path = "../database" }
 kira = "0.10.2"
 kira-remote-stream = { path = "../kira_remote_stream" }
 rspotify = { version = "0.13.1", default-features = false, features = ["client-ureq", "ureq-rustls-tls"] }
 symphonia = "0.5.3"
+serde_json = "1.0.140"
 tokio = { version = "1.35.1", features = ["rt-multi-thread", "full", "tracing"] }
 tracing = "0.1.40"
+librespot = { path = "../../librespot", default-features = false, features = ["rodio-backend", "with-libmdns"] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+librespot = { path = "../../librespot", features = ["alsa-backend", "with-libmdns"] }

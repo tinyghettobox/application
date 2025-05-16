@@ -1,3 +1,4 @@
+use std::ops::Sub;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -11,55 +12,58 @@ use crate::{Player, Progress};
 // Update progress position every second optimistically. FetchProgressTimer is used to correct the optimistic progress position
 pub struct PlayerTimer;
 impl PlayerTimer {
-    pub fn start_progress_timer<P, T, E>(player: Arc<Mutex<Player<P, T, E>>>)
+    pub fn start_progress_timer<P, T, E>(_player: Arc<Mutex<Player<P, T, E>>>)
     where
         P: Fn(Progress) + 'static + Sync + Send,
         T: Fn(Option<LibraryEntry>) + 'static + Sync + Send,
         E: Fn(LibraryEntry) + 'static + Sync + Send,
     {
-        tokio::spawn(async move {
-            let mut interval = tokio::time::interval(Duration::from_millis(1000));
-            loop {
-                interval.tick().await;
-
-                let mut player = player.lock().await;
-                let (variant, progress) = {
-                    let mut current_track = player.current_track.lock().await;
-                    let track = match current_track.as_mut() {
-                        None => continue,
-                        Some(current_track) if !current_track.playing => continue,
-                        Some(current_track) => current_track,
-                    };
-
-                    track.progress.position += Duration::from_millis(1000);
-
-                    if let Some(on_progress) = player.notify_progress.as_ref() {
-                        on_progress(track.progress.clone())
-                    }
-
-                    (track.library_entry.variant, track.progress.clone())
-                };
-                // For infinite streams there is no track end so we skip that part
-                if !progress.is_finite {
-                    continue;
-                }
-
-                // For spotify we want to add tracks to queue before they end to ensure seamless playing
-                if matches!(variant, Variant::Spotify) {
-                    if progress.position >= progress.duration {
-                        if let Err(err) = player.on_track_end().await {
-                            error!("Failed to play next track: {}", err);
-                        }
-                    }
-                } else {
-                    if progress.position >= progress.duration {
-                        if let Err(err) = player.on_track_end().await {
-                            error!("Failed to end track: {}", err);
-                        }
-                    }
-                }
-            }
-        });
+        // tokio::spawn(async move {
+        //     let mut interval = tokio::time::interval(Duration::from_millis(1000));
+        //     let mut last_update = Instant::now();
+        //     loop {
+        //         interval.tick().await;
+        //
+        //         let mut player = player.lock().await;
+        //         let (variant, progress) = {
+        //             let mut current_track = player.current_track.lock().await;
+        //             let track = match current_track.as_mut() {
+        //                 None => continue,
+        //                 Some(current_track) if !current_track.playing => continue,
+        //                 Some(current_track) => current_track,
+        //             };
+        //
+        //             let now = Instant::now();
+        //             track.progress.position += now.duration_since(last_update);
+        //             last_update = now;
+        //
+        //             if let Some(on_progress) = player.notify_progress.as_ref() {
+        //                 on_progress(track.progress.clone())
+        //             }
+        //
+        //             (track.library_entry.variant, track.progress.clone())
+        //         };
+        //         // For infinite streams there is no track end so we skip that part
+        //         if !progress.is_finite {
+        //             continue;
+        //         }
+        //
+        //         // For spotify we want to add tracks to queue before they end to ensure seamless playing
+        //         if matches!(variant, Variant::Spotify) {
+        //             if progress.position >= progress.duration {
+        //                 if let Err(err) = player.on_track_end().await {
+        //                     error!("Failed to play next track: {}", err);
+        //                 }
+        //             }
+        //         } else {
+        //             if progress.position >= progress.duration {
+        //                 if let Err(err) = player.on_track_end().await {
+        //                     error!("Failed to end track: {}", err);
+        //                 }
+        //             }
+        //         }
+        //     }
+        // });
     }
 
     // Fetching progress is done in separate thread to not block progress update
@@ -70,30 +74,55 @@ impl PlayerTimer {
         E: Fn(LibraryEntry) + 'static + Sync + Send,
     {
         tokio::spawn(async move {
-            let mut interval = tokio::time::interval(Duration::from_millis(5000));
+            let mut interval = tokio::time::interval(Duration::from_millis(1000));
             loop {
                 interval.tick().await;
-                let player = player.lock().await;
+                let mut player = player.lock().await;
 
-                let mut current_track = player.current_track.lock().await;
-                let current_track = match current_track.as_mut() {
-                    None => continue,
-                    Some(track) if !track.playing => continue,
-                    Some(track) => track,
-                };
+                let (variant, progress) = {
+                    let mut current_track = player.current_track.lock().await;
+                    let track = match current_track.as_mut() {
+                        None => continue,
+                        Some(track) if !track.playing => continue,
+                        Some(track) => track,
+                    };
 
-                let progress = match current_track.target.lock().await.get_progress().await {
-                    Ok(progress) => progress,
-                    Err(error) => {
-                        error!("Could not fetch progress: {}", error);
-                        continue;
+                    let progress = match track.target.lock().await.get_progress().await {
+                        Ok(progress) => progress,
+                        Err(error) => {
+                            error!("Could not fetch progress: {}", error);
+                            continue;
+                        }
+                    };
+
+                    track.progress = progress.clone();
+
+                    if let Some(on_progress) = player.notify_progress.as_ref() {
+                        on_progress(track.progress.clone())
                     }
+
+                    (track.library_entry.variant, progress.clone())
                 };
 
-                current_track.progress = progress;
+                // For infinite streams there is no track end so we skip that part
+                if !progress.is_finite {
+                    continue;
+                }
 
-                if let Some(on_progress) = player.notify_progress.as_ref() {
-                    on_progress(current_track.progress.clone())
+                // For spotify we want to add tracks to queue before they end to ensure seamless playing
+
+                if progress.position >= progress.duration {
+                    if let Err(err) = player.on_track_end().await {
+                        error!("Failed to end track: {}", err);
+                    }
+                } else if matches!(variant, Variant::Spotify) {
+                    if progress.duration.sub(progress.position) < Duration::from_secs(5)
+                        && progress.duration.sub(progress.position) > Duration::from_secs(4)
+                    {
+                        if let Err(err) = player.queue_next_track().await {
+                            error!("Failed to play next track: {}", err);
+                        }
+                    }
                 }
             }
         });

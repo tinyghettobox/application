@@ -24,7 +24,8 @@ impl RemotePlayTarget {
     pub fn new(_conn: DatabaseConnection, volume: f64) -> Self {
         Self {
             manager: Arc::new(Mutex::new(
-                AudioManager::<DefaultBackend>::new(AudioManagerSettings::default()).expect("manager to be created"),
+                AudioManager::<DefaultBackend>::new(AudioManagerSettings::default())
+                    .expect("manager to be created"),
             )),
             sound_handle: Arc::new(Mutex::new(None)),
             volume,
@@ -34,7 +35,9 @@ impl RemotePlayTarget {
 }
 
 fn percent_to_decibel(value: f64) -> Value<Decibels> {
-    Fixed(Decibels((30.0 * (value * 0.99 + 0.01).log10()) as f32))
+    let db = Decibels::SILENCE.0 + Decibels::SILENCE.0.abs() * value.powf(2.0) as f32;
+    debug!("Setting decibels to {}", db);
+    Fixed(Decibels(db))
 }
 
 #[async_trait]
@@ -58,7 +61,12 @@ impl PlayTarget for RemotePlayTarget {
         let sound = StreamingSoundData::from_decoder(decoder).with_settings(settings);
         self.duration = sound.duration();
 
-        let handle = self.manager.lock().await.play(sound).map_err(|e| format!("Could not play sound: {}", e))?;
+        let handle = self
+            .manager
+            .lock()
+            .await
+            .play(sound)
+            .map_err(|e| format!("Could not play sound: {}", e))?;
 
         *self.sound_handle.lock().await = Some(handle);
 
@@ -71,7 +79,12 @@ impl PlayTarget for RemotePlayTarget {
     }
 
     async fn pause(&mut self) -> Result<(), String> {
-        self.sound_handle.lock().await.as_mut().ok_or("No sound handle to pause".to_string())?.pause(Tween::default());
+        self.sound_handle
+            .lock()
+            .await
+            .as_mut()
+            .ok_or("No sound handle to pause".to_string())?
+            .pause(Tween::default());
         Ok(())
     }
 
@@ -86,11 +99,15 @@ impl PlayTarget for RemotePlayTarget {
     }
 
     async fn stop(&mut self) -> Result<(), String> {
-        self.sound_handle.lock().await.as_mut().ok_or("No sound handle to stop".to_string())?.stop(Tween::default());
+        self.sound_handle
+            .lock()
+            .await
+            .as_mut()
+            .ok_or("No sound handle to stop".to_string())?
+            .stop(Tween::default());
         Ok(())
     }
 
-    // TODO fix seeking for remote target
     async fn seek_to(&mut self, position: Duration) -> Result<(), String> {
         self.sound_handle
             .lock()
@@ -103,18 +120,23 @@ impl PlayTarget for RemotePlayTarget {
 
     async fn set_volume(&mut self, volume: f64) -> Result<(), String> {
         self.volume = volume;
-        self.sound_handle
-            .lock()
-            .await
-            .as_mut()
-            .ok_or("No sound handle to set value".to_string())?
-            .set_volume(percent_to_decibel(volume), Tween::default());
+
+        let mut handle = self.sound_handle.lock().await;
+
+        if let Some(handle) = handle.as_mut() {
+            handle.set_volume(percent_to_decibel(volume), Tween::default());
+        }
         Ok(())
     }
 
     async fn get_progress(&self) -> Result<Progress, String> {
-        let progress =
-            self.sound_handle.lock().await.as_ref().ok_or("No sound handle to get progress".to_string())?.position();
+        let progress = self
+            .sound_handle
+            .lock()
+            .await
+            .as_ref()
+            .ok_or("No sound handle to get progress".to_string())?
+            .position();
         let is_finite = self.duration.as_secs() < i32::MAX as u64;
 
         Ok(Progress {

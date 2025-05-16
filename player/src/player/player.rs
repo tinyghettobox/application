@@ -3,13 +3,14 @@ use std::time::Duration;
 
 use tokio::sync::Mutex;
 use tokio::time::sleep;
-use tracing::debug;
 use tracing::log::{error, info};
 
 use database::model::library_entry::Variant;
 use database::{model::library_entry::Model as LibraryEntry, DatabaseConnection};
 
-use crate::player::play_target::{LocalPlayTarget, PlayTarget, Progress, RemotePlayTarget, SpotifyPlayTarget};
+use crate::player::play_target::{
+    LocalPlayTarget, PlayTarget, Progress, RemotePlayTarget, SpotifyPlayTarget,
+};
 use crate::player::queue::Queue;
 use crate::player::spotify_manager::SpotifyManager;
 use crate::player::timer::PlayerTimer;
@@ -49,7 +50,9 @@ where
         let spotify_manager = SpotifyManager::new(&conn).await;
 
         let player = Arc::new(Mutex::new(Self {
-            spotify: Arc::new(Mutex::new(SpotifyPlayTarget::new(spotify_manager, volume).await)),
+            spotify: Arc::new(Mutex::new(
+                SpotifyPlayTarget::new(spotify_manager, volume).await,
+            )),
             local: Arc::new(Mutex::new(LocalPlayTarget::new(conn.clone(), volume).await)),
             remote: Arc::new(Mutex::new(RemotePlayTarget::new(conn.clone(), volume))),
             queue: Queue::new(),
@@ -82,7 +85,10 @@ where
         self.play_next_track().await
     }
 
-    fn get_play_target(&mut self, track: &LibraryEntry) -> Option<Arc<Mutex<dyn PlayTarget + Send>>> {
+    fn get_play_target(
+        &mut self,
+        track: &LibraryEntry,
+    ) -> Option<Arc<Mutex<dyn PlayTarget + Send>>> {
         match track.variant {
             Variant::Folder => None,
             Variant::Stream => Some(self.remote.clone()),
@@ -91,10 +97,16 @@ where
         }
     }
 
-    async fn play_track(&mut self, library_entry: LibraryEntry) -> Result<Option<LibraryEntry>, String> {
+    async fn play_track(
+        &mut self,
+        library_entry: LibraryEntry,
+    ) -> Result<Option<LibraryEntry>, String> {
         if let Some(current_track) = self.current_track.lock().await.as_mut() {
-            if current_track.playing {
-                debug!("Stopping currently playing track");
+            // When playing spotify tracks the API has problems with stopping the current track and right away playing a new track
+            let next_is_spotify = library_entry.variant == Variant::Spotify;
+            let prev_is_spotify = current_track.library_entry.variant == Variant::Spotify;
+            if current_track.playing && (!prev_is_spotify || !next_is_spotify) {
+                info!("Stopping currently playing track");
                 current_track.target.lock().await.stop().await?;
                 current_track.playing = false;
             }
@@ -108,10 +120,16 @@ where
         });
 
         if let Some(new_track) = new_track.as_mut() {
-            new_track.target.lock().await.play(&new_track.library_entry).await.map_err(|error| {
-                error!("#### Failed to play track: {}", error);
-                error
-            })?;
+            new_track
+                .target
+                .lock()
+                .await
+                .play(&new_track.library_entry)
+                .await
+                .map_err(|error| {
+                    error!("#### Failed to play track: {}", error);
+                    error
+                })?;
             sleep(Duration::from_secs(1)).await; // Let spotify api catch up with playing
             new_track.progress = new_track.target.lock().await.get_progress().await?;
             new_track.progress.position = Duration::from_secs(0); // Spotify returns weird position
@@ -145,7 +163,17 @@ where
 
     pub async fn queue_next_track(&mut self) -> Result<Option<LibraryEntry>, String> {
         match self.queue.next() {
-            Some(library_entry) => self.play_track(library_entry).await,
+            Some(library_entry) => {
+                // Seek back again as we only want to queue the next track and not play it
+                self.queue.prev();
+                match self.get_play_target(&library_entry) {
+                    Some(target) => {
+                        target.lock().await.queue(&library_entry).await?;
+                        Ok(Some(library_entry))
+                    }
+                    None => return Ok(None),
+                }
+            }
             None => Ok(None),
         }
     }
@@ -185,9 +213,12 @@ where
     }
 
     pub async fn set_volume(&mut self, volume: f64) -> Result<(), String> {
-        if let Some(track) = self.current_track.lock().await.as_mut() {
-            track.target.lock().await.set_volume(volume).await?;
-        }
+        // if let Some(track) = self.current_track.lock().await.as_mut() {
+        //     track.target
+        // }
+        self.remote.lock().await.set_volume(volume).await?;
+        self.spotify.lock().await.set_volume(volume).await?;
+        self.local.lock().await.set_volume(volume).await?;
         Ok(())
     }
 

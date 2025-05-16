@@ -21,7 +21,7 @@ impl Default for Progress {
     fn default() -> Self {
         Self {
             position: Duration::from_secs(0),
-            duration: Duration::from_secs(1),
+            duration: Duration::from_secs(100),
             is_finite: true,
         }
     }
