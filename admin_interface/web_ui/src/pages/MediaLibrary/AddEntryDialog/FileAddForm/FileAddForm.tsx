@@ -75,7 +75,7 @@ export default function FileAddForm() {
 
   const handleDragEnd = (items: LibraryEntry[]) => {
     setEntries(entries =>
-      items.map(items => entries.find(entry => entry.name === item.id) as LibraryEntry)
+      items.map(item => entries.find(entry => entry.name === item.id) as LibraryEntry)
     );
   };
 
@@ -94,7 +94,7 @@ export default function FileAddForm() {
       <Sortable items={(entries as LibraryEntry[])} onDragEnd={handleDragEnd} getItemIdCallback={item => item.name}>
         {(visibleItems) => (
           <List>
-            {(entries as LibraryEntry[]).map((entry) =>
+            {visibleItems.map((entry) =>
               <SortableItem itemId={entry.name} key={entry.name}>
                 {(props, isDragging) => (
                   <ListItem

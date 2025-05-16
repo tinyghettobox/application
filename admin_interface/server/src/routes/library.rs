@@ -2,13 +2,15 @@ use actix_multipart::form::tempfile::TempFile;
 use actix_multipart::form::text::Text;
 use actix_multipart::form::MultipartForm;
 use actix_web::{delete, get, post, put, web, HttpResponse, Responder};
+use chrono::{DateTime, Utc};
+use database::model::library_entry::BulkUpdateModel;
 use database::model::track_source::CreateModel;
 use database::{
     model::library_entry::CreateModel as LibraryEntryCreateModel,
     model::library_entry::Model as LibraryEntry, DatabaseConnection, DbErr, LibraryEntryRepository,
     TrackSourceRepository,
 };
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use tracing::{error, info};
 
 #[derive(Deserialize)]
@@ -58,6 +60,46 @@ pub async fn update(
                 HttpResponse::InternalServerError().finish()
             }
         },
+    }
+}
+
+#[post("/api/library/bulk-update")]
+pub async fn bulk_update(
+    conn: web::Data<DatabaseConnection>,
+    updates: web::Json<Vec<BulkUpdateModel>>,
+) -> impl Responder {
+    match LibraryEntryRepository::bulk_patch(&conn, updates.into_inner()).await {
+        Ok(results) => HttpResponse::Ok().json(results),
+        Err(error) => {
+            error!("Failed to apply bulk updates: {:?}", error);
+            HttpResponse::InternalServerError().finish()
+        }
+    }
+}
+
+#[derive(Deserialize, Serialize)]
+struct MarkPlayedPayload {
+    library_entry_ids: Vec<i32>,
+    played_at: Option<DateTime<Utc>>,
+}
+
+#[post("/api/library/mark-played")]
+pub async fn mark_played(
+    conn: web::Data<DatabaseConnection>,
+    payload: web::Json<MarkPlayedPayload>,
+) -> impl Responder {
+    match LibraryEntryRepository::mark_played(
+        &conn,
+        payload.library_entry_ids.clone(),
+        payload.played_at,
+    )
+    .await
+    {
+        Ok(results) => HttpResponse::Ok().json(results),
+        Err(error) => {
+            error!("Failed to mark as played: {:?}", error);
+            HttpResponse::InternalServerError().finish()
+        }
     }
 }
 
@@ -121,7 +163,8 @@ pub async fn create(
 
 #[delete("/api/library/{id}")]
 pub async fn delete(conn: web::Data<DatabaseConnection>, id: web::Path<i32>) -> impl Responder {
-    match LibraryEntryRepository::delete(&conn, id.into_inner()).await {
+    let id = id.into_inner();
+    match LibraryEntryRepository::delete(&conn, id).await {
         Ok(deleted) => {
             if deleted {
                 HttpResponse::Ok().finish()

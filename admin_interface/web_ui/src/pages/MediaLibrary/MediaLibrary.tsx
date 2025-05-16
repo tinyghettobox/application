@@ -2,7 +2,7 @@ import {useState} from "react";
 import {Box, Breadcrumbs, Button, CircularProgress, Grid, Stack, Typography} from "@mui/material";
 import FolderList from "./FolderList";
 import TrackList from "./TrackList";
-import {AddOutlined, ArrowLeft, Home, WestOutlined} from "@mui/icons-material";
+import {AddOutlined, ArrowLeft, CheckOutlined, Home, WestOutlined} from "@mui/icons-material";
 import FolderAvatar from "@/components/FolderAvatar";
 import {useLibraryEntry} from "@/pages/MediaLibrary/useLibraryEntry";
 import SortButton from "@/pages/MediaLibrary/SortButton";
@@ -10,13 +10,18 @@ import AddEntryDialog from "@/pages/MediaLibrary/AddEntryDialog/AddEntryDialog";
 import {LibraryEntry} from "@db-models/LibraryEntry";
 import {useParams, Link} from "react-router-dom";
 import {notify} from "@/components/Notification";
+import useSelection from "./useSelection";
 
 export default function MediaLibrary() {
   const params = useParams();
   const entityId = params.id && parseInt(params.id) || 0;
-  const {libraryEntry, loading, error, reloadLibraryEntry, deleteLibraryEntry, updateLibraryEntry} = useLibraryEntry(entityId);
+  const {libraryEntry, loading, error, reloadLibraryEntry, deleteLibraryEntry, bulkUpdateLibraryEntries, setEntry, markPlayed} = useLibraryEntry(entityId);
   const [dialogOpen, setDialogOpen] = useState(false);
   const usedVariant = libraryEntry?.children?.map(child => child.variant)[0];
+  const selection = useSelection(libraryEntry?.children ?? []);
+  const allSelectedPlayed = libraryEntry?.children
+    ?.filter(child => selection.selectedItemIds.includes(child.id!))
+    .some(child => child.playedAt);
 
   const handleOpenAddDialog = () => {
     setDialogOpen(true)
@@ -46,12 +51,27 @@ export default function MediaLibrary() {
       entry.sortKey = index;
       return entry;
     });
+    // We have to update the state already to not wait for network and risk flickering
+    if (libraryEntry) {
+      libraryEntry.children = sortedItems;
+      setEntry(libraryEntry);
+    }
 
-    await updateLibraryEntry(oldEntry => ({...oldEntry, children: sortedItems}));
+    await bulkUpdateLibraryEntries(sortedItems.map(item => ({id: item.id, sortKey: item.sortKey})));
+    selection.clearSelection();
   }
 
   const handleSorted = async (libraryEntries: LibraryEntry[]) => {
-    await updateLibraryEntry(oldEntry => ({...oldEntry, children: libraryEntries}));
+    await bulkUpdateLibraryEntries(libraryEntries.map(item => ({id: item.id, sortKey: item.sortKey})));
+  }
+
+  const handleMarkAsPlayed = async (event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    await markPlayed(selection.selectedItemIds, allSelectedPlayed ? null : new Date().toISOString());
+
+    selection.clearSelection();
   }
 
   return (
@@ -92,6 +112,10 @@ export default function MediaLibrary() {
                     {!!libraryEntry.children && (
                       <SortButton libraryEntries={libraryEntry.children} onSorted={handleSorted}/>
                     )}
+                    <Button variant={'text'} disabled={selection.selectedItemIds.length === 0} onClick={handleMarkAsPlayed}>
+                      <CheckOutlined/>&nbsp;
+                      Mark as {allSelectedPlayed ? 'not played' : 'played'}
+                    </Button>
                   </Stack>
                 </Grid>
               </Grid>
@@ -103,12 +127,16 @@ export default function MediaLibrary() {
                 folders={libraryEntry.children.filter(entry => entry.variant === 'folder')}
                 onSortEnd={handleSortEnd}
                 onDelete={handleDelete}
+                selectedItemIds={selection.selectedItemIds}
+                onSelect={selection.handleSelect}
               />
             ) : (
               <TrackList
                 tracks={libraryEntry.children.filter(entry => entry.variant !== 'folder')}
                 onSortEnd={handleSortEnd}
                 onDelete={handleDelete}
+                selectedItemIds={selection.selectedItemIds}
+                onSelect={selection.handleSelect}
               />
             )
           )}

@@ -21,7 +21,7 @@ export default function AddEntryDialog({parent, open, onClose, allowedVariant}: 
       onClose={() => onClose()}
     >
       <AddEntryStateProvider parent={parent} onClose={onClose}>
-        {open && (
+        {!!open && (
           <AddForm allowedVariant={allowedVariant}/>
         )}
       </AddEntryStateProvider>

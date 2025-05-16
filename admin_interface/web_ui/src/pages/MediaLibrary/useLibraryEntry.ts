@@ -1,6 +1,6 @@
 import {useCallback, useEffect, useState} from "react";
 import {notify} from "@/components/Notification";
-import {delLibraryEntry, getLibraryEntry, putLibraryEntry} from "@/util/api";
+import {delLibraryEntry, getLibraryEntry, putLibraryEntry, postBulkLibraryEntries, LibraryEntryBulkUpdate, postMarkLibraryEntriesPlayed} from "@/util/api";
 import {LibraryEntry} from "@db-models/LibraryEntry";
 
 export function useLibraryEntry(id?: number) {
@@ -31,7 +31,7 @@ export function useLibraryEntry(id?: number) {
         if (oldState.libraryEntry) {
           oldState.libraryEntry.children = oldState.libraryEntry.children?.filter(child => child.id !== id);
         }
-        return { ...oldState }
+        return {...oldState}
       });
       notify('success', `Entry deleted`, 2000);
       await loadLibraryEntry();
@@ -61,9 +61,34 @@ export function useLibraryEntry(id?: number) {
     }
   }, [id, setState, state.libraryEntry]);
 
+  const bulkUpdateLibraryEntries = useCallback(async (updates: LibraryEntryBulkUpdate[]) => {
+    try {
+      await postBulkLibraryEntries(updates);
+      notify('success', `Bulk update successful`, 2000);
+      await loadLibraryEntry();
+    } catch (e) {
+      notify('error', `Could not perform bulk update: ${e}`);
+    }
+  }, []);
+
+  const markPlayed = useCallback(async (entryIds: number[], playedAt: string | null) => {
+    try {
+      await postMarkLibraryEntriesPlayed(entryIds, playedAt);
+      notify('success', `Bulk update successful`, 2000);
+      await loadLibraryEntry();
+    } catch (e) {
+      notify('error', `Could not mark as played: ${e}`);
+    }
+  }, []);
+
+  const setEntry = useCallback((entry: LibraryEntry) => {
+    setState(oldState => ({...state, libraryEntry: entry}));
+  }, []);
+
+
   useEffect(() => {
     loadLibraryEntry();
   }, [id, loadLibraryEntry]);
 
-  return {...state, reloadLibraryEntry: loadLibraryEntry, deleteLibraryEntry, updateLibraryEntry};
+  return {...state, reloadLibraryEntry: loadLibraryEntry, deleteLibraryEntry, updateLibraryEntry, bulkUpdateLibraryEntries, markPlayed, setEntry};
 }

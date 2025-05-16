@@ -79,11 +79,11 @@ async function get<T>(path: string): Promise<T> {
   return api('GET', path);
 }
 
-async function put<T>(path: string, payload: T): Promise<T> {
+async function put<T, R = T>(path: string, payload: T): Promise<R> {
   return api('PUT', path, payload);
 }
 
-async function post<T>(path: string, payload: T): Promise<T> {
+async function post<T, R = T>(path: string, payload: T): Promise<R> {
   return api('POST', path, payload);
 }
 
@@ -117,6 +117,16 @@ export async function putLibraryEntry(id: number, entry: LibraryEntry): Promise<
 
 export async function delLibraryEntry(id: number): Promise<void> {
   return del<void>(`/api/library/${id}`);
+}
+
+export type LibraryEntryBulkUpdate = Pick<LibraryEntry, 'id'> & Partial<Pick<LibraryEntry, 'sortKey' | 'playedAt'>>
+
+export async function postBulkLibraryEntries<T = LibraryEntryBulkUpdate[]>(update: T): Promise<void> {
+  return post<T, void>('/api/library/bulk-update', update);
+}
+
+export async function postMarkLibraryEntriesPlayed(libraryEntryIds: number[], playedAt: string | null): Promise<void> {
+  return post<any, void>('/api/library/mark-played', {libraryEntryIds, playedAt});
 }
 
 export async function postLibraryEntries(parent_id: number, entries: LibraryEntry[]): Promise<LibraryEntry[]> {

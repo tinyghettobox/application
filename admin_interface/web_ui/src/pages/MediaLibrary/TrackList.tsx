@@ -8,16 +8,22 @@ interface Props {
   tracks: LibraryEntry[];
   onSortEnd: (tracks: LibraryEntry[]) => void;
   onDelete: (track: LibraryEntry) => void;
+  selectedItemIds: number[];
+  onSelect: (e: React.MouseEvent, id: number) => void;
 }
 
-export default function TrackList({tracks, onSortEnd, onDelete}: Props) {
+export default function TrackList({tracks, onSortEnd, onDelete, selectedItemIds, onSelect}: Props) {
   return (
     <div>
-      <Sortable items={tracks} onDragEnd={onSortEnd}>
-        {(visibleItems, selectedItemIds, onSelect) => (
+      <Sortable
+        items={tracks}
+        onDragEnd={onSortEnd}
+        selectedItemIds={selectedItemIds}
+      >
+        {(visibleItems) => (
           <List>
             {visibleItems.map(track => (
-              <SortableItem itemId={track.id} key={track.id}>
+              <SortableItem itemId={track.id!} key={track.id}>
                 {(props, isDragging) => (
                   <ListItem
                     {...props}
@@ -29,7 +35,7 @@ export default function TrackList({tracks, onSortEnd, onDelete}: Props) {
                     secondaryAction={<IconButton onClickCapture={() => onDelete(track)}><Delete/></IconButton>}
                   >
                     <ListItemIcon>
-                      <Checkbox checked={selectedItemIds.includes(track.id)} onClick={e => onSelect(e, track.id)}/>
+                      <Checkbox checked={selectedItemIds.includes(track.id!)} onClick={e => onSelect(e, track.id!)}/>
                     </ListItemIcon>
                     <ListItemText
                       primary={track.name}

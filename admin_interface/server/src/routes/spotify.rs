@@ -21,17 +21,26 @@ pub async fn get_config(conn: web::Data<DatabaseConnection>) -> impl Responder {
 }
 
 #[put("/api/spotify/config")]
-pub async fn update_config(conn: web::Data<DatabaseConnection>, json: web::Json<serde_json::Value>) -> actix_web::Result<impl Responder> {
+pub async fn update_config(
+    conn: web::Data<DatabaseConnection>,
+    json: web::Json<serde_json::Value>,
+) -> actix_web::Result<impl Responder> {
     match SpotifyConfigRepository::update_from_json(&conn, json.into_inner()).await {
         Ok((updated_model, changed_fields)) => {
             if changed_fields.contains(&"username".to_string()) {
-                crate::commands::set_spotifyd_config("username", &updated_model.username.clone().unwrap())?;
+                crate::configure_commands::set_spotifyd_config(
+                    "username",
+                    &updated_model.username.clone().unwrap(),
+                )?;
             }
             if changed_fields.contains(&"password".to_string()) {
-                crate::commands::set_spotifyd_config("password", &updated_model.password.clone().unwrap())?;
+                crate::configure_commands::set_spotifyd_config(
+                    "password",
+                    &updated_model.password.clone().unwrap(),
+                )?;
             }
             Ok(HttpResponse::Ok().json(updated_model))
-        },
+        }
         Err(error) => {
             error!("Failed to set system config: {:?}", error);
             Ok(HttpResponse::BadRequest().json(json!({ "error": error.to_string() })))
@@ -50,9 +59,14 @@ fn get_origin_host<'a>(http_request: HttpRequest) -> String {
 }
 
 #[get("/api/spotify/auth")]
-pub async fn auth(conn: web::Data<DatabaseConnection>, request: HttpRequest) -> Result<HttpResponse> {
+pub async fn auth(
+    conn: web::Data<DatabaseConnection>,
+    request: HttpRequest,
+) -> Result<HttpResponse> {
     let host = get_origin_host(request);
-    let config = SpotifyConfigRepository::get(&conn).await.map_err(|e| ErrorBadRequest(e))?;
+    let config = SpotifyConfigRepository::get(&conn)
+        .await
+        .map_err(|e| ErrorBadRequest(e))?;
 
     let spotify = AuthCodeSpotify::new(
         Credentials::new(&config.client_id, &config.secret_key),
@@ -71,7 +85,9 @@ pub async fn auth(conn: web::Data<DatabaseConnection>, request: HttpRequest) -> 
     Ok(HttpResponse::PermanentRedirect()
         .insert_header((
             "location",
-            spotify.get_authorize_url(false).map_err(|e| ErrorBadRequest(e))?,
+            spotify
+                .get_authorize_url(false)
+                .map_err(|e| ErrorBadRequest(e))?,
         ))
         .finish())
 }
@@ -87,10 +103,11 @@ pub async fn callback(
     conn: web::Data<DatabaseConnection>,
     query: web::Query<CallbackParams>,
     request: HttpRequest,
-) -> Result<HttpResponse>
-{
+) -> Result<HttpResponse> {
     let host = get_origin_host(request);
-    let mut config = SpotifyConfigRepository::get(&conn).await.map_err(|e| ErrorBadRequest(e))?;
+    let mut config = SpotifyConfigRepository::get(&conn)
+        .await
+        .map_err(|e| ErrorBadRequest(e))?;
 
     let spotify = AuthCodeSpotify::new(
         Credentials::new(&config.client_id, &config.secret_key),
@@ -101,16 +118,22 @@ pub async fn callback(
         },
     );
 
-    spotify.request_token(&query.code).map_err(|e| ErrorBadRequest(e))?;
+    spotify
+        .request_token(&query.code)
+        .map_err(|e| ErrorBadRequest(e))?;
     let token = spotify.get_token().lock().unwrap().clone().unwrap();
 
     config.access_token = Some(token.access_token);
     config.refresh_token = token.refresh_token;
     config.expired_at = token.expires_at.map(|date| date.to_rfc3339());
 
-    SpotifyConfigRepository::update(&conn, config).await.map_err(|e| ErrorInternalServerError(e))?;
+    SpotifyConfigRepository::update(&conn, config)
+        .await
+        .map_err(|e| ErrorInternalServerError(e))?;
 
-    Ok(HttpResponse::PermanentRedirect().insert_header(("location", "/spotifyConfig/2")).finish())
+    Ok(HttpResponse::PermanentRedirect()
+        .insert_header(("location", "/spotifyConfig/2"))
+        .finish())
 }
 
 #[derive(Deserialize)]
@@ -120,10 +143,20 @@ pub struct SearchPayload {
 }
 
 #[get("/api/spotify/search")]
-pub async fn search(conn: web::Data<DatabaseConnection>, params: web::Query<SearchPayload>) -> Result<HttpResponse> {
+pub async fn search(
+    conn: web::Data<DatabaseConnection>,
+    params: web::Query<SearchPayload>,
+) -> Result<HttpResponse> {
     let spotify = get_spotify(&conn).await?;
     let result = spotify
-        .search(&params.search, params.search_type, None, None, Some(50), None)
+        .search(
+            &params.search,
+            params.search_type,
+            None,
+            None,
+            Some(50),
+            None,
+        )
         .map_err(|e| ErrorBadRequest(format!("Spotify search failed: {}", e)))?;
 
     Ok(HttpResponse::Ok().json(result))
@@ -147,8 +180,12 @@ pub async fn children(
         "artist" => HttpResponse::Ok().json(
             spotify
                 .artist_albums_manual(
-                    ArtistId::from_id(params.parent_id.as_str())
-                        .map_err(|e| ErrorInternalServerError(format!("Invalid spotify id '{}': {}", params.parent_id, e)))?,
+                    ArtistId::from_id(params.parent_id.as_str()).map_err(|e| {
+                        ErrorInternalServerError(format!(
+                            "Invalid spotify id '{}': {}",
+                            params.parent_id, e
+                        ))
+                    })?,
                     vec![],
                     None,
                     Some(50),
@@ -159,8 +196,12 @@ pub async fn children(
         "album" => HttpResponse::Ok().json(
             spotify
                 .album_track_manual(
-                    AlbumId::from_id(params.parent_id.as_str())
-                        .map_err(|e| ErrorInternalServerError(format!("Invalid spotify id '{}': {}", params.parent_id, e)))?,
+                    AlbumId::from_id(params.parent_id.as_str()).map_err(|e| {
+                        ErrorInternalServerError(format!(
+                            "Invalid spotify id '{}': {}",
+                            params.parent_id, e
+                        ))
+                    })?,
                     None,
                     Some(50),
                     params.offset,
@@ -170,8 +211,12 @@ pub async fn children(
         "playlist" => HttpResponse::Ok().json(
             spotify
                 .playlist_items_manual(
-                    PlaylistId::from_id(params.parent_id.as_str())
-                        .map_err(|e| ErrorInternalServerError(format!("Invalid spotify id '{}': {}", params.parent_id, e)))?,
+                    PlaylistId::from_id(params.parent_id.as_str()).map_err(|e| {
+                        ErrorInternalServerError(format!(
+                            "Invalid spotify id '{}': {}",
+                            params.parent_id, e
+                        ))
+                    })?,
                     None,
                     None,
                     Some(50),
@@ -182,8 +227,12 @@ pub async fn children(
         "show" => HttpResponse::Ok().json(
             spotify
                 .get_shows_episodes_manual(
-                    ShowId::from_id(params.parent_id.as_str())
-                        .map_err(|e| ErrorInternalServerError(format!("Invalid spotify id '{}': {}", params.parent_id, e)))?,
+                    ShowId::from_id(params.parent_id.as_str()).map_err(|e| {
+                        ErrorInternalServerError(format!(
+                            "Invalid spotify id '{}': {}",
+                            params.parent_id, e
+                        ))
+                    })?,
                     None,
                     Some(50),
                     params.offset,
@@ -200,7 +249,9 @@ pub async fn children(
 }
 
 async fn get_spotify(conn: &DatabaseConnection) -> Result<AuthCodeSpotify, actix_web::Error> {
-    let config = SpotifyConfigRepository::get(conn).await.map_err(|e| ErrorBadRequest(e))?;
+    let config = SpotifyConfigRepository::get(conn)
+        .await
+        .map_err(|e| ErrorBadRequest(e))?;
 
     if config.access_token.is_none() {
         return Err(ErrorBadRequest("Spotify is not configured"));
@@ -236,7 +287,7 @@ async fn get_spotify(conn: &DatabaseConnection) -> Result<AuthCodeSpotify, actix
         token,
         Credentials::new(&config.client_id, &config.secret_key),
         Default::default(),
-        Default::default()
+        Default::default(),
     );
 
     if let Err(error) = spotify.refresh_token() {

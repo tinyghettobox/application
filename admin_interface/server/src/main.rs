@@ -6,8 +6,8 @@ use tracing::level_filters::LevelFilter;
 use crate::routes::*;
 use database::connect;
 
-mod commands;
-mod error;
+mod configure_commands;
+mod problem;
 mod routes;
 
 #[tokio::main]
@@ -39,6 +39,9 @@ async fn main() {
             .service(library::create)
             .service(library::update)
             .service(library::upload)
+            .service(library::bulk_update)
+            .service(library::mark_played)
+            .service(update::get_operating_system_update_version)
             .service(image::proxy_image)
             .service(static_files::get)
             .app_data(web::Data::new(connection.clone()))

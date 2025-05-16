@@ -3,11 +3,24 @@
   padding: 16px 16px 0;
   text-decoration: none;
   color: inherit;
+  position: relative;
 
   .name {
     line-height: 16px;
     margin-top: 16px;
     margin-bottom: 8px;
+  }
+
+  .checkbox {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+
+  .playedSign {
+    position: absolute;
+    top: 170px;
+    right: 0;
   }
 
   .deleteButton {
@@ -25,12 +38,15 @@
 .sortPopover {
   padding: 16px;
   width: 400px;
+
   .patternList {
     margin-bottom: 16px;
   }
+
   .exampleList {
     margin-top: 16px;
   }
+
   .exampleItem {
     overflow: hidden;
     white-space: nowrap;
