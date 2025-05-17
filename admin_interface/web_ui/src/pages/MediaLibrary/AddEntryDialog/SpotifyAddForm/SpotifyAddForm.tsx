@@ -16,7 +16,7 @@ import {Controller, useForm} from "react-hook-form";
 import {SearchOutlined, EastOutlined} from "@mui/icons-material";
 import {searchResultToLibraryEntry} from "./helper";
 import {Variant} from "@db-models/Variant";
-import {LibraryEntry} from "@db-models/LibraryEntry";
+import {NewLibraryEntry} from "@db-models/LibraryEntry";
 import styles from "@/pages/MediaLibrary/AddEntryDialog/SpotifyAddForm/SpotifyAddForm.module.scss";
 import SpotifyItem from "@/pages/MediaLibrary/AddEntryDialog/SpotifyAddForm/SpotifyItem";
 import {useAddEntryState} from "@/pages/MediaLibrary/AddEntryDialog/useAddEntryState";
@@ -29,7 +29,7 @@ const SEARCH_TYPES = ['artist', 'album', 'playlist', 'track', 'show', 'episode']
 
 export default function SpotifyAddForm({allowedVariant}: Props) {
   const {getNextSortKey} = useAddEntryState();
-  const [searchResult, setSearchResult] = useState({loading: false, data: [] as LibraryEntry[]});
+  const [searchResult, setSearchResult] = useState({loading: false, data: [] as NewLibraryEntry[]});
   const {
     control,
     handleSubmit,
@@ -61,7 +61,7 @@ export default function SpotifyAddForm({allowedVariant}: Props) {
       return;
     }
 
-    const entries: LibraryEntry[] = [];
+    const entries: NewLibraryEntry[] = [];
     for (const searchResultItem of searchResult.items) {
       entries.push(await searchResultToLibraryEntry(searchResultItem, formData.searchType, getNextSortKey()));
     }

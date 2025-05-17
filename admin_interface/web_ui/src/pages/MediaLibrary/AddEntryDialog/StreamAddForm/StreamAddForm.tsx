@@ -2,7 +2,7 @@ import {ChangeEvent, useReducer, useRef, useState} from "react";
 import {Box, FormControl, Grid, IconButton, InputLabel, OutlinedInput} from "@mui/material";
 import {Check, Delete} from "@mui/icons-material";
 import {useAddEntryState} from "@/pages/MediaLibrary/AddEntryDialog/useAddEntryState";
-import {LibraryEntry} from "@db-models/LibraryEntry";
+import {NewLibraryEntry} from "@db-models/LibraryEntry";
 
 export default function StreamAddForm() {
   const {entries, setEntries, addEntry, removeEntry, getNextSortKey} = useAddEntryState();
@@ -30,7 +30,7 @@ export default function StreamAddForm() {
   }
 
 
-  const handleUrlChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, entry: LibraryEntry) => {
+  const handleUrlChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, entry: NewLibraryEntry) => {
     const index = entries.indexOf(entry);
     if (index === -1) {
       throw new Error(`Can not find index of ${JSON.stringify(entry)} in playlist items: ${JSON.stringify(entries)}`);
@@ -43,7 +43,7 @@ export default function StreamAddForm() {
     setEntries([...entries]);
   }
 
-  const handleNameChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, entry: LibraryEntry) => {
+  const handleNameChange = (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>, entry: NewLibraryEntry) => {
     const index = entries.indexOf(entry);
     if (index === -1) {
       throw new Error(`Can not find index of ${JSON.stringify(entry)} in playlist items: ${JSON.stringify(entries)}`);

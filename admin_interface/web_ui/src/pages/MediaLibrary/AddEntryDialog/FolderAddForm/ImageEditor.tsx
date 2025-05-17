@@ -1,10 +1,10 @@
 import React, {useRef, useState} from "react";
-import {LibraryEntry} from "@db-models/LibraryEntry";
+import {NewLibraryEntry} from "@db-models/LibraryEntry";
 import FolderAvatar from "@/components/FolderAvatar";
 import {Slider} from "@mui/material";
 
 interface Props {
-  folder?: LibraryEntry;
+  folder?: NewLibraryEntry;
   onResize?: (image: Array<number>) => void
 }
 

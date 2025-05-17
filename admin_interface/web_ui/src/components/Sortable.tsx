@@ -4,7 +4,7 @@ import {ReactElement, useState} from "react";
 import {CSS} from "@dnd-kit/utilities";
 
 interface ItemProps {
-  itemId: number;
+  itemId: number | string;
   children: (props: Record<string, unknown>, isDragging: boolean) => ReactElement;
 }
 
@@ -49,17 +49,17 @@ interface SortableProps<T> {
   items: T[];
   onDragEnd: (sortedItems: T[]) => void;
   children: (visibleItems: T[]) => ReactElement;
-  getItemIdCallback?: (item: T) => number | string;
-  selectedItemIds: number[];
+  getItemId: (item: T) => number | string;
+  selectedItemIds?: (number | string)[];
 }
 
-export function Sortable<T extends { id: number }>(props: SortableProps<T>) {
+export function Sortable<T>(props: SortableProps<T>) {
   const {
     items: propsItems,
     onDragEnd,
     children,
-    getItemIdCallback = (item: T) => item.id,
-    selectedItemIds,
+    getItemId,
+    selectedItemIds = [],
   } = props;
   const [draggingId, setDraggingId] = useState(-1);
   const sensors = useSensors(
@@ -70,16 +70,16 @@ export function Sortable<T extends { id: number }>(props: SortableProps<T>) {
     })
   );
 
-  const items = propsItems.map((item, index) => ({...item, id: getItemIdCallback(item)}))
+  const items = propsItems.map((item, index) => ({...item, id: getItemId(item)}))
   const visibleItems = items.filter(item => {
     if (draggingId === -1) {
       return true;
     }
-    if (item.id === draggingId) {
+    if (getItemId(item) === draggingId) {
       return true;
     }
     // Exclude other selected entries beside the dragging one
-    return !selectedItemIds.includes(item.id);
+    return !selectedItemIds.includes(getItemId(item));
   });
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -89,9 +89,9 @@ export function Sortable<T extends { id: number }>(props: SortableProps<T>) {
       return;
     }
 
-    const movingItems = items.filter(item => selectedItemIds.includes(item.id));
+    const movingItems = items.filter(item => selectedItemIds.includes(getItemId(item)));
     if (movingItems.length === 0) {
-      const activeItem = items.find(item => item.id == event.active.id);
+      const activeItem = items.find(item => getItemId(item) == event.active.id);
       if (activeItem) {
         movingItems.push(activeItem);
       }
@@ -99,8 +99,8 @@ export function Sortable<T extends { id: number }>(props: SortableProps<T>) {
 
     const otherItems = items.filter(item => !movingItems.includes(item));
 
-    const targetIndex = otherItems.findIndex(item => item.id == event.over?.id);
-    const currentIndex = items.findIndex(item => item.id == event.active.id);
+    const targetIndex = otherItems.findIndex(item => getItemId(item) == event.over?.id);
+    const currentIndex = items.findIndex(item => getItemId(item) == event.active.id);
     const isBackward = targetIndex < currentIndex;
     otherItems.splice(targetIndex + (isBackward ? 0 : 1), 0, ...movingItems);
 

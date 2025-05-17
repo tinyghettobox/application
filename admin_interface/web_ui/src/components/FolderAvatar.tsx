@@ -1,10 +1,10 @@
 import {Speaker} from "@mui/icons-material";
 import {Avatar, AvatarProps} from "@mui/material";
-import {LibraryEntry} from "@db-models/LibraryEntry";
+import {NewLibraryEntry} from "@db-models/LibraryEntry";
 import {arrayToBase64} from "@/util/base64";
 
 interface Props {
-  folder?: LibraryEntry;
+  folder?: NewLibraryEntry;
   sx?: any;
   variant?: AvatarProps['variant'];
 }
@@ -17,7 +17,7 @@ export default function FolderAvatar({folder, sx, variant}: Props) {
   return (
     <Avatar src={dataUri} sx={sx} variant={variant}>
       <span>
-        {folder?.name ? folder?.name.substring(0, 8).toUpperCase() : <Speaker />}
+        {folder?.name ? folder?.name.substring(0, 8).toUpperCase() : <Speaker/>}
       </span>
     </Avatar>
   )

@@ -154,14 +154,20 @@ impl ActiveModel {
     }
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone, TS)]
+#[serde(rename = "NewLibraryEntry")]
+#[ts(export)]
 pub struct CreateModel {
+    #[ts(optional)]
     pub parent_id: Option<i32>,
     pub variant: Variant,
     pub name: String,
+    #[ts(optional)]
     pub image: Option<Vec<u8>>,
     pub sort_key: i32,
+    #[ts(optional)]
     pub children: Option<Vec<CreateModel>>, // Just used to pass children from API to client
+    #[ts(optional)]
     pub track_source: Option<TrackSourceCreateModel>, // Just used to pass children from API to client
 }
 

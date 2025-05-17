@@ -4,7 +4,7 @@ import {Check, Delete, ErrorOutline, Upload} from "@mui/icons-material";
 import {useAddEntryState} from "@/pages/MediaLibrary/AddEntryDialog/useAddEntryState";
 import {Sortable, SortableItem} from "@/components/Sortable";
 import sortableListStyles from "../../SortableList.module.scss";
-import {LibraryEntry} from "@db-models/LibraryEntry";
+import {NewLibraryEntry} from "@db-models/LibraryEntry";
 import {uploadLibraryEntryFile} from "@/util/api";
 import {notify} from "@/components/Notification";
 import {TrackSource} from "@db-models/TrackSource";
@@ -36,7 +36,7 @@ export default function FileAddForm() {
     }
 
     let sortKey = getNextSortKey();
-    const newEntries: LibraryEntry[] = [];
+    const newEntries: NewLibraryEntry[] = [];
     for (let i = 0; i < event.target.files.length; i++) {
       const file = event.target.files?.[i] as File;
       const trackSortKey = sortKey++;
@@ -73,13 +73,13 @@ export default function FileAddForm() {
     ]);
   }
 
-  const handleDragEnd = (items: LibraryEntry[]) => {
+  const handleDragEnd = (items: NewLibraryEntry[]) => {
     setEntries(entries =>
-      items.map(item => entries.find(entry => entry.name === item.id) as LibraryEntry)
+      items.map(item => entries.find(entry => entry.name === item.name) as NewLibraryEntry)
     );
   };
 
-  const handleDelete = (entry: LibraryEntry) => {
+  const handleDelete = (entry: NewLibraryEntry) => {
     removeEntry(entry);
   }
 
@@ -91,7 +91,7 @@ export default function FileAddForm() {
           <VisuallyHiddenInput type="file" name="image" accept="audio/*" multiple onChange={handleUpload}/>
         </Button>
       </Box>
-      <Sortable items={(entries as LibraryEntry[])} onDragEnd={handleDragEnd} getItemIdCallback={item => item.name}>
+      <Sortable<NewLibraryEntry> items={entries} onDragEnd={handleDragEnd} getItemId={item => item.name}>
         {(visibleItems) => (
           <List>
             {visibleItems.map((entry) =>

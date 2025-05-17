@@ -34,10 +34,11 @@ export default function FolderList({folders, onSortEnd, onDelete, selectedItemId
 
   return (
     <Grid container gap={1}>
-      <Sortable
+      <Sortable<LibraryEntry>
         items={folders}
         onDragEnd={onSortEnd}
         selectedItemIds={selectedItemIds}
+        getItemId={item => item.id}
       >
         {(visibleItems) => (
           <>

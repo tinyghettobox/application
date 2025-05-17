@@ -4,14 +4,14 @@ import {MouseEvent, useState} from "react";
 import {notify} from "@/components/Notification";
 import styles from "./SpotifyAddForm.module.scss";
 import {Variant} from "@db-models/Variant";
-import {LibraryEntry} from "@db-models/LibraryEntry";
+import {NewLibraryEntry} from "@db-models/LibraryEntry";
 import {useAddEntryState} from "@/pages/MediaLibrary/AddEntryDialog/useAddEntryState";
 import {searchResultToLibraryEntry} from "@/pages/MediaLibrary/AddEntryDialog/SpotifyAddForm/helper";
 import {arrayToBase64} from "@/util/base64";
 
 interface Props {
   parentSelected?: boolean,
-  entry: LibraryEntry,
+  entry: NewLibraryEntry,
   allowedVariant?: Variant
 }
 
@@ -40,12 +40,12 @@ async function loadChildren(itemType: string, id: string, offset = 0) {
   return await response.json();
 }
 
-async function loadChildrenNested(item: LibraryEntry, onProgress?: (progress: number) => void) {
+async function loadChildrenNested(item: NewLibraryEntry, onProgress?: (progress: number) => void) {
   if (!item.trackSource || !item.trackSource?.spotifyId || !item.trackSource?.spotifyType) {
     return [];
   }
 
-  let children: LibraryEntry[] = [];
+  let children: NewLibraryEntry[] = [];
   let loadMode = true;
   let offset = 0;
 
@@ -56,7 +56,7 @@ async function loadChildrenNested(item: LibraryEntry, onProgress?: (progress: nu
       const childType = getChildType(item.trackSource.spotifyType);
       let sortKey = 0;
       for (const resultItem of result.items) {
-        let entry: LibraryEntry;
+        let entry: NewLibraryEntry;
         if (item.trackSource.spotifyType === 'playlist' && resultItem.track) {
           entry = await searchResultToLibraryEntry(resultItem.track, childType, sortKey++);
         } else {
@@ -169,9 +169,9 @@ export default function SpotifyItem({entry, parentSelected = false, allowedVaria
         </div>
       </div>
       <div className={styles.itemChildren}>
-        {state.libraryEntry.variant === 'folder' && state.libraryEntry.children?.map((child) =>
+        {state.libraryEntry.variant === 'folder' && state.libraryEntry.children?.map((child, index) =>
           <SpotifyItem
-            key={child.id}
+            key={`${index}${child.name}`}
             entry={child}
             parentSelected={libraryEntryIsAdded || parentSelected}
             allowedVariant={allowedVariant}

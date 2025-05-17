@@ -1,4 +1,4 @@
-import {LibraryEntry} from "@db-models/LibraryEntry";
+import {NewLibraryEntry} from "@db-models/LibraryEntry";
 import {cropImage} from "@/pages/MediaLibrary/AddEntryDialog/helper";
 
 interface SearchResultItem {
@@ -8,7 +8,7 @@ interface SearchResultItem {
   type: string,
 }
 
-export async function searchResultToLibraryEntry(item: SearchResultItem, type: string, sortKey: number): Promise<LibraryEntry> {
+export async function searchResultToLibraryEntry(item: SearchResultItem, type: string, sortKey: number): Promise<NewLibraryEntry> {
   let image: number[] | undefined = undefined;
   if (item.images?.[0]?.url) {
     const response = await fetch(item.images?.[0]?.url);

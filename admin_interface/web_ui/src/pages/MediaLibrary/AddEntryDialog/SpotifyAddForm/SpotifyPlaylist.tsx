@@ -4,23 +4,23 @@ import {useAddEntryState} from "@/pages/MediaLibrary/AddEntryDialog/useAddEntryS
 import {Sortable, SortableItem} from "@/components/Sortable";
 import styles from "./SpotifyAddForm.module.scss";
 import sortableListStyles from "../../SortableList.module.scss";
-import {LibraryEntry} from "@db-models/LibraryEntry";
+import {NewLibraryEntry} from "@db-models/LibraryEntry";
 import {arrayToBase64} from "@/util/base64";
 
 export default function SpotifyPlaylist() {
   const {entries, setEntries, removeEntry} = useAddEntryState();
 
-  const handleDragEnd = (items: LibraryEntry[]) => {
+  const handleDragEnd = (items: NewLibraryEntry[]) => {
     setEntries(entries =>
-      items.map(item => entries.find(entry => getId(entry) === item.id) as LibraryEntry)
+      items.map(item => entries.find(entry => getId(entry) === getId(item)) as NewLibraryEntry)
     )
   }
 
-  const handleDelete = (entry: LibraryEntry) => {
+  const handleDelete = (entry: NewLibraryEntry) => {
     removeEntry(entry);
   }
 
-  const getId = (entry: LibraryEntry) => {
+  const getId = (entry: NewLibraryEntry) => {
     return entry.trackSource?.spotifyId as string;
   }
 
@@ -29,7 +29,7 @@ export default function SpotifyPlaylist() {
       <Typography variant="h5" className={styles.title}>Playlist</Typography>
       {entries.length === 0 && <Typography variant="body2" sx={{mt: 2}}>No items added yet</Typography>}
 
-      <Sortable items={entries} onDragEnd={handleDragEnd} getItemIdCallback={getId}>
+      <Sortable<NewLibraryEntry> items={entries} onDragEnd={handleDragEnd} getItemId={getId}>
         {(visibleItems) => (
           <List>
             {entries.map((entry, index) => (

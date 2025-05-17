@@ -15,10 +15,11 @@ interface Props {
 export default function TrackList({tracks, onSortEnd, onDelete, selectedItemIds, onSelect}: Props) {
   return (
     <div>
-      <Sortable
+      <Sortable<LibraryEntry>
         items={tracks}
         onDragEnd={onSortEnd}
         selectedItemIds={selectedItemIds}
+        getItemId={item => item.id}
       >
         {(visibleItems) => (
           <List>

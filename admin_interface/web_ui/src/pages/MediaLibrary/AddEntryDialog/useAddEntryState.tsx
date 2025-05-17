@@ -1,16 +1,16 @@
 import {createContext, ReactElement, useContext, useState, MouseEvent} from "react";
 import {notify} from "@/components/Notification";
 import isEqual from "fast-deep-equal";
-import {LibraryEntry} from "@db-models/LibraryEntry";
+import {LibraryEntry, NewLibraryEntry} from "@db-models/LibraryEntry";
 import {postLibraryEntries} from "@/util/api";
 
 type AddEntryState = {
   parentId?: number;
-  entries: LibraryEntry[];
-  setEntries: (entries: LibraryEntry[] | ((oldEntries: LibraryEntry[]) => LibraryEntry[])) => void;
-  addEntry: (entry: LibraryEntry) => void;
-  removeEntry: (entry: LibraryEntry) => void;
-  isEntryAdded: (entry: LibraryEntry) => boolean;
+  entries: NewLibraryEntry[];
+  setEntries: (entries: NewLibraryEntry[] | ((oldEntries: NewLibraryEntry[]) => NewLibraryEntry[])) => void;
+  addEntry: (entry: NewLibraryEntry) => void;
+  removeEntry: (entry: NewLibraryEntry) => void;
+  isEntryAdded: (entry: NewLibraryEntry) => boolean;
   abort: () => void;
   submit: (event: MouseEvent) => void;
   getNextSortKey: () => number;
@@ -24,9 +24,9 @@ interface Props {
   children: ReactElement[] | ReactElement;
 }
 
-type FlatEntry = { parent?: LibraryEntry, entry: LibraryEntry };
+type FlatEntry = { parent?: NewLibraryEntry, entry: NewLibraryEntry };
 
-function flatten(entries: LibraryEntry[], parent?: LibraryEntry): FlatEntry[] {
+function flatten(entries: NewLibraryEntry[], parent?: NewLibraryEntry): FlatEntry[] {
   return entries.flatMap(entry => {
     if (entry.variant === 'folder') {
       return [{parent, entry}, ...flatten(entry.children || [], entry)];
@@ -37,13 +37,13 @@ function flatten(entries: LibraryEntry[], parent?: LibraryEntry): FlatEntry[] {
 }
 
 export const AddEntryStateProvider = (props: Props) => {
-  const [entries, setEntries] = useState<LibraryEntry[]>([]);
+  const [entries, setEntries] = useState<NewLibraryEntry[]>([]);
 
-  const addEntry = (entry: LibraryEntry) => {
+  const addEntry = (entry: NewLibraryEntry) => {
     setEntries(oldEntries => [...oldEntries, entry]);
   }
 
-  const removeEntry = (entry: LibraryEntry) => {
+  const removeEntry = (entry: NewLibraryEntry) => {
     setEntries(existingEntries => {
       let existingFlatEntries = flatten(existingEntries);
 
@@ -63,7 +63,7 @@ export const AddEntryStateProvider = (props: Props) => {
     });
   }
 
-  const isEntryAdded = (entry: LibraryEntry) => {
+  const isEntryAdded = (entry: NewLibraryEntry) => {
     return flatten(entries).some(flatEntry => isEqual(flatEntry.entry, entry));
   }
 

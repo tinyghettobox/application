@@ -74,14 +74,22 @@ impl<'a> Debug for FormatFile<'a> {
     }
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone, TS)]
+#[serde(rename = "NewTrackSource")]
+#[ts(export)]
 pub struct CreateModel {
+    #[ts(optional)]
     pub id: Option<i32>,
+    #[ts(optional)]
     pub library_entry_id: Option<i32>,
     pub title: String,
+    #[ts(optional)]
     pub url: Option<String>,
+    #[ts(optional)]
     pub file: Option<Vec<u8>>,
+    #[ts(optional)]
     pub spotify_id: Option<String>,
+    #[ts(optional)]
     pub spotify_type: Option<String>,
 }
 

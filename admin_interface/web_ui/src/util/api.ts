@@ -1,7 +1,6 @@
 import {SystemConfig} from "@db-models/SystemConfig";
 import {SpotifyConfig} from "@db-models/SpotifyConfig";
-import {LibraryEntry} from "@db-models/LibraryEntry";
-import {Form} from "react-router-dom";
+import {LibraryEntry, NewLibraryEntry} from "@db-models/LibraryEntry";
 
 function snakeToCamel(some: string): string {
   return some.replace(/([a-z])_([a-z])/g, (_, a, b) => `${a}${b.toUpperCase()}`);
@@ -129,8 +128,8 @@ export async function postMarkLibraryEntriesPlayed(libraryEntryIds: number[], pl
   return post<any, void>('/api/library/mark-played', {libraryEntryIds, playedAt});
 }
 
-export async function postLibraryEntries(parent_id: number, entries: LibraryEntry[]): Promise<LibraryEntry[]> {
-  return post<LibraryEntry[]>(`/api/library?parent_id=${parent_id}`, entries);
+export async function postLibraryEntries(parent_id: number, entries: NewLibraryEntry[]): Promise<LibraryEntry[]> {
+  return post<NewLibraryEntry[], LibraryEntry[]>(`/api/library?parent_id=${parent_id}`, entries);
 }
 
 export function uploadLibraryEntryFile(file: File, onProgress: (progress: number) => void, onLoad: (error?: string, data?: unknown) => void) {
