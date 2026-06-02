@@ -111,6 +111,10 @@ impl PlayerTimer {
                             track.playing = false;
                             continue;
                         }
+                        ProgressStatus::Stopped if progress.is_finite => {
+                            // Kira signals natural end via Stopped; mark as done to prevent re-entry.
+                            track.playing = false;
+                        }
                         _ => {}
                     }
 
@@ -124,7 +128,11 @@ impl PlayerTimer {
 
                 // For spotify we want to add tracks to queue before they end to ensure seamless playing
 
-                if progress.position >= progress.duration {
+                if progress.position >= progress.duration || matches!(progress.status, ProgressStatus::Stopped) {
+                    // Mark track as not playing before on_track_end to prevent re-entry on next tick.
+                    if let Some(track) = player.current_track.lock().await.as_mut() {
+                        track.playing = false;
+                    }
                     if let Err(err) = player.on_track_end().await {
                         error!("Failed to end track: {}", err);
                     }

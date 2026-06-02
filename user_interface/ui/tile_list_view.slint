@@ -1,0 +1,248 @@
+import { VerticalBox, HorizontalBox, ScrollView } from "std-widgets.slint";
+import { Theme } from "./theme.slint";
+import { UILibraryEntry, Helper } from "./common.slint";
+
+export component Tile {
+    in property <int> id;
+    in property <int> parent_id;
+    in property <string> variant;
+    in property <string> name;
+    in property <string> played_at;
+    in property <[int]> image;
+    in property <int> sort_key;
+    in property <bool> is_loaded: false;
+    in property <bool> is_playing: false;
+    in property <int> play_progress: 0;
+    in property <float> progress_arc_x: 90;
+    in property <float> progress_arc_y: 0;
+
+    callback clicked(int /* id */);
+    callback long-pressed(int /* id */, string /* name */);
+    callback play-clicked(int /* id */);
+
+    property <bool> aurora-tick: false;
+    property <bool> press-active: false;
+    property <bool> long-press-consumed: false;
+
+    Timer {
+        interval: Theme.aurora-duration;
+        running: is_loaded;
+        triggered => { aurora-tick = !aurora-tick; }
+    }
+
+    Timer {
+        interval: 3000ms;
+        running: press-active;
+        triggered => {
+            press-active = false;
+            long-press-consumed = true;
+            root.long-pressed(root.id, root.name);
+        }
+    }
+
+    property <length> ring-size: 180px;
+    property <length> aurora-band-width: ring-size * 3;
+    property <length> aurora-x: aurora-tick ? -ring-size * 2 : -ring-size;
+    animate aurora-x { duration: Theme.aurora-duration; easing: linear; }
+
+    TouchArea {
+        width: parent.width;
+        height: parent.height;
+        clicked => {
+            if !root.long-press-consumed {
+                root.clicked(root.id);
+            }
+            root.long-press-consumed = false;
+        }
+        pointer-event(e) => {
+            if e.kind == PointerEventKind.down {
+                root.press-active = true;
+                root.long-press-consumed = false;
+            } else if e.kind == PointerEventKind.up || e.kind == PointerEventKind.cancel {
+                root.press-active = false;
+            }
+        }
+    }
+
+    VerticalBox {
+        spacing: 10px;
+
+        // Outer ring — clips the aurora gradient to a circle
+        Rectangle {
+            width: ring-size;
+            height: ring-size;
+            border-radius: ring-size / 2;
+            clip: true;
+
+            // Dark base fill so inactive state looks clean
+            Rectangle {
+                width: parent.width;
+                height: parent.height;
+                background: Theme.background-accent-color;
+            }
+
+            // Aurora gradient band sweeping left to right behind the image
+            Rectangle {
+                x: aurora-x;
+                y: 0;
+                width: aurora-band-width;
+                height: parent.height;
+                opacity: is_loaded ? 1.0 : 0.0;
+                background: @linear-gradient(90deg,
+                    Theme.aurora-color-1 0%,
+                    Theme.aurora-color-2 17%,
+                    Theme.aurora-color-3 33%,
+                    Theme.aurora-color-4 50%,
+                    Theme.aurora-color-5 67%,
+                    Theme.aurora-color-1 83%,
+                    Theme.aurora-color-2 100%
+                );
+                animate opacity { duration: 600ms; easing: ease-out; }
+            }
+
+            // Image circle inset by aurora-tile-border-width to expose the colored ring
+            Rectangle {
+                x: Theme.aurora-tile-border-width;
+                y: Theme.aurora-tile-border-width;
+                width: ring-size - Theme.aurora-tile-border-width * 2;
+                height: ring-size - Theme.aurora-tile-border-width * 2;
+                border-radius: (ring-size - Theme.aurora-tile-border-width * 2) / 2;
+                clip: true;
+
+                if image.length == 0: Rectangle {
+                    width: parent.width;
+                    height: parent.height;
+                    background: @linear-gradient(135deg, #3a1c71, #6200ee, #03dac6);
+
+                    Text {
+                        width: parent.width;
+                        height: parent.height;
+                        text: name;
+                        font-size: 28px;
+                        font-weight: 700;
+                        color: #ffffff;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                        overflow: elide;
+                        wrap: word-wrap;
+                    }
+                }
+
+                if image.length > 0: Image {
+                    source: Helper.get_image(image);
+                    width: parent.width;
+                    height: parent.height;
+                    image-fit: cover;
+                }
+            }
+
+            // Circular progress arc drawn over the ring border, only for folders with progress and not during playback
+            if play_progress > 0 && play_progress < 100 && variant == "folder" && !is_loaded: Path {
+                x: 0;
+                y: 0;
+                width: ring-size;
+                height: ring-size;
+                viewbox-x: 0;
+                viewbox-y: 0;
+                viewbox-width: 180;
+                viewbox-height: 180;
+                stroke: Theme.secondary-color;
+                stroke-width: Theme.aurora-tile-border-width;
+                fill: transparent;
+                MoveTo { x: 90; y: 0; }
+                ArcTo {
+                    radius-x: 90;
+                    radius-y: 90;
+                    x: progress_arc_x;
+                    y: progress_arc_y;
+                    sweep: true;
+                    large-arc: play_progress > 50;
+                }
+            }
+
+            // Full circle highlight for 100% played folders, hidden during playback
+            if play_progress >= 100 && variant == "folder" && !is_loaded: Rectangle {
+                x: 0;
+                y: 0;
+                width: ring-size;
+                height: ring-size;
+                border-radius: ring-size / 2;
+                border-width: Theme.aurora-tile-border-width;
+                border-color: Theme.secondary-color;
+                background: transparent;
+            }
+
+        }
+
+        Text {
+            text: name;
+            font-size: 16px;
+            color: Theme.text-color;
+            horizontal-alignment: center;
+        }
+    }
+
+    // ▶ play badge — after VerticalBox so it renders on top, outside the clipped ring
+    if variant == "folder": Rectangle {
+        property <length> badge-size: 56px;
+        x: ring-size - badge-size - 4px;
+        y: ring-size - badge-size - 4px;
+        width: badge-size;
+        height: badge-size;
+        border-radius: badge-size / 2;
+        background: Theme.primary-color;
+
+        Text {
+            width: parent.width;
+            height: parent.height;
+            text: "▶";
+            font-size: 22px;
+            color: Theme.text-color;
+            horizontal-alignment: center;
+            vertical-alignment: center;
+        }
+
+        TouchArea {
+            width: parent.width;
+            height: parent.height;
+            clicked => { root.play-clicked(root.id); }
+        }
+    }
+}
+
+export component TileListView {
+    in property <[[UILibraryEntry]]> rows;
+    callback entry-clicked(int /* id */);
+    callback entry-long-pressed(int /* id */, string /* name */);
+    callback entry-play-clicked(int /* id */);
+
+    width: 100%;
+    height: 100%;
+    VerticalBox {
+        ScrollView {
+            VerticalBox {
+                for row in rows: HorizontalBox {
+                    alignment: center;
+                    spacing: 20px;
+                    for entry in row: Tile {
+                        id: entry.id;
+                        parent_id: entry.parent_id;
+                        variant: entry.variant;
+                        name: entry.name;
+                        played_at: entry.played_at;
+                        image: entry.image;
+                        sort_key: entry.sort_key;
+                        is_loaded: entry.is_loaded;
+                        is_playing: entry.is_playing;
+                        play_progress: entry.play_progress;
+                        progress_arc_x: entry.progress_arc_x;
+                        progress_arc_y: entry.progress_arc_y;
+                        clicked => { entry-clicked(entry.id); }
+                        long-pressed(id, name) => { entry-long-pressed(id, name); }
+                        play-clicked => { entry-play-clicked(entry.id); }
+                    }
+                }
+            }
+        }
+    }
+}

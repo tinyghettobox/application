@@ -10,7 +10,7 @@ use sea_orm::ActiveValue::Set;
 use sea_orm::Order::Asc;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, ConnectionTrait, DatabaseConnection, DbBackend, DbErr,
-    EntityTrait, QueryFilter, QueryOrder, QuerySelect, Statement, TransactionTrait, Value,
+    EntityTrait, QueryFilter, QueryOrder, FromQueryResult, QuerySelect, Statement, TransactionTrait, Value,
 };
 
 pub struct LibraryEntryRepository {}
@@ -327,6 +327,78 @@ impl LibraryEntryRepository {
             .collect::<Vec<Model>>())
     }
 
+    pub async fn get_ancestor_ids(conn: &DatabaseConnection, id: i32) -> Result<Vec<i32>, DbErr> {
+        let ancestors = Entity::find()
+            .from_raw_sql(Statement::from_sql_and_values(
+                DbBackend::Sqlite,
+                r#"
+                    WITH RECURSIVE ancestors AS (
+                        SELECT parent_id FROM library_entry WHERE id = ?
+                        UNION ALL
+                        SELECT le.parent_id FROM library_entry le
+                        INNER JOIN ancestors a ON le.id = a.parent_id
+                        WHERE a.parent_id IS NOT NULL
+                    )
+                    SELECT * FROM library_entry WHERE id IN (SELECT parent_id FROM ancestors WHERE parent_id IS NOT NULL)
+                "#,
+                [id.into()],
+            ))
+            .all(conn)
+            .await?;
+
+        Ok(ancestors.into_iter().map(|e| e.id).collect())
+    }
+
+    /// Returns a map of folder_id -> (played_leaf_count, total_leaf_count) for the given IDs.
+    /// Only counts non-folder descendants (leaves).
+    pub async fn get_folder_play_progress(
+        conn: &DatabaseConnection,
+        folder_ids: Vec<i32>,
+    ) -> Result<std::collections::HashMap<i32, (i32, i32)>, DbErr> {
+        if folder_ids.is_empty() {
+            return Ok(std::collections::HashMap::new());
+        }
+
+        #[derive(Debug, sea_orm::FromQueryResult)]
+        struct ProgressRow {
+            folder_id: i32,
+            played: i32,
+            total: i32,
+        }
+
+        let placeholders = vec!["?"; folder_ids.len()].join(", ");
+        let sql = format!(
+            r#"
+            WITH RECURSIVE tree AS (
+                SELECT id, parent_id, variant, played_at, id AS root_id
+                FROM library_entry
+                WHERE id IN ({placeholders})
+                UNION ALL
+                SELECT le.id, le.parent_id, le.variant, le.played_at, t.root_id
+                FROM library_entry le
+                INNER JOIN tree t ON le.parent_id = t.id
+            )
+            SELECT
+                root_id AS folder_id,
+                CAST(SUM(CASE WHEN played_at IS NOT NULL AND variant != 'folder' THEN 1 ELSE 0 END) AS INTEGER) AS played,
+                CAST(SUM(CASE WHEN variant != 'folder' THEN 1 ELSE 0 END) AS INTEGER) AS total
+            FROM tree
+            WHERE variant != 'folder'
+            GROUP BY root_id
+            "#,
+            placeholders = placeholders,
+        );
+
+        let rows = ProgressRow::find_by_statement(Statement::from_sql_and_values(
+            DbBackend::Sqlite,
+            sql,
+            folder_ids.into_iter().map(Into::into).collect::<Vec<Value>>(),
+        ))
+        .all(conn)
+        .await?;
+
+        Ok(rows.into_iter().map(|r| (r.folder_id, (r.played, r.total))).collect())
+    }
     async fn get_children<C: ConnectionTrait>(conn: &C, id: i32) -> Result<Vec<Model>, DbErr> {
         let entries = Entity::find()
             .filter(Column::ParentId.eq(id))

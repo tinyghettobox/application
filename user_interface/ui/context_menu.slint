@@ -1,0 +1,90 @@
+import { Theme } from "./theme.slint";
+
+export component ContextMenu {
+    in property <string> item-name;
+    in property <bool> open: false;
+
+    callback mark-played();
+    callback mark-not-played();
+    callback dismissed();
+
+    width: 100%;
+    height: 100%;
+
+    if open: TouchArea {
+        width: 100%;
+        height: 100%;
+        clicked => { root.dismissed(); }
+    }
+
+    if open: Rectangle {
+        width: 100%;
+        height: 100%;
+        background: #000000cc;
+
+        VerticalLayout {
+            alignment: center;
+            spacing: 0;
+
+            Rectangle {
+                background: Theme.background-accent-color;
+                border-radius: 12px;
+                width: 320px;
+                height: self.preferred-height;
+
+                VerticalLayout {
+                    padding: 16px;
+                    spacing: 0;
+
+                    Text {
+                        text: item-name;
+                        font-size: 16px;
+                        color: Theme.text-accent-color;
+                        horizontal-alignment: center;
+                        overflow: elide;
+                        height: 40px;
+                        vertical-alignment: center;
+                    }
+
+                    Rectangle {
+                        height: 1px;
+                        background: Theme.border-color;
+                    }
+
+                    TouchArea {
+                        height: 56px;
+                        clicked => { root.mark-played(); }
+                        Text {
+                            width: parent.width;
+                            height: parent.height;
+                            text: "Mark as played";
+                            font-size: 18px;
+                            color: Theme.text-color;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+
+                    Rectangle {
+                        height: 1px;
+                        background: Theme.border-color;
+                    }
+
+                    TouchArea {
+                        height: 56px;
+                        clicked => { root.mark-not-played(); }
+                        Text {
+                            width: parent.width;
+                            height: parent.height;
+                            text: "Mark as not played";
+                            font-size: 18px;
+                            color: Theme.text-color;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

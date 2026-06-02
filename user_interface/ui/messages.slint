@@ -1,0 +1,32 @@
+import { VerticalBox, HorizontalBox } from "std-widgets.slint";
+
+export global Messages {
+    in property <[string]> messages;
+}
+
+export component MessagesView inherits Rectangle {
+    
+    VerticalBox {
+        for msg in Messages.messages: Text {
+            text: msg;
+            font-size: 16px;
+        }
+    }
+    
+    // Fixed overlay message - always on top
+    Rectangle {
+        y: 10px;
+        width: 200px;
+        height: 30px;
+        border-radius: 5px;
+        x: (parent.width - self.width) / 2;
+        
+        for msg in Messages.messages: Text {
+            text: msg;
+            color: white;
+            horizontal-alignment: center;
+            vertical-alignment: center;
+            font-size: 14px;
+        }
+    }
+}

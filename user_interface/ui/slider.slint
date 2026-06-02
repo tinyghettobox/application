@@ -1,0 +1,75 @@
+import { Theme } from "./theme.slint";
+
+// Generic slider. Value and callback use float 0–100.
+// Fires changed() only on pointer-up or tap (commit-on-release throttle).
+export component Slider inherits Rectangle {
+    in property <float> value;
+    in property <length> track-height: 4px;
+    in property <length> corner-radius: 0px;
+    in property <bool> show-thumb: true;
+    callback changed(float);
+
+    height: track-height;
+    background: Theme.border-color;
+    border-radius: corner-radius;
+
+    // Written imperatively while dragging; -1 means "not dragging / caught up".
+    private property <float> dragged-pos: -1;
+    private property <float> display-value: dragged-pos >= 0 ? dragged-pos : value;
+
+    // When value arrives within 2% of the seek target, clear the lock.
+    private property <float> catch-up-watcher: value;
+    changed catch-up-watcher => {
+        if dragged-pos >= 0 && !touch.pressed && Math.abs(value - dragged-pos) <= 2 {
+            dragged-pos = -1;
+        }
+    }
+
+    // Filled portion
+    Rectangle {
+        x: 0;
+        width: parent.width * (display-value / 100.0);
+        height: parent.height;
+        border-radius: corner-radius;
+        background: Theme.primary-color;
+    }
+
+    // Thumb knob
+    if show-thumb: Rectangle {
+        width: 20px;
+        height: 20px;
+        border-radius: 10px;
+        background: Theme.text-color;
+        x: parent.width * (display-value / 100.0) - self.width / 2;
+        y: (parent.height - self.height) / 2;
+    }
+
+    track := Rectangle {
+        width: parent.width;
+        height: parent.height;
+        background: transparent;
+
+        touch := TouchArea {
+            width: parent.width;
+            height: 44px;
+            y: (parent.height - self.height) / 2;
+
+            moved => {
+                if self.pressed {
+                    dragged-pos = Math.clamp(self.mouse-x / track.width * 100, 0, 100);
+                }
+            }
+
+            clicked => {
+                dragged-pos = Math.clamp(self.mouse-x / track.width * 100, 0, 100);
+                changed(dragged-pos);
+            }
+
+            pointer-event(event) => {
+                if event.kind == PointerEventKind.up && self.mouse-x != self.pressed-x {
+                    changed(dragged-pos);
+                }
+            }
+        }
+    }
+}

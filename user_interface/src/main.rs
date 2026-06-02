@@ -1,172 +1,131 @@
-extern crate gtk4;
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use gtk4::gdk::Display;
-use gtk4::gio::resources_register_include;
-use gtk4::prelude::{ApplicationExt, ApplicationExtManual};
-use gtk4::{glib, Application, CssProvider, IconTheme};
-use std::sync::{Arc, Mutex};
-use tracing::info;
-use tracing::level_filters::LevelFilter;
-use tracing_subscriber::filter::Targets;
-use tracing_subscriber::layer::SubscriberExt;
-use tracing_subscriber::util::SubscriberInitExt;
-use tracing_subscriber::Layer;
+use std::error::Error;
+use std::sync::mpsc::sync_channel;
 
-use database::{connect, model::library_entry::Model as LibraryEntry};
-use player::{Player, Progress};
+use image::{GenericImageView, ImageReader};
+use slint::{Image, Model, ModelRc, SharedPixelBuffer};
+use tracing::error;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
-use crate::components::{Component, WindowComponent};
-use crate::state::{Action, Dispatcher, Event, EventHandler, State};
-use crate::util::memory_subscriber;
+slint::include_modules!();
 
-mod components;
-mod state;
-mod util;
+mod log_layer;
+mod model;
+mod view_model;
 
-const APP_ID: &str = "org.tinyghettobox.gui";
+fn main() -> Result<(), Box<dyn Error>> {
+    // Channel bridges the tracing layer (built before State) to State::dispatch (available after).
+    let (log_tx, log_rx) = sync_channel::<model::actions::Action>(256);
 
-#[tokio::main(flavor = "multi_thread")]
-async fn main() -> glib::ExitCode {
-    // Necessary for librespot since rustls 0.23.x
-    rustls::crypto::aws_lc_rs::default_provider()
-        .install_default()
-        .expect("Failed to install default provider");
+    tracing_subscriber::registry()
+        .with(EnvFilter::from_default_env())
+        .with(tracing_subscriber::fmt::layer())
+        .with(log_layer::StateLogLayer::new(log_tx))
+        .init();
 
-    let log_messages = Arc::new(Mutex::new(vec![]));
-    let subscriber = tracing_subscriber::registry()
-        .with(memory_subscriber::MemorySubscriber::new(
-            log_messages.clone(),
-        ))
-        .with(
-            tracing_subscriber::fmt::layer().with_filter(
-                Targets::new()
-                    .with_default(LevelFilter::DEBUG)
-                    .with_target("stream_download", LevelFilter::DEBUG)
-                    .with_target("runtime", LevelFilter::INFO)
-                    .with_target("sqlx::query", LevelFilter::INFO)
-                    .with_target("tokio", LevelFilter::INFO)
-                    .with_target("ureq", LevelFilter::INFO)
-                    .with_target("ureq::unit", LevelFilter::DEBUG)
-                    .with_target("rustls", LevelFilter::INFO)
-                    .with_target("hyper_util::client::legacy", LevelFilter::INFO),
-                // .with_target("user_interface::state", LevelFilter::INFO)
-            ),
-        );
+    // Tokio runtime on background threads; Slint event loop stays on the main thread.
+    let rt = tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()?;
 
-    #[cfg(debug_assertions)]
-    let subscriber = subscriber.with(console_subscriber::ConsoleLayer::builder().spawn());
+    let (state, player_rx) = rt.block_on(async {
+        let conn = database::connect().await.expect("DB connect failed");
 
-    subscriber.init();
+        // Spawn Player::new on a background task so ALSA init doesn't block the UI from starting.
+        let conn_for_player = conn.clone();
+        let player_rx = tokio::spawn(async move {
+            player::Player::new(conn_for_player, 0.7).await
+        });
 
-    info!("Starting user interface");
+        let state = model::State::new(conn);
+        (state, player_rx)
+    });
 
-    resources_register_include!("composite_templates.gresource")
-        .expect("Failed to register resources.");
-
-    let connection = connect().await.expect("Could not connect to database");
-    let state = Arc::new(Mutex::new(
-        State::new(connection.clone(), log_messages.clone()).await,
-    ));
-    let dispatcher = Arc::new(Mutex::new(Dispatcher::new()));
-
-    let player = Player::new(connection.clone(), state.lock().unwrap().volume).await;
-
+    // Forward log actions from the tracing layer into State::dispatch.
     {
-        let player = player.clone();
-        let dispatcher1 = dispatcher.clone();
-        let dispatcher2 = dispatcher.clone();
-        let dispatcher3 = dispatcher.clone();
-        let dispatcher4 = dispatcher.clone();
-        tokio::spawn(async move {
-            let mut player = player.lock().await;
-            let handle_progress_change = move |progress: Progress| {
-                dispatcher1
-                    .clone()
-                    .lock()
-                    .unwrap()
-                    .dispatch_action(Action::SetProgress(progress));
-            };
-            let handle_track_change = move |library_entry: Option<LibraryEntry>| {
-                dispatcher2
-                    .lock()
-                    .unwrap()
-                    .dispatch_action(Action::SetPlayingTrack(library_entry));
-            };
-            let handle_track_end = move |_library_entry: LibraryEntry| {
-                dispatcher3
-                    .lock()
-                    .unwrap()
-                    .dispatch_action(Action::SetPlayedAt);
-            };
-            let handle_error = move |error| {
-                dispatcher4
-                    .lock()
-                    .unwrap()
-                    .dispatch_action(Action::ShowError(error));
-            };
-
-            player.connect_progress_changed(handle_progress_change);
-            player.connect_track_changed(handle_track_change);
-            player.connect_track_ended(handle_track_end);
-            player.connect_error(handle_error);
+        let state_for_log = state.clone();
+        std::thread::spawn(move || {
+            for action in log_rx {
+                state_for_log.dispatch(action);
+            }
         });
     }
 
-    let handle = tokio::runtime::Handle::current();
-    let thread = std::thread::spawn(move || {
-        handle.block_on(async {
-            let app = Application::builder().application_id(APP_ID).build();
-            app.connect_startup(|_| {
-                info!("Startup");
-                let theme = IconTheme::for_display(&Display::default().unwrap());
-                theme.add_resource_path("/org/tinyghettobox/gui/icons/scalable/actions/");
-                theme.add_search_path("/org/tinyghettobox/gui/icons/scalable/actions/");
+    // Enter the runtime so tokio::spawn works from the action loop
+    let _guard = rt.enter();
 
-                let provider = CssProvider::new();
-                provider.load_from_resource("/org/tinyghettobox/gui/styles.css");
+    let ui = AppWindow::new()?;
 
-                gtk4::style_context_add_provider_for_display(
-                    &Display::default().expect("Could not connect to a display."),
-                    &provider,
-                    gtk4::STYLE_PROVIDER_PRIORITY_APPLICATION,
-                );
-                info!("Startup done");
-            });
-            app.connect_activate(move |app: &Application| {
-                let dispatcher = dispatcher.clone();
-                let state = state.clone();
-                let player = player.clone();
+    let _content_vm = view_model::content::ContentVM::new(ui.as_weak(), state.clone());
+    let _display_timer_vm = view_model::display_timer::DisplayTimerVM::new(ui.as_weak(), state.clone());
+    let _logs_vm = view_model::logs::LogsVM::new(ui.as_weak(), state.clone());
+    let _messages_vm = view_model::messages::MessagesVM::new(ui.as_weak(), state.clone());
+    let _navbar_vm = view_model::navbar::NavbarVM::new(ui.as_weak(), state.clone());
+    let _playbar_vm = view_model::playbar::PlaybarVM::new(ui.as_weak(), state.clone());
 
-                info!("Render app");
-                let window = WindowComponent::new(state.clone(), dispatcher.clone(), None);
-                window.present(app);
+    // Wire player callbacks once Player::new() finishes, then load library.
+    {
+        let state_clone = state.clone();
+        tokio::spawn(async move {
+            match player_rx.await {
+                Ok(player) => {
+                    {
+                        let mut p = player.lock().await;
+                        let s1 = state_clone.clone();
+                        let s2 = state_clone.clone();
+                        let s3 = state_clone.clone();
+                        let s4 = state_clone.clone();
+                        p.connect_progress_changed(move |progress| {
+                            s1.dispatch(model::actions::Action::SetProgress(progress));
+                        });
+                        p.connect_track_changed(move |entry| {
+                            s2.dispatch(model::actions::Action::SetPlayingTrack(entry));
+                        });
+                        p.connect_track_ended(move |entry| {
+                            s3.dispatch(model::actions::Action::SetPlayedAt(entry.id, true));
+                        });
+                        p.connect_error(move |msg| {
+                            s4.dispatch(model::actions::Action::AppendLog(
+                                model::actions::LogEntry {
+                                    level: model::actions::LogLevel::Error,
+                                    message: msg,
+                                    timestamp: chrono::Utc::now().naive_utc(),
+                                }
+                            ));
+                        });
+                    }
+                    state_clone.set_player(player);
+                    state_clone.dispatch(model::actions::Action::InitVolume);
+                    state_clone.dispatch(model::actions::Action::LoadLibraryEntry(0));
+                }
+                Err(e) => {
+                    error!("Player init failed: {:?}", e);
+                    std::process::exit(1);
+                }
+            }
+        });
+    }
 
-                let window = Arc::new(Mutex::new(Box::new(window) as Box<dyn EventHandler>));
-
-                let dispatcher_clone = dispatcher.clone();
-                dispatcher.lock().unwrap().handle(
-                    move |action| {
-                        let dispatcher = dispatcher_clone.clone();
-                        let state = state.clone();
-                        let player = player.clone();
-                        Action::process(action, state.clone(), dispatcher.clone(), player.clone())
-                    },
-                    move |event| Event::broadcast(event, window.clone()),
-                );
-
-                dispatcher
-                    .lock()
-                    .unwrap()
-                    .dispatch_action(Action::ToggleMonitor(true));
-                dispatcher.lock().unwrap().dispatch_action(Action::Started);
-                info!("Rendered");
-            });
-
-            info!("Run");
-            // Run the application
-            app.run()
-        })
+    ui.global::<Helper>().on_get_image(|image: ModelRc<i32>| {
+        let decode = move || {
+            let data_u8: Vec<u8> = image.iter().map(|v| v as u8).collect();
+            let img = ImageReader::new(std::io::Cursor::new(data_u8))
+                .with_guessed_format()
+                .map_err(|e| slint::platform::PlatformError::from(format!("{:?}", e)))?
+                .decode()
+                .map_err(|e| slint::platform::PlatformError::from(format!("{:?}", e)))?;
+            let (width, height) = img.dimensions();
+            Ok(Image::from_rgb8(SharedPixelBuffer::clone_from_slice(
+                img.as_bytes(),
+                width,
+                height,
+            )))
+        };
+        decode().unwrap_or_else(|_: slint::platform::PlatformError| Image::default())
     });
 
-    thread.join().unwrap()
+    ui.run()?;
+
+    Ok(())
 }

@@ -1,0 +1,72 @@
+import { VerticalBox, HorizontalBox, ScrollView } from "std-widgets.slint";
+import { UILibraryEntry, Helper } from "./common.slint";
+import { Theme } from "./theme.slint";
+import { TileListView } from "./tile_list_view.slint";
+import { DetailListView } from "detail_list_view.slint";
+import { ContextMenu } from "context_menu.slint";
+
+export global Content {
+    in property <string> variant: "folder";
+    in property <[[UILibraryEntry]]> tile-rows: [[{id: 0, parent_id: 0, variant: "folder", name: "test", played_at: "", image: [], sort_key: 0}]];
+    in property <[UILibraryEntry]> detail-rows: [{id: 0, parent_id: 0, variant: "folder", name: "test", played_at: "", image: [], sort_key: 0}];
+    in property <bool> interaction-disabled: false;
+    callback select-library-entry(int /* id */);
+    callback play-folder(int /* id */);
+    callback context-menu-action(int /* id */, string /* action: "played" | "not-played" */);
+}
+
+export component ContentView {
+    vertical-stretch: 1;
+    width: 100%;
+
+    property <int> context-menu-id: -1;
+    property <string> context-menu-name: "";
+
+    if Content.variant == "folder" || Content.variant == "stream":
+        TileListView {
+            rows: Content.tile-rows;
+            entry-clicked(id) => {
+                Content.select-library-entry(id);
+            }
+            entry-long-pressed(id, name) => {
+                root.context-menu-id = id;
+                root.context-menu-name = name;
+            }
+            entry-play-clicked(id) => {
+                Content.play-folder(id);
+            }
+        }
+    if Content.variant != "folder" && Content.variant != "stream":
+        DetailListView {
+            rows: Content.detail-rows;
+            entry-clicked(id) => {
+                Content.select-library-entry(id);
+            }
+            entry-long-pressed(id, name) => {
+                root.context-menu-id = id;
+                root.context-menu-name = name;
+            }
+        }
+
+    // Absorbs all touches while a track is loading to prevent double-starts
+    if Content.interaction-disabled: TouchArea {
+        width: 100%;
+        height: 100%;
+    }
+
+    ContextMenu {
+        open: root.context-menu-id != -1;
+        item-name: root.context-menu-name;
+        mark-played => {
+            Content.context-menu-action(root.context-menu-id, "played");
+            root.context-menu-id = -1;
+        }
+        mark-not-played => {
+            Content.context-menu-action(root.context-menu-id, "not-played");
+            root.context-menu-id = -1;
+        }
+        dismissed => {
+            root.context-menu-id = -1;
+        }
+    }
+}

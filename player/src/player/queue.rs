@@ -41,6 +41,11 @@ impl Queue {
         self.current = -1;
         self.queue.clear();
     }
+
+    /// Set the position so that the next call to `next()` returns the entry at `idx`.
+    pub fn set_current(&mut self, idx: i32) {
+        self.current = idx - 1;
+    }
 }
 
 impl FromIterator<LibraryEntry> for Queue {

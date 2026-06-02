@@ -1,0 +1,23 @@
+export global DisplayTimer {
+    in property <bool> display-active: true;
+    callback wake-up();
+}
+
+export component DisplayOverlay {
+    width: 100%;
+    height: 100%;
+
+    // Display off: black screen + consuming TouchArea so the wake touch has no side effects.
+    if !DisplayTimer.display-active: Rectangle {
+        width: parent.width;
+        height: parent.height;
+        background: black;
+
+        TouchArea {
+            width: parent.width;
+            height: parent.height;
+            clicked => { DisplayTimer.wake-up(); }
+        }
+    }
+
+}

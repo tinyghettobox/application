@@ -1,0 +1,43 @@
+import { UILibraryEntry, Helper } from "./common.slint";
+import { Content, ContentView } from "./content.slint";
+import { Messages,MessagesView } from "./messages.slint";
+import { Navbar, NavbarView } from "./navbar.slint";
+import { Playbar, PlaybarView } from "./playbar.slint";
+import { Logs, LogsView, UILogEntry } from "./logs.slint";
+import { Theme } from "./theme.slint";
+import { VerticalBox } from "std-widgets.slint";
+import { DisplayTimer, DisplayOverlay } from "./display_timer.slint";
+
+export { UILibraryEntry, Helper, UILogEntry }
+export { Content, Messages, Navbar, Playbar, Logs, DisplayTimer }
+
+export component AppWindow inherits Window {
+    preferred-width: 800px;
+    preferred-height: 480px;
+    background: Theme.background-color;
+
+    VerticalBox {
+        height: parent.height;
+        padding: 0;
+        NavbarView {
+        }
+        ContentView {
+        }
+        PlaybarView {
+        }
+    }
+
+    MessagesView {
+    }
+
+    LogsView {
+        width: parent.width;
+        height: parent.height;
+    }
+
+    // Must be last so it sits on top of all other content.
+    DisplayOverlay {
+        width: parent.width;
+        height: parent.height;
+    }
+}

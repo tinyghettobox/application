@@ -1,0 +1,22 @@
+import { Slider } from "./slider.slint";
+import { Theme } from "./theme.slint";
+
+export component PlaybarProgress inherits Rectangle {
+    in property <float> progress;
+    in property <bool> is-loading;
+    callback seek(float);
+
+    width: 100%;
+    height: 4px;
+    background: Theme.border-color;
+
+    Slider {
+        width: parent.width;
+        height: parent.height;
+        value: progress;
+        track-height: parent.height;
+        corner-radius: 0px;
+        show-thumb: !is-loading;
+        changed(v) => { seek(v); }
+    }
+}

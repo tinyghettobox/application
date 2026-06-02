@@ -1,0 +1,168 @@
+import { Theme } from "./theme.slint";
+import { Helper } from "./common.slint";
+import { PlaybarProgress } from "./playbar_progress.slint";
+import { PlaybarControls } from "./playbar_controls.slint";
+
+component PlaybarArtwork {
+    in property <string> title;
+    in property <[int]> image;
+
+    width: 64px;
+    height: 64px;
+
+    if image.length == 0: Rectangle {
+        width: parent.width;
+        height: parent.height;
+        background: @linear-gradient(135deg, #3a1c71, #6200ee, #03dac6);
+        Text {
+            width: parent.width;
+            height: parent.height;
+            text: title.character-count > 0 ? title : "♪";
+            font-size: 22px;
+            font-weight: 700;
+            color: #ffffff;
+            horizontal-alignment: center;
+            vertical-alignment: center;
+        }
+    }
+
+    if image.length > 0: Image {
+        source: Helper.get_image(image);
+        width: parent.width;
+        height: parent.height;
+        image-fit: cover;
+    }
+}
+
+export global Playbar {
+    in property <bool> visible: false;
+    in property <string> track-title: "";
+    in property <string> parent-title: "";
+    in property <[int]> track-image: [];
+    in property <[int]> parent-image: [];
+    in property <bool> is-playing: false;
+    in property <bool> is-loading: false;
+    in property <float> progress: 0.0;
+    in property <int> volume: 80;
+
+    callback play-prev();
+    callback toggle-play();
+    callback play-next();
+    callback set-volume(int);
+    callback seek(float);
+}
+
+export component PlaybarView inherits Rectangle {
+    height: Playbar.visible ? 80px : 1px;
+    opacity: Playbar.visible ? 1.0 : 0.0;
+
+    animate height {
+        duration: 200ms;
+        easing: ease-in-out;
+    }
+    animate opacity {
+        duration: 200ms;
+        easing: ease-in-out;
+    }
+
+    Rectangle {
+        width: parent.width;
+        height: parent.height;
+        background: Theme.background-accent-color;
+
+        // Artwork (fixed 64×64 on the left)
+        artwork := Rectangle {
+            x: 8px;
+            y: 4px + (parent.height - 4px - self.height) / 2;
+            width: 64px;
+            height: 64px;
+            border-radius: 4px;
+            clip: true;
+            background: Theme.background-color;
+
+            property <[int]> display-image: Playbar.track-image.length > 0
+                ? Playbar.track-image
+                : Playbar.parent-image;
+
+            PlaybarArtwork {
+                title: Playbar.track-title;
+                image: parent.display-image;
+                width: 64px;
+                height: 64px;
+            }
+        }
+
+        // Controls on the right
+        controls := PlaybarControls {
+            x: parent.width - self.width;
+            y: 4px;
+            height: parent.height - 4px;
+            is-playing: Playbar.is-playing;
+            volume: Playbar.volume;
+            play-prev => { Playbar.play-prev(); }
+            toggle-play => { Playbar.toggle-play(); }
+            play-next => { Playbar.play-next(); }
+            set-volume(v) => { Playbar.set-volume(v); }
+        }
+
+        // Track info fills the gap between artwork and controls
+        Rectangle {
+            x: artwork.x + artwork.width + 12px;
+            y: 4px;
+            width: controls.x - self.x - 8px;
+            height: parent.height - 4px;
+            background: transparent;
+
+            // Loading skeleton
+            if Playbar.is-loading && !Playbar.is-playing: VerticalLayout {
+                width: parent.width;
+                height: parent.height;
+                alignment: center;
+                spacing: 6px;
+
+                Rectangle {
+                    width: min(parent.width * 0.6, 180px);
+                    height: 14px;
+                    border-radius: 4px;
+                    background: Theme.border-color;
+                }
+                Rectangle {
+                    width: min(parent.width * 0.4, 120px);
+                    height: 12px;
+                    border-radius: 4px;
+                    background: Theme.border-color;
+                }
+            }
+
+            // Normal track info
+            if !Playbar.is-loading || Playbar.is-playing: VerticalLayout {
+                width: parent.width;
+                height: parent.height;
+                alignment: center;
+                spacing: 4px;
+
+                Text {
+                    text: Playbar.track-title;
+                    font-size: 16px;
+                    color: Theme.text-color;
+                    overflow: elide;
+                }
+                Text {
+                    text: Playbar.parent-title;
+                    font-size: 14px;
+                    color: Theme.text-accent-color;
+                    overflow: elide;
+                }
+            }
+        }
+
+        PlaybarProgress {
+            x: 0;
+            y: 0;
+            width: parent.width;
+            progress: Playbar.progress;
+            is-loading: Playbar.is-loading;
+            seek(pct) => { Playbar.seek(pct); }
+        }
+    }
+}

@@ -1,0 +1,185 @@
+import { Theme } from "./theme.slint";
+import { IconSeekBackward, IconPlay, IconPause, IconSeekForward, IconVolumeFull, IconVolume, IconVolumeOff } from "./icons.slint";
+
+export component PlaybarControls {
+    in property <bool> is-playing;
+    in property <int> volume;
+    out property <bool> volume-open: false;
+
+    callback play-prev();
+    callback toggle-play();
+    callback play-next();
+    callback set-volume(int);
+
+    width: 280px;
+
+    // Intercept touches outside the popover to close it
+    if volume-open: TouchArea {
+        width: 800px;
+        height: 480px;
+        x: -(root.absolute-position.x);
+        y: -(root.absolute-position.y);
+        clicked => { volume-open = false; }
+    }
+
+    HorizontalLayout {
+        width: parent.width;
+        height: 60px;
+        y: (parent.height - self.height) / 2;
+        alignment: center;
+        spacing: 0px;
+
+        prev-area := TouchArea {
+            width: 60px;
+            height: 60px;
+            clicked => { play-prev(); }
+            Rectangle {
+                border-radius: 30px;
+                background: prev-area.pressed ? Theme.border-color : transparent;
+                IconSeekBackward {
+                    color: Theme.text-color;
+                    width: 26px;
+                    height: 26px;
+                    x: (parent.width - self.width) / 2;
+                    y: (parent.height - self.height) / 2;
+                }
+            }
+        }
+
+        play-area := TouchArea {
+            width: 60px;
+            height: 60px;
+            clicked => { toggle-play(); }
+            Rectangle {
+                border-radius: 30px;
+                background: play-area.pressed ? Theme.border-color : transparent;
+                if is-playing: IconPause {
+                    color: Theme.text-color;
+                    width: 24px;
+                    height: 24px;
+                    x: (parent.width - self.width) / 2;
+                    y: (parent.height - self.height) / 2;
+                }
+                if !is-playing: IconPlay {
+                    color: Theme.text-color;
+                    width: 24px;
+                    height: 24px;
+                    x: (parent.width - self.width) / 2;
+                    y: (parent.height - self.height) / 2;
+                }
+            }
+        }
+
+        next-area := TouchArea {
+            width: 60px;
+            height: 60px;
+            clicked => { play-next(); }
+            Rectangle {
+                border-radius: 30px;
+                background: next-area.pressed ? Theme.border-color : transparent;
+                IconSeekForward {
+                    color: Theme.text-color;
+                    width: 26px;
+                    height: 26px;
+                    x: (parent.width - self.width) / 2;
+                    y: (parent.height - self.height) / 2;
+                }
+            }
+        }
+
+        // Gap between transport controls and volume
+        Rectangle { width: 20px; height: 60px; }
+
+        vol-btn := TouchArea {
+            width: 60px;
+            height: 60px;
+            clicked => { volume-open = !volume-open; }
+            Rectangle {
+                border-radius: 30px;
+                background: vol-btn.pressed || volume-open ? Theme.border-color : transparent;
+                IconVolumeFull {
+                    color: Theme.text-color;
+                    width: 24px;
+                    height: 24px;
+                    x: (parent.width - self.width) / 2;
+                    y: (parent.height - self.height) / 2;
+                }
+            }
+        }
+    }
+
+    // Volume popover — floats above the controls
+    if volume-open: Rectangle {
+        width: 400px;
+        height: 56px;
+        x: parent.width - self.width;
+        y: -self.height - 8px;
+        background: Theme.background-accent-color;
+        border-color: Theme.border-color;
+        border-width: 1px;
+        border-radius: 8px;
+        drop-shadow-blur: 12px;
+        drop-shadow-color: #000000aa;
+
+        HorizontalLayout {
+            width: parent.width;
+            height: parent.height;
+            padding: 12px;
+            spacing: 8px;
+            alignment: stretch;
+
+            IconVolumeOff {
+                color: Theme.text-accent-color;
+                width: 20px;
+            }
+
+            track-container := Rectangle {
+                background: transparent;
+
+                vol-track := Rectangle {
+                    width: parent.width;
+                    height: 8px;
+                    y: (parent.height - self.height) / 2;
+                    border-radius: 4px;
+                    background: Theme.border-color;
+
+                    Rectangle {
+                        width: parent.width * (volume / 100.0);
+                        height: parent.height;
+                        border-radius: 4px;
+                        background: Theme.primary-color;
+                        x: 0;
+                        y: 0;
+                    }
+
+                    Rectangle {
+                        width: 20px;
+                        height: 20px;
+                        border-radius: 10px;
+                        background: Theme.text-color;
+                        x: parent.width * (volume / 100.0) - self.width / 2;
+                        y: (parent.height - self.height) / 2;
+                    }
+                }
+
+                TouchArea {
+                    width: parent.width;
+                    height: parent.height;
+                    moved => {
+                        if (self.pressed) {
+                            set-volume(Math.clamp(Math.round(self.mouse-x / vol-track.width * 100), 0, 100));
+                        }
+                    }
+                    clicked => {
+                        set-volume(Math.clamp(Math.round(self.mouse-x / vol-track.width * 100), 0, 100));
+                    }
+                }
+            }
+
+            IconVolumeFull {
+                color: Theme.text-accent-color;
+                width: 20px;
+            }
+        }
+    }
+}

@@ -1,0 +1,75 @@
+import { HorizontalBox } from "std-widgets.slint";
+import { Theme } from "./theme.slint";
+import { IconArrowLeft, IconLogs } from "./icons.slint";
+
+
+export global Navbar {
+  in property <bool> visible: false;
+  in property <int> parent-id: 0;
+  in property <string> entry-name: "Music";
+  callback go-back(int /* index */);
+  callback open-logs();
+}
+
+export component NavbarView {
+  height: 70px;
+  opacity: Navbar.visible ? 1.0 : 0.0;
+
+  animate opacity {
+    duration: 100ms;
+    easing: ease-in-out;
+  }
+
+  Rectangle {
+    width: parent.width;
+    background: Theme.background-accent-color;
+    HorizontalBox {
+      padding: 0;
+      height: parent.height;
+      back-area := TouchArea {
+        width: 70px;
+        height: parent.height;
+        clicked => {
+            Navbar.go-back(Navbar.parent-id);
+        }
+        IconArrowLeft {
+          color: Theme.text-color;
+          width: 28px;
+          height: 28px;
+          x: (parent.width - self.width) / 2;
+          y: (parent.height - self.height) / 2;
+        }
+      }
+
+      Text {
+        height: parent.height;
+        text: Navbar.entry-name;
+        color: Theme.text-color;
+        font-size: 24px;
+        vertical-alignment: center;
+        horizontal-stretch: 1;
+      }
+
+      logs-area := TouchArea {
+        width: 70px;
+        height: parent.height;
+        clicked => {
+            Navbar.open-logs();
+        }
+        IconLogs {
+          color: Theme.text-accent-color;
+          width: 24px;
+          height: 24px;
+          x: (parent.width - self.width) / 2;
+          y: (parent.height - self.height) / 2;
+        }
+      }
+    }
+    Rectangle {
+      width: parent.width;
+      height: 1px;
+      y: parent.height - self.height;
+      background: Theme.border-color;
+    }
+  }
+}

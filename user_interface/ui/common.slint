@@ -1,0 +1,21 @@
+
+export global Helper {
+    pure callback get_image([int]) -> image;
+}
+
+export struct UILibraryEntry {
+    id: int,
+    parent_id: int,
+    variant: string,
+    name: string,
+    played_at: string,
+    image: [int],
+    sort_key: int,
+
+    play_progress: int,
+    // Arc endpoint for the circular progress ring (pre-computed in Rust to avoid trig in Slint)
+    progress_arc_x: float,
+    progress_arc_y: float,
+    is_loaded: bool,
+    is_playing: bool,
+}

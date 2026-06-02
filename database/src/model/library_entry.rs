@@ -65,6 +65,10 @@ pub struct Model {
     #[sea_orm(ignore)]
     #[ts(optional)]
     pub parent_image: Option<Vec<u8>>,
+    // Only relevant for the user interface — 0-100 progress for folder entries
+    #[sea_orm(ignore)]
+    #[ts(optional)]
+    pub play_progress: Option<i32>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
