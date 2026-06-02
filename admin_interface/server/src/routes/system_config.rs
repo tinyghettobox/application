@@ -75,5 +75,8 @@ fn run_update_commands(updated_model: Model, changed_fields: Vec<String>) -> Res
     if changed_fields.contains(&"led_pin".to_string()) {
         crate::configure_commands::set_led_pin(updated_model.led_pin.clone())?;
     }
+    if changed_fields.contains(&"max_volume".to_string()) {
+        crate::configure_commands::set_max_volume(updated_model.max_volume.clone())?;
+    }
     Ok(())
 }

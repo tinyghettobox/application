@@ -1,4 +1,4 @@
-use crate::player::play_target::{PlayTarget, Progress};
+use crate::player::play_target::{PlayTarget, Progress, ProgressStatus};
 use async_trait::async_trait;
 use database::model::library_entry::Model as LibraryEntry;
 use database::{DatabaseConnection, TrackSourceRepository};
@@ -64,6 +64,7 @@ impl PlayTarget for LocalPlayTarget {
             .map_err(|e| format!("Could not lock audio manager: {}", e))?
             .play(sound)
             .map_err(|e| format!("Could not play sound: {}", e))?;
+
         self.sound_handle = Arc::new(Mutex::new(Some(handle)));
 
         Ok(())
@@ -129,19 +130,38 @@ impl PlayTarget for LocalPlayTarget {
     }
 
     async fn get_progress(&self) -> Result<Progress, String> {
-        let progress = self
-            .sound_handle
-            .lock()
-            .map_err(|e| format!("Could not lock sound handle: {}", e))?
-            .as_ref()
-            .ok_or("No sound handle to get progress".to_string())?
-            .position();
+        if let Some(handle) = self.sound_handle.lock().unwrap().as_mut() {
+            let error = handle.pop_error();
+            let progress = handle.position();
+            let is_finite = self.duration.as_secs() < i32::MAX as u64;
 
-        Ok(Progress {
-            position: Duration::from_secs_f64(progress),
-            duration: self.duration,
-            is_finite: true,
-        })
+            Ok(Progress {
+                position: Duration::from_secs_f64(progress),
+                duration: if is_finite {
+                    self.duration
+                } else {
+                    Duration::from_secs_f64(progress)
+                },
+                is_finite, // infinite stream will have u64::MAX / sample rate as duration
+                preloaded: false,
+                status: if let Some(err) = error {
+                    debug!("Error in stream: {}", err);
+                    ProgressStatus::Failed(format!("{}", err))
+                } else if handle.state().is_advancing() {
+                    ProgressStatus::Playing
+                } else {
+                    ProgressStatus::Stopped
+                },
+            })
+        } else {
+            Ok(Progress {
+                position: Duration::from_secs(0),
+                duration: Duration::from_secs(0),
+                is_finite: true,
+                preloaded: false,
+                status: ProgressStatus::Stopped,
+            })
+        }
     }
 
     fn clone_box(&self) -> Box<dyn PlayTarget> {

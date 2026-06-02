@@ -5,7 +5,6 @@ use gtk4::prelude::IsA;
 use gtk4::{glib, Widget};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
-use tracing::info;
 
 pub struct ShutdownTimerComponent {
     children: Vec<Arc<Mutex<Box<dyn EventHandler>>>>,
@@ -97,7 +96,6 @@ impl Component<Option<()>> for ShutdownTimerComponent {
 
     fn update(&mut self) {
         let monitor_active = self.state.lock().expect("could not lock").monitor_active;
-        info!("Setting forward to {}", monitor_active);
         self.widget.set_forwards_clicks(monitor_active);
     }
 

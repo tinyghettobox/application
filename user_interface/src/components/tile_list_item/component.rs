@@ -4,7 +4,7 @@ use crate::components::tile_list_item::widget::TileListItemWidget;
 use crate::components::{Children, Component};
 use crate::state::{Action, Dispatcher, Event, EventHandler, State};
 use database::model::library_entry::Variant;
-use tracing::{debug, error};
+use tracing::error;
 
 pub struct TileListItemComponent {
     pub widget: TileListItemWidget,
@@ -16,7 +16,7 @@ pub struct TileListItemComponent {
 impl EventHandler for TileListItemComponent {
     fn on_event(&mut self, event: &Event) {
         match event {
-            Event::PlayStateChanged => self.update_play_state(),
+            Event::PlayStateChanged | Event::TrackChanged => self.update_play_state(),
             _ => {}
         }
     }
@@ -123,24 +123,19 @@ impl Component<i32> for TileListItemComponent {
         let state = self.state.lock().unwrap();
 
         match &state.library_entry.children {
-            Some(child_library_entry) => {
-                debug!(
-                    "Searching id {} in {} children",
-                    self.library_entry_id,
-                    child_library_entry.len()
-                );
-                match child_library_entry
+            Some(child_library_entries) => {
+                match child_library_entries
                     .iter()
                     .find(|entry| entry.id == self.library_entry_id)
                 {
                     Some(entry) => {
-                        debug!(
-                            "Entry {} has image size: {}",
-                            entry.id,
-                            entry.image.as_ref().unwrap_or(&vec![]).len()
-                        );
                         self.widget.set_image(entry.image.clone());
                         self.widget.set_name(entry.name.to_string());
+                        self.widget.set_playing(
+                            state
+                                .playing_library_entry_path
+                                .contains(&self.library_entry_id),
+                        );
                     }
                     None => error!(
                         "Passed library entry '{}' does not exist o.O???",
@@ -160,11 +155,14 @@ impl Component<i32> for TileListItemComponent {
 
 impl TileListItemComponent {
     pub fn update_play_state(&self) {
-        let playing_library_entry = self.state.lock().unwrap().playing_library_entry.clone();
+        let playing_breadcrumb = self
+            .state
+            .lock()
+            .unwrap()
+            .playing_library_entry_path
+            .clone();
 
-        if let Some(playing_library_entry) = playing_library_entry {
-            self.widget
-                .set_playing(playing_library_entry.id == self.library_entry_id);
-        }
+        self.widget
+            .set_playing(playing_breadcrumb.contains(&self.library_entry_id));
     }
 }

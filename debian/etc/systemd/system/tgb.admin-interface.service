@@ -11,6 +11,7 @@ ExecStart=/srv/tinyghettobox/admin_interface_server
 Restart=always
 RestartSec=20
 Type=simple
+User=tinyghettobox
 
 [Install]
 WantedBy=multi-user.target

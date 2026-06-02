@@ -1,4 +1,11 @@
 #!/bin/sh
+#
+chown -R tinyghettobox /srv/tinyghettobox
+chmod -R 755 /srv/tinyghettobox
+
+# Allow the admin_interface_server to bind to port 80
+setcap 'cap_net_bind_service=+ep' /srv/tinyghettobox/admin_interface_server
+
 # Enable and start services
 systemctl daemon-reload
 systemctl enable tgb.user-interface.service

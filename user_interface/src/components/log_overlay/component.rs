@@ -16,7 +16,7 @@ pub struct LogOverlayComponent {
 impl EventHandler for LogOverlayComponent {
     fn on_event(&mut self, event: &Event) {
         match event {
-            Event::LogOverlayToggled => self.update(),
+            Event::LogOverlayToggled | Event::LogLevelChanged => self.update(),
             _ => {}
         }
     }
@@ -46,18 +46,36 @@ impl Component<Option<()>> for LogOverlayComponent {
     ) -> (LogOverlayWidget, Children) {
         let widget = LogOverlayWidget::new();
         widget.set_factory();
-        widget.connect_close_clicked(move |_| {
-            dispatcher
-                .lock()
-                .expect("could not lock")
-                .dispatch_action(Action::ToggleLogOverlay(false));
-        });
+        {
+            let dispatcher = dispatcher.clone();
+            widget.connect_close_clicked(move |_| {
+                dispatcher
+                    .lock()
+                    .expect("could not lock")
+                    .dispatch_action(Action::ToggleLogOverlay(false));
+            });
+        }
+        {
+            let dispatcher = dispatcher.clone();
+            widget.connect_log_level_changed(move |level| {
+                dispatcher
+                    .lock()
+                    .expect("could not lock")
+                    .dispatch_action(Action::SetLogLevel(level));
+            });
+        }
 
         (widget, vec![])
     }
 
     fn update(&mut self) {
         let show_log_overlay = self.state.lock().expect("could not lock").show_log_overlay;
+        let log_level = self
+            .state
+            .lock()
+            .expect("could not lock")
+            .log_level
+            .to_string();
 
         if show_log_overlay {
             let messages = self
@@ -68,6 +86,7 @@ impl Component<Option<()>> for LogOverlayComponent {
                 .lock()
                 .expect("could not lock messages")
                 .iter()
+                .filter(|message| level_to_number(&message.level) >= level_to_number(&log_level))
                 .map(|message| BoxedAnyObject::new(message.clone()))
                 .collect::<ListStore>();
 
@@ -93,5 +112,16 @@ impl Component<Option<()>> for LogOverlayComponent {
 impl LogOverlayComponent {
     pub fn add_child(&self, widget: &impl IsA<Widget>) {
         self.widget.add_child(widget);
+    }
+}
+
+fn level_to_number(level: &str) -> u8 {
+    match level {
+        "TRACE" => 0,
+        "DEBUG" => 1,
+        "INFO" => 2,
+        "WARN" => 3,
+        "ERROR" => 4,
+        _ => panic!("Unknown log level {}", level), // unknown
     }
 }

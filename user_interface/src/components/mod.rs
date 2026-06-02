@@ -13,6 +13,7 @@ mod detail_list_item;
 mod empty_info;
 mod log_overlay;
 mod navbar;
+mod notification;
 mod player_bar;
 mod ripple;
 mod shutdown_timer;

@@ -1,4 +1,3 @@
-use std::ops::Sub;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -7,16 +6,18 @@ use tracing::error;
 
 use database::model::library_entry::{Model as LibraryEntry, Variant};
 
+use crate::player::play_target::ProgressStatus;
 use crate::{Player, Progress};
 
 // Update progress position every second optimistically. FetchProgressTimer is used to correct the optimistic progress position
 pub struct PlayerTimer;
 impl PlayerTimer {
-    pub fn start_progress_timer<P, T, E>(_player: Arc<Mutex<Player<P, T, E>>>)
+    pub fn start_progress_timer<P, T, E, F>(_player: Arc<Mutex<Player<P, T, E, F>>>)
     where
         P: Fn(Progress) + 'static + Sync + Send,
         T: Fn(Option<LibraryEntry>) + 'static + Sync + Send,
         E: Fn(LibraryEntry) + 'static + Sync + Send,
+        F: Fn(String) + 'static + Sync + Send,
     {
         // tokio::spawn(async move {
         //     let mut interval = tokio::time::interval(Duration::from_millis(1000));
@@ -67,11 +68,12 @@ impl PlayerTimer {
     }
 
     // Fetching progress is done in separate thread to not block progress update
-    pub fn start_correct_progress_timer<P, T, E>(player: Arc<Mutex<Player<P, T, E>>>)
+    pub fn start_correct_progress_timer<P, T, E, F>(player: Arc<Mutex<Player<P, T, E, F>>>)
     where
         P: Fn(Progress) + 'static + Sync + Send,
         T: Fn(Option<LibraryEntry>) + 'static + Sync + Send,
         E: Fn(LibraryEntry) + 'static + Sync + Send,
+        F: Fn(String) + 'static + Sync + Send,
     {
         tokio::spawn(async move {
             let mut interval = tokio::time::interval(Duration::from_millis(1000));
@@ -101,6 +103,17 @@ impl PlayerTimer {
                         on_progress(track.progress.clone())
                     }
 
+                    match progress.status {
+                        ProgressStatus::Failed(reason) => {
+                            if let Some(on_error) = player.notify_error.as_ref() {
+                                on_error(reason.to_owned());
+                            }
+                            track.playing = false;
+                            continue;
+                        }
+                        _ => {}
+                    }
+
                     (track.library_entry.variant, progress.clone())
                 };
 
@@ -116,9 +129,7 @@ impl PlayerTimer {
                         error!("Failed to end track: {}", err);
                     }
                 } else if matches!(variant, Variant::Spotify) {
-                    if progress.duration.sub(progress.position) < Duration::from_secs(5)
-                        && progress.duration.sub(progress.position) > Duration::from_secs(4)
-                    {
+                    if !progress.preloaded && progress.position > Duration::from_secs(10) {
                         if let Err(err) = player.queue_next_track().await {
                             error!("Failed to play next track: {}", err);
                         }

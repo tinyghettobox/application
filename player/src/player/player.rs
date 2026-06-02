@@ -12,7 +12,7 @@ use crate::player::play_target::{
     LocalPlayTarget, PlayTarget, Progress, RemotePlayTarget, SpotifyPlayTarget,
 };
 use crate::player::queue::Queue;
-use crate::player::spotify_manager::SpotifyManager;
+use crate::player::spotify::SpotifyManager;
 use crate::player::timer::PlayerTimer;
 
 #[derive(Clone)]
@@ -24,11 +24,12 @@ pub(super) struct Track {
 }
 
 #[derive(Clone)]
-pub struct Player<P, T, E>
+pub struct Player<P, T, E, F>
 where
     P: Fn(Progress) + 'static + Sync + Send,
     T: Fn(Option<LibraryEntry>) + 'static + Sync + Send,
     E: Fn(LibraryEntry) + 'static + Sync + Send,
+    F: Fn(String) + 'static + Sync + Send,
 {
     spotify: Arc<Mutex<SpotifyPlayTarget>>,
     local: Arc<Mutex<LocalPlayTarget>>,
@@ -38,13 +39,15 @@ where
     pub(super) notify_progress: Option<P>,
     pub(super) notify_track_change: Option<T>,
     pub(super) notify_track_end: Option<E>,
+    pub(super) notify_error: Option<F>,
 }
 
-impl<P, T, E> Player<P, T, E>
+impl<P, T, E, F> Player<P, T, E, F>
 where
     P: Fn(Progress) + 'static + Sync + Send,
     T: Fn(Option<LibraryEntry>) + 'static + Sync + Send,
     E: Fn(LibraryEntry) + 'static + Sync + Send,
+    F: Fn(String) + 'static + Sync + Send,
 {
     pub async fn new(conn: DatabaseConnection, volume: f64) -> Arc<Mutex<Self>> {
         let spotify_manager = SpotifyManager::new(&conn).await;
@@ -60,6 +63,7 @@ where
             notify_progress: Default::default(),
             notify_track_change: Default::default(),
             notify_track_end: Default::default(),
+            notify_error: Default::default(),
         }));
 
         PlayerTimer::start_progress_timer(player.clone());
@@ -78,6 +82,10 @@ where
 
     pub fn connect_track_ended(&mut self, notify_track_end: E) {
         self.notify_track_end = Some(notify_track_end);
+    }
+
+    pub fn connect_error(&mut self, notify_error: F) {
+        self.notify_error = Some(notify_error);
     }
 
     pub async fn play_queue(&mut self, queue: Queue) -> Result<Option<LibraryEntry>, String> {

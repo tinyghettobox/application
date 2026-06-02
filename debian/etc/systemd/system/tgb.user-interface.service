@@ -1,14 +1,16 @@
 [Unit]
 Description=TinyGhettoBox user interface
-Wants=local-fs.target
-After=local-fs.target
+Wants=local-fs.target systemd-timesyncd.service pulseaudio.service
+After=local-fs.target systemd-timesyncd.service pulseaudio.service
 
 [Service]
 WorkingDirectory=/srv/tinyghettobox
-ExecStart=xinit /srv/tinyghettobox/user_interface
+Environment="DISPLAY=:0"
+ExecStart=/srv/tinyghettobox/user_interface
 Restart=always
 RestartSec=20
 Type=simple
+User=tinyghettobox
 
 [Install]
 WantedBy=local-fs.target

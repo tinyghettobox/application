@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <template class="TinyGhettoBoxNotification" parent="GtkBox">
+    <child>
+      <object class="GtkOverlay">
+        <child type="overlay">
+          <object class="GtkRevealer" id="revealer">
+            <property name="transition-type">slide-down</property>
+            <property name="halign">center</property>
+            <property name="valign">start</property>
+            <child>
+              <object class="GtkBox" id="notification_box">
+                <style>
+                  <class name="notification"/>
+                </style>
+                <property name="orientation">horizontal</property>
+                <child>
+                  <object class="GtkLabel" id="notification_label">
+                    <property name="halign">center</property>
+                    <property name="valign">center</property>
+                    <property name="wrap">true</property>
+                    <property name="max-width-chars">50</property>
+                    <property name="ellipsize">end</property>
+                    <attributes>
+                      <attribute name="scale" value="1.2"/>
+                    </attributes>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkButton" id="close_button">
+                    <property name="halign">center</property>
+                    <property name="valign">center</property>
+                    <property name="label" translatable="yes">✖</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+        </child>
+        <child>
+          <object class="GtkBox" id="container">
+            <property name="orientation">vertical</property>
+            <property name="hexpand">true</property>
+            <property name="vexpand">true</property>
+          </object>
+        </child>
+      </object>
+    </child>
+  </template>
+</interface>
+

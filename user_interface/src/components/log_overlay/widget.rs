@@ -1,7 +1,9 @@
 use crate::util::memory_subscriber::LogMessage;
 use gtk4::gio::ListStore;
-use gtk4::glib::{object_subclass, BoxedAnyObject};
-use gtk4::prelude::{BoxExt, ButtonExt, Cast, CastNone, IsA, ListItemExt, WidgetExt};
+use gtk4::glib::{clone, object_subclass, BoxedAnyObject};
+use gtk4::prelude::{
+    AdjustmentExt, BoxExt, ButtonExt, Cast, CastNone, IsA, ListItemExt, WidgetExt,
+};
 use gtk4::subclass::prelude::*;
 use gtk4::{
     glib, CompositeTemplate, ListItem, NoSelection, Orientation, SignalListItemFactory,
@@ -16,9 +18,13 @@ pub struct LogOverlayWidgetImp {
     #[template_child]
     list: TemplateChild<gtk4::ListView>,
     #[template_child]
+    scrolled_window: TemplateChild<gtk4::ScrolledWindow>,
+    #[template_child]
     overlay: TemplateChild<gtk4::Box>,
     #[template_child]
     container: TemplateChild<gtk4::Box>,
+    #[template_child]
+    log_level: TemplateChild<gtk4::DropDown>,
 }
 
 #[object_subclass]
@@ -165,12 +171,42 @@ impl LogOverlayWidget {
             .set_model(Some(&NoSelection::new(Some(store))));
     }
 
+    pub fn connect_log_level_changed(&self, callback: impl Fn(String) + 'static) {
+        self.imp()
+            .log_level
+            .connect_selected_item_notify(move |list| {
+                if let Some(selected) = list.selected_item() {
+                    if let Some(level) = selected.downcast_ref::<gtk4::StringObject>() {
+                        callback(level.string().to_string());
+                    }
+                }
+            });
+    }
+
     pub fn connect_close_clicked(&self, callback: impl Fn(&gtk4::Button) + 'static) {
         self.imp().close_button.connect_clicked(callback);
     }
 
     pub fn set_visible(&self, visible: bool) {
         self.imp().overlay.set_visible(visible);
+
+        if visible {
+            let scrolled_window = self.imp().scrolled_window.get();
+            glib::idle_add_local(clone!(
+                #[weak]
+                scrolled_window,
+                #[upgrade_or]
+                glib::ControlFlow::Continue,
+                move || {
+                    let adj = scrolled_window.vadjustment();
+                    let upper = adj.upper();
+                    if upper > 0.0 {
+                        adj.set_value(upper);
+                    }
+                    glib::ControlFlow::Break
+                }
+            ));
+        }
     }
 
     pub fn add_child(&self, widget: &impl IsA<Widget>) {

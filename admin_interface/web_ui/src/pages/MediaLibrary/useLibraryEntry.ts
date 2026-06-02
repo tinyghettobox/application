@@ -3,7 +3,7 @@ import {notify} from "@/components/Notification";
 import {delLibraryEntry, getLibraryEntry, putLibraryEntry, postBulkLibraryEntries, LibraryEntryBulkUpdate, postMarkLibraryEntriesPlayed} from "@/util/api";
 import {LibraryEntry} from "@db-models/LibraryEntry";
 
-export function useLibraryEntry(id?: number) {
+export function useLibraryEntry(id: number) {
   const [state, setState] = useState<{
     libraryEntry?: LibraryEntry,
     loading: boolean,
@@ -13,7 +13,7 @@ export function useLibraryEntry(id?: number) {
   const loadLibraryEntry = useCallback(async () => {
     setState(state => ({...state, loading: true}));
     try {
-      setState({loading: false, libraryEntry: await getLibraryEntry(id || 0)});
+      setState({loading: false, libraryEntry: await getLibraryEntry(id)});
     } catch (e) {
       notify('error', `Could not load library entry: ${e}`);
       setState({
@@ -69,7 +69,7 @@ export function useLibraryEntry(id?: number) {
     } catch (e) {
       notify('error', `Could not perform bulk update: ${e}`);
     }
-  }, []);
+  }, [loadLibraryEntry]);
 
   const markPlayed = useCallback(async (entryIds: number[], playedAt: string | null) => {
     try {
@@ -79,10 +79,10 @@ export function useLibraryEntry(id?: number) {
     } catch (e) {
       notify('error', `Could not mark as played: ${e}`);
     }
-  }, []);
+  }, [loadLibraryEntry]);
 
   const setEntry = useCallback((entry: LibraryEntry) => {
-    setState(oldState => ({...state, libraryEntry: entry}));
+    setState(oldState => ({...oldState, libraryEntry: entry}));
   }, []);
 
 

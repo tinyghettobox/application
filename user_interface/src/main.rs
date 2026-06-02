@@ -47,7 +47,8 @@ async fn main() -> glib::ExitCode {
                     .with_target("tokio", LevelFilter::INFO)
                     .with_target("ureq", LevelFilter::INFO)
                     .with_target("ureq::unit", LevelFilter::DEBUG)
-                    .with_target("rustls", LevelFilter::INFO),
+                    .with_target("rustls", LevelFilter::INFO)
+                    .with_target("hyper_util::client::legacy", LevelFilter::INFO),
                 // .with_target("user_interface::state", LevelFilter::INFO)
             ),
         );
@@ -75,6 +76,7 @@ async fn main() -> glib::ExitCode {
         let dispatcher1 = dispatcher.clone();
         let dispatcher2 = dispatcher.clone();
         let dispatcher3 = dispatcher.clone();
+        let dispatcher4 = dispatcher.clone();
         tokio::spawn(async move {
             let mut player = player.lock().await;
             let handle_progress_change = move |progress: Progress| {
@@ -96,10 +98,17 @@ async fn main() -> glib::ExitCode {
                     .unwrap()
                     .dispatch_action(Action::SetPlayedAt);
             };
+            let handle_error = move |error| {
+                dispatcher4
+                    .lock()
+                    .unwrap()
+                    .dispatch_action(Action::ShowError(error));
+            };
 
             player.connect_progress_changed(handle_progress_change);
             player.connect_track_changed(handle_track_change);
             player.connect_track_ended(handle_track_end);
+            player.connect_error(handle_error);
         });
     }
 

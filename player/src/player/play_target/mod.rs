@@ -11,10 +11,19 @@ pub use remote::RemotePlayTarget;
 pub use spotify::SpotifyPlayTarget;
 
 #[derive(Clone, Debug)]
+pub enum ProgressStatus {
+    Playing,
+    Stopped,
+    Failed(String),
+}
+
+#[derive(Clone, Debug)]
 pub struct Progress {
     pub position: Duration,
     pub duration: Duration,
     pub is_finite: bool,
+    pub preloaded: bool,
+    pub status: ProgressStatus,
 }
 
 impl Default for Progress {
@@ -23,6 +32,8 @@ impl Default for Progress {
             position: Duration::from_secs(0),
             duration: Duration::from_secs(100),
             is_finite: true,
+            preloaded: false,
+            status: ProgressStatus::Stopped,
         }
     }
 }

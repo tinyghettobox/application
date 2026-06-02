@@ -1,17 +1,17 @@
 use std::sync::{Arc, Mutex};
 
-use gtk4::prelude::GtkWindowExt;
-use gtk4::Application;
-
 use crate::components::content::ContentComponent;
 use crate::components::log_overlay::LogOverlayComponent;
 use crate::components::navbar::NavbarComponent;
+use crate::components::notification::NotificationComponent;
 use crate::components::player_bar::PlayerBarComponent;
 use crate::components::ripple::RippleComponent;
 use crate::components::shutdown_timer::ShutdownTimerComponent;
 use crate::components::window::widget::WindowWidget;
 use crate::components::{Children, Component};
 use crate::state::{Dispatcher, Event, EventHandler, State};
+use gtk4::prelude::GtkWindowExt;
+use gtk4::Application;
 
 pub struct WindowComponent {
     pub widget: WindowWidget,
@@ -52,6 +52,7 @@ impl Component<Option<()>> for WindowComponent {
         let shutdown_timer = ShutdownTimerComponent::new(state.clone(), dispatcher.clone(), None);
         let log_overlay = LogOverlayComponent::new(state.clone(), dispatcher.clone(), None);
         let ripple = RippleComponent::new(state.clone(), dispatcher.clone(), None);
+        let notification = NotificationComponent::new(state.clone(), dispatcher.clone(), None);
         let navbar = NavbarComponent::new(state.clone(), dispatcher.clone(), None);
         let content = ContentComponent::new(state.clone(), dispatcher.clone(), None);
         let player_bar = PlayerBarComponent::new(state.clone(), dispatcher.clone(), None);
@@ -60,15 +61,14 @@ impl Component<Option<()>> for WindowComponent {
         log_overlay.add_child(&content.get_widget());
         log_overlay.add_child(&player_bar.get_widget());
 
-        ripple.add_child(&log_overlay.get_widget());
-
+        notification.add_child(&log_overlay.get_widget());
+        ripple.add_child(&notification.get_widget());
         shutdown_timer.add_child(&ripple.get_widget());
 
         let widget = WindowWidget::new();
         widget.connect_close_request(|_| {
             std::process::exit(0);
         });
-
         widget.set_child(Some(&shutdown_timer.get_widget()));
 
         (
@@ -80,6 +80,7 @@ impl Component<Option<()>> for WindowComponent {
                 Arc::new(Mutex::new(Box::new(ripple))),
                 Arc::new(Mutex::new(Box::new(log_overlay))),
                 Arc::new(Mutex::new(Box::new(shutdown_timer))),
+                Arc::new(Mutex::new(Box::new(notification))),
             ],
         )
     }

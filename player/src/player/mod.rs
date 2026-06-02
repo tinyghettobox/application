@@ -5,6 +5,5 @@ pub use queue::Queue;
 mod play_target;
 mod player;
 mod queue;
-mod spotify_manager;
+mod spotify;
 mod timer;
-

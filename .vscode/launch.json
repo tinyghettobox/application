@@ -1,0 +1,50 @@
+{
+    // Verwendet IntelliSense zum Ermitteln möglicher Attribute.
+    // Zeigen Sie auf vorhandene Attribute, um die zugehörigen Beschreibungen anzuzeigen.
+    // Weitere Informationen finden Sie unter https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'admin_interface_server'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=admin_interface_server",
+                    "--package=admin_interface_server"
+                ],
+                "filter": {
+                    "name": "admin_interface_server",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'user_interface'",
+            "env": {
+                "RUSTFLAGS": "--cfg tokio_unstable"
+            },
+            "cargo": {
+                "env": {
+                    "RUSTFLAGS": "--cfg tokio_unstable"
+                },
+                "args": [
+                    "build",
+                    "--bin=user_interface",
+                    "--package=user_interface"
+                ],
+                "filter": {
+                    "name": "user_interface",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}

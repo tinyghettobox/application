@@ -1,11 +1,10 @@
-use gtk4::{CompositeTemplate, gio, glib};
 use gtk4::glib::object_subclass;
 use gtk4::subclass::prelude::*;
+use gtk4::{gio, glib, CompositeTemplate};
 
 #[derive(Default, CompositeTemplate)]
 #[template(file = "./window.ui")]
 pub struct WindowWidgetImp {}
-
 
 #[object_subclass]
 impl ObjectSubclass for WindowWidgetImp {

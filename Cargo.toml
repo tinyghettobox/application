@@ -6,8 +6,8 @@ members = [
     "kira_remote_stream",
     "migration",
     "player",
-    "user_interface",
     "debian",
+    "user_interface",
 ]
 
 #[profile.dev]

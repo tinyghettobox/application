@@ -103,6 +103,22 @@ window.background .navbar label {
     background-position: center;
 }
 
+@keyframes playing-tile {
+    0% {
+        box-shadow: 0 0 4px 4px @primary-color;
+    }
+    50% {
+        box-shadow: 0 0 4px 8px @primary-color;
+    }
+    100% {
+        box-shadow: 0 0 4px 4px @primary-color;
+    }
+}
+
+.tile-item.playing .image {
+    animation: playing-tile 2s ease infinite;
+}
+
 .detail-list {
     margin: 15px;
 }
@@ -231,4 +247,22 @@ popover.background arrow {
 
 .log-overlay-content .error {
     color: #ca1212;
+}
+
+.notification {
+    background: darkred;
+    color: @color;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, .2);
+    padding: 4px 16px;
+    border-radius: 5px;
+    margin-top: 32px;
+}
+.notification button {
+    margin-left: 16px;
+    background: transparent;
+    border: none;
+    padding: 8px;
+}
+window.background .notification label {
+    font-size: 14px;
 }

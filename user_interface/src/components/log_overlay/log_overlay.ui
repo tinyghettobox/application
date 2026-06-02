@@ -18,6 +18,22 @@
                   <class name="log-overlay-header"/>
                 </style>
                 <property name="hexpand">true</property>
+                <property name="halign">fill</property>
+                <child>
+                  <object class="GtkDropDown" id="log_level">
+                    <property name="model">
+                      <object class="GtkStringList">
+                        <items>
+                          <item translatable="yes">TRACE</item>
+                          <item translatable="yes">DEBUG</item>
+                          <item translatable="yes">INFO</item>
+                          <item translatable="yes">WARN</item>
+                          <item translatable="yes">ERROR</item>
+                        </items>
+                      </object>
+                    </property>
+                  </object>
+                </child>
                 <child>
                   <object class="GtkButton" id="close_button">
                     <property name="hexpand">true</property>
@@ -28,7 +44,7 @@
               </object>
             </child>
             <child>
-              <object class="GtkScrolledWindow">
+              <object class="GtkScrolledWindow" id="scrolled_window">
                 <style>
                   <class name="log-overlay-content"/>
                 </style>

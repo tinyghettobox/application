@@ -28,8 +28,10 @@ pub enum Action {
     SetVolume(f64),
     ToggleMonitor(bool),
     ToggleLogOverlay(bool),
+    SetLogLevel(String),
     Shutdown,
     CaptureActivity,
+    ShowError(String),
 }
 
 #[derive(Debug)]
@@ -42,6 +44,7 @@ pub enum Event {
     VolumeChanged,
     MonitorToggled,
     LogOverlayToggled,
+    LogLevelChanged,
     Error(String),
     Dummy,
 }
@@ -52,15 +55,16 @@ pub trait EventHandler {
 }
 
 impl Action {
-    pub async fn process<P, T, E>(
+    pub async fn process<P, T, E, F>(
         action: Action,
         state: Arc<Mutex<State>>,
         dispatcher: Arc<Mutex<Dispatcher>>,
-        player: Arc<AsyncMutex<Player<P, T, E>>>,
+        player: Arc<AsyncMutex<Player<P, T, E, F>>>,
     ) where
         P: Fn(Progress) + 'static + Sync + Send,
         T: Fn(Option<LibraryEntry>) + 'static + Sync + Send,
         E: Fn(LibraryEntry) + 'static + Sync + Send,
+        F: Fn(String) + 'static + Sync + Send,
     {
         match action {
             Action::Started => {
@@ -125,11 +129,11 @@ impl Action {
                 .await
                 {
                     Ok(library_entries) => {
+                        // Start id is used for playing specific tracks. The play queue starts from there
                         let queue = if let Some(start_id) = start_id {
                             library_entries
                                 .into_iter()
                                 .skip_while(|entry| entry.id != start_id)
-                                .skip_while(|entry| entry.played_at.is_some())
                                 .collect()
                         } else {
                             library_entries
@@ -141,6 +145,8 @@ impl Action {
 
                         match player.lock().await.play_queue(queue).await {
                             Ok(Some(_)) => {
+                                let mut state = state.lock().unwrap();
+                                state.start_playing = true;
                                 // Handled by on_track_change triggering SetPlayingTrack
                                 None
                             }
@@ -202,10 +208,37 @@ impl Action {
                 }
             }
             Action::SetPlayingTrack(library_entry) => {
-                let mut state = state.lock().unwrap();
-                state.playing_library_entry = library_entry.clone();
-                state.paused = library_entry.is_none();
-                state.progress = Progress::default();
+                debug!("Setting playing track: {:?}", library_entry);
+                {
+                    let mut state = state.lock().unwrap();
+                    state.playing_library_entry = library_entry.clone();
+                    state.paused = library_entry.is_none();
+                    state.progress = Progress::default();
+                }
+                // Determining the playing library entry breadcrumb used to show folder as playing
+                if let Some(library_entry) = library_entry.as_ref() {
+                    let mut child = library_entry.clone();
+                    let mut breadcrumb = vec![child.id.clone()];
+                    let connection = state.lock().unwrap().connection.clone();
+                    while let Some(parent_id) = child.parent_id.as_ref() {
+                        match LibraryEntryRepository::get(&connection, parent_id.to_owned()).await {
+                            Ok(Some(parent)) => {
+                                breadcrumb.insert(0, parent.id.clone());
+                                child = parent;
+                            }
+                            Ok(None) => {
+                                break;
+                            }
+                            Err(error) => {
+                                error!("Failed to get playing breadcrumb: {}", error);
+                                break;
+                            }
+                        }
+                    }
+                    debug!("Setting playing breadcrumb: {:?}", breadcrumb);
+
+                    state.lock().unwrap().playing_library_entry_path = breadcrumb;
+                }
 
                 dispatcher
                     .lock()
@@ -342,10 +375,13 @@ impl Action {
                 if cfg!(target_os = "linux") {
                     info!("Shutting down");
                     tokio::time::sleep(Duration::from_secs(1)).await;
-                    Command::new("shutdown")
+                    if let Err(error) = Command::new("sudo")
+                        .arg("/sbin/shutdown")
                         .arg("now")
                         .spawn()
-                        .expect("could not shutdown");
+                    {
+                        error!("Could not shutdown: {:?}", error);
+                    }
                 }
             }
             Action::CaptureActivity => {
@@ -359,6 +395,20 @@ impl Action {
                     .lock()
                     .expect("could not lock")
                     .dispatch_event(Event::LogOverlayToggled);
+            }
+            Action::SetLogLevel(log_level) => {
+                let mut state = state.lock().expect("could not lock");
+                state.log_level = log_level;
+                dispatcher
+                    .lock()
+                    .expect("could not lock")
+                    .dispatch_event(Event::LogLevelChanged);
+            }
+            Action::ShowError(error) => {
+                dispatcher
+                    .lock()
+                    .unwrap()
+                    .dispatch_event(Event::Error(error));
             }
         }
     }
