@@ -1,26 +1,21 @@
 
 .entry {
-  padding: 16px 16px 0;
+  padding: 8px 8px 0;
   text-decoration: none;
   color: inherit;
   position: relative;
 
   .name {
-    line-height: 16px;
-    margin-top: 16px;
-    margin-bottom: 8px;
+    line-height: 1.2;
+    margin-top: 8px;
+    margin-bottom: 4px;
+    font-size: 0.8rem;
   }
 
   .checkbox {
     position: absolute;
     top: 0;
     left: 0;
-  }
-
-  .playedSign {
-    position: absolute;
-    top: 170px;
-    right: 0;
   }
 
   .deleteButton {
@@ -48,7 +43,7 @@
 
 .sortPopover {
   padding: 16px;
-  width: 400px;
+  width: min(400px, calc(100vw - 32px));
 
   .patternList {
     margin-bottom: 16px;

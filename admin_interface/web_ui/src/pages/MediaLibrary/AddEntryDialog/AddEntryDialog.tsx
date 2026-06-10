@@ -14,7 +14,7 @@ interface Props {
 export default function AddEntryDialog({parent, open, onClose, allowedVariant}: Props) {
   return (
     <Drawer
-      PaperProps={{sx: {width: '40%', padding: 4}}}
+      PaperProps={{sx: {width: {xs: '100%', sm: '70%', md: '40%'}, padding: 4}}}
       variant="persistent"
       anchor="right"
       open={open}

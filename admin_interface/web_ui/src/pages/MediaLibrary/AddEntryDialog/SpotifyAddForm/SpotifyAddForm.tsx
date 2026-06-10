@@ -13,7 +13,7 @@ import {
 import {useState} from "react";
 import SpotifyPlaylist from "./SpotifyPlaylist";
 import {Controller, useForm} from "react-hook-form";
-import {SearchOutlined, EastOutlined} from "@mui/icons-material";
+import {SearchOutlined} from "@mui/icons-material";
 import {searchResultToLibraryEntry} from "./helper";
 import {Variant} from "@db-models/Variant";
 import {NewLibraryEntry} from "@db-models/LibraryEntry";
@@ -71,77 +71,68 @@ export default function SpotifyAddForm({allowedVariant}: Props) {
 
   return (
     <form onSubmit={handleSubmit(search)}>
-      <Grid container gap={1}>
-        <Grid item xs={7}>
-          <Grid container sx={{mt: '0px', mb: '24px'}} spacing={2}>
-            <Grid item xs={7}>
-              <Controller
-                name={'search'}
-                rules={{required: true}}
-                control={control}
-                render={({field, fieldState}) =>
-                  <FormControl fullWidth size="small" error={fieldState.invalid}>
-                    <InputLabel id={"search-label"}>Search</InputLabel>
-                    <OutlinedInput label={"Search"} {...field} />
-                  </FormControl>
-                }
-              />
-            </Grid>
-            <Grid item xs={3}>
-              <Controller
-                name={'searchType'}
-                control={control}
-                render={({field: {onChange, ...field}, fieldState}) =>
-                  <FormControl fullWidth size="small" error={fieldState.invalid}>
-                    <InputLabel id={'search-type'}>Search type</InputLabel>
-                    <Select
-                      variant="outlined"
-                      labelId="search-type"
-                      label={'Search type'}
-                      onChange={(event) => onChange(event.target.value)}
-                      {...field}
-                    >
-                      {SEARCH_TYPES.map(type =>
-                        <MenuItem key={type} value={type.toLowerCase()}>{type}</MenuItem>
-                      )}
-                    </Select>
-                  </FormControl>
-                }
-              />
-            </Grid>
-            <Grid item xs={2}>
-              <Button
-                variant="outlined"
-                type={'submit'}
-                disabled={!watch('search')}
-                sx={{height: '100%'}}
-              ><SearchOutlined/></Button>
-            </Grid>
-          </Grid>
-
-          {searchResult.loading ?
-            <CircularProgress/>
-            :
-            searchResult.data.length !== 0 ?
-              <div className={styles.resultList}>
-                <Typography variant="h5" className={styles.title}>{watch('searchType')}s</Typography>
-                {searchResult.data.map(item => (
-                  <SpotifyItem key={item.name} entry={item} allowedVariant={allowedVariant}/>
-                ))}
-              </div>
-              :
-              formState.isSubmitted && <Typography>No search result yet</Typography>
-          }
-
-
+      <Grid container spacing={1} sx={{mt: 0, mb: 2}}>
+        <Grid item xs={6}>
+          <Controller
+            name={'search'}
+            rules={{required: true}}
+            control={control}
+            render={({field, fieldState}) =>
+              <FormControl fullWidth size="small" error={fieldState.invalid}>
+                <InputLabel id={"search-label"}>Search</InputLabel>
+                <OutlinedInput label={"Search"} {...field} />
+              </FormControl>
+            }
+          />
         </Grid>
-        <Divider orientation="vertical" textAlign={'left'} flexItem>
-          <EastOutlined/>
-        </Divider>
         <Grid item xs={4}>
-          <SpotifyPlaylist/>
+          <Controller
+            name={'searchType'}
+            control={control}
+            render={({field: {onChange, ...field}, fieldState}) =>
+              <FormControl fullWidth size="small" error={fieldState.invalid}>
+                <InputLabel id={'search-type'}>Type</InputLabel>
+                <Select
+                  variant="outlined"
+                  labelId="search-type"
+                  label={'Type'}
+                  onChange={(event) => onChange(event.target.value)}
+                  {...field}
+                >
+                  {SEARCH_TYPES.map(type =>
+                    <MenuItem key={type} value={type.toLowerCase()}>{type}</MenuItem>
+                  )}
+                </Select>
+              </FormControl>
+            }
+          />
+        </Grid>
+        <Grid item xs={2}>
+          <Button
+            variant="outlined"
+            type={'submit'}
+            disabled={!watch('search')}
+            sx={{height: '100%', minWidth: 0, width: '100%'}}
+          ><SearchOutlined/></Button>
         </Grid>
       </Grid>
+
+      <SpotifyPlaylist/>
+      <Divider sx={{my: 2}}/>
+
+      {searchResult.loading ?
+        <CircularProgress/>
+        :
+        searchResult.data.length !== 0 ?
+          <div className={styles.resultList}>
+            <Typography variant="h5" className={styles.title}>{watch('searchType')}s</Typography>
+            {searchResult.data.map(item => (
+              <SpotifyItem key={item.name} entry={item} allowedVariant={allowedVariant}/>
+            ))}
+          </div>
+          :
+          formState.isSubmitted && <Typography>No search result yet</Typography>
+      }
     </form>
   )
 }

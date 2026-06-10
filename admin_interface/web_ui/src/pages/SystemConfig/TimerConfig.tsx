@@ -36,13 +36,13 @@ export default function TimerConfig({control}: Props) {
                 <FormControl fullWidth error={fieldState.invalid}>
                   <FormLabel>Sleep timer</FormLabel>
                   <Grid container spacing={2} alignItems={"center"}>
-                    <Grid item xs={1}>
+                    <Grid item xs={12} sm={2}>
                       <TextField
                         error={fieldState.invalid}
                         {...field}
                       />
                     </Grid>
-                    <Grid item xs={5}>
+                    <Grid item xs={12} sm={5}>
                       <Slider
                         aria-label="Sleeptimer"
                         valueLabelDisplay="auto"
@@ -69,13 +69,13 @@ export default function TimerConfig({control}: Props) {
                 <FormControl fullWidth error={fieldState.invalid}>
                   <FormLabel>Idle shutdown timer</FormLabel>
                   <Grid container spacing={2} alignItems={"center"}>
-                    <Grid item xs={1}>
+                    <Grid item xs={12} sm={2}>
                       <TextField
                         error={fieldState.invalid}
                         {...field}
                       />
                     </Grid>
-                    <Grid item xs={5}>
+                    <Grid item xs={12} sm={5}>
                       <Slider
                         aria-label="Idle shutdown timer"
                         valueLabelDisplay="auto"
@@ -104,13 +104,13 @@ export default function TimerConfig({control}: Props) {
                 <FormControl fullWidth error={fieldState.invalid}>
                   <FormLabel>Display turn off timer</FormLabel>
                   <Grid container spacing={2} alignItems={"center"}>
-                    <Grid item xs={1}>
+                    <Grid item xs={12} sm={2}>
                       <TextField
                         error={fieldState.invalid}
                         {...field}
                       />
                     </Grid>
-                    <Grid item xs={5}>
+                    <Grid item xs={12} sm={5}>
                       <Slider
                         aria-label="Display turn off timer"
                         valueLabelDisplay="auto"

@@ -106,9 +106,9 @@ export default function FolderAddForm() {
       <FormControl fullWidth sx={{mb: 4}}>
         <FormLabel>Image</FormLabel>
 
-        <Grid container alignItems={'center'}>
-          <Grid item xs={3} textAlign={'center'}>
-            <div style={{width: '134px', margin: '16px auto 0'}}>
+        <Grid container alignItems={'flex-start'} spacing={2} direction={{xs: 'column', sm: 'row'}}>
+          <Grid item xs={12} sm={3} sx={{display: 'flex', justifyContent: 'center'}}>
+            <div style={{width: '134px', marginTop: '16px'}}>
               {/* TODO implement / fix image editor */}
               <ImageEditor folder={folder}/>
               {!!folder?.image &&
@@ -116,7 +116,7 @@ export default function FolderAddForm() {
               }
             </div>
           </Grid>
-          <Grid item xs={9}>
+          <Grid item xs={12} sm={9}>
             <Stack divider={<Divider><Typography variant="caption">or</Typography></Divider>} gap={2}>
               <Grid container>
                 <Grid item xs={9}>

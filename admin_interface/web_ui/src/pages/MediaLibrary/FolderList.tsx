@@ -1,5 +1,5 @@
 import {MouseEvent} from "react";
-import {Checkbox, Grid, IconButton, Stack, Tooltip, Typography} from "@mui/material";
+import {Box, Checkbox, Grid, IconButton, Stack, Tooltip, Typography} from "@mui/material";
 import FolderAvatar from "@/components/FolderAvatar";
 import {CheckOutlined, Delete, BlockOutlined} from "@mui/icons-material";
 import styles from './MediaLibrary.module.scss';
@@ -37,7 +37,7 @@ export default function FolderList({folders, onSortEnd, onDelete, selectedItemId
   }
 
   return (
-    <Grid container gap={1}>
+    <Grid container spacing={1}>
       <Sortable<LibraryEntry>
         items={folders}
         onDragEnd={onSortEnd}
@@ -47,44 +47,42 @@ export default function FolderList({folders, onSortEnd, onDelete, selectedItemId
         {(visibleItems) => (
           <>
             {visibleItems.map(folder => (
-              <SortableItem itemId={folder.id!} key={folder.id}>
-                {(props, isDragging) => {
-                  return (
-                    <div
-                      {...props}
-                      key={folder.id}
-                      className={[
-                        styles.entry,
-                        sortableListStyles.sortableListItem,
-                        isDragging ? sortableListStyles.isDragging : '',
-                        folder.deleted ? styles.deletedEntry : '',
-                      ].join(' ')}
-                      onClick={(e) => handleClick(e, folder.id, folder.deleted)}
-                    >
-                      <div className={styles.checkbox}>
-                        <Checkbox checked={selectedItemIds.includes(folder.id!)} onClick={e => onSelect(e, folder.id!)}/>
-                      </div>
-                      {!!folder.playedAt && !folder.deleted && (
-                        <div className={styles.playedSign}>
-                          <CheckOutlined sx={{fontSize: '32px', color: 'green'}}/>
+              <Grid item xs={6} sm={4} md={3} key={folder.id}>
+                <SortableItem itemId={folder.id!}>
+                  {(props, isDragging) => {
+                    return (
+                      <div
+                        {...props}
+                        className={[
+                          styles.entry,
+                          sortableListStyles.sortableListItem,
+                          isDragging ? sortableListStyles.isDragging : '',
+                          folder.deleted ? styles.deletedEntry : '',
+                        ].join(' ')}
+                        onClick={(e) => handleClick(e, folder.id, folder.deleted)}
+                      >
+                        <div className={styles.checkbox}>
+                          <Checkbox checked={selectedItemIds.includes(folder.id!)} onClick={e => onSelect(e, folder.id!)}/>
                         </div>
-                      )}
-                      {folder.deleted && (
-                        <div className={styles.playedSign}>
-                          <Tooltip title="No longer available on Spotify">
-                            <BlockOutlined sx={{fontSize: '32px', color: 'text.disabled'}}/>
-                          </Tooltip>
-                        </div>
-                      )}
-                      <Grid item xs={'auto'} key={folder.id}>
-                        <Stack sx={{textAlign: 'center', opacity: folder.deleted ? 0.4 : 1}}>
-                          <FolderAvatar sx={{width: '180px', height: '180px'}} folder={folder}/>
+                        <Stack sx={{textAlign: 'center', opacity: folder.deleted ? 0.4 : 1, alignItems: 'center'}}>
+                          <Box sx={{position: 'relative', display: 'inline-block', width: '100%'}}>
+                            <FolderAvatar sx={{width: '100%', height: 'auto', aspectRatio: '1'}} folder={folder}/>
+                            {!!folder.playedAt && !folder.deleted && (
+                              <CheckOutlined sx={{fontSize: '28px', color: 'green', position: 'absolute', bottom: 0, right: 0}}/>
+                            )}
+                            {folder.deleted && (
+                              <Tooltip title="No longer available on Spotify">
+                                <BlockOutlined sx={{fontSize: '28px', color: 'text.disabled', position: 'absolute', bottom: 0, right: 0}}/>
+                              </Tooltip>
+                            )}
+                          </Box>
                           <Typography
-                            variant="subtitle1"
+                            variant="subtitle2"
                             sx={{
-                              maxWidth: '180px',
+                              width: '100%',
                               textDecoration: folder.deleted ? 'line-through' : 'none',
                               color: folder.deleted ? 'text.disabled' : 'inherit',
+                              wordBreak: 'break-word',
                             }}
                             className={styles.name}
                           >{folder.name}</Typography>
@@ -102,11 +100,11 @@ export default function FolderList({folders, onSortEnd, onDelete, selectedItemId
                             </IconButton>
                           </div>
                         </Stack>
-                      </Grid>
-                    </div>
-                  )
-                }}
-              </SortableItem>
+                      </div>
+                    )
+                  }}
+                </SortableItem>
+              </Grid>
             ))}
           </>
         )}

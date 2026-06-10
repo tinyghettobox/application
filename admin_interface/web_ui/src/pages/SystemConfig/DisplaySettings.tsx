@@ -33,14 +33,14 @@ export default function DisplaySettings({control}: Props) {
                 <FormControl fullWidth error={fieldState.invalid}>
                   <FormLabel>Display brightness</FormLabel>
                   <Grid container spacing={2} alignItems={"center"}>
-                    <Grid item xs={1}>
+                    <Grid item xs={12} sm={2}>
                       <TextField
                         error={fieldState.invalid}
                         // size={'small'}
                         {...field}
                       />
                     </Grid>
-                    <Grid item xs={5}>
+                    <Grid item xs={12} sm={5}>
                       <Slider
                         aria-label="Display brightness"
                         valueLabelDisplay="auto"

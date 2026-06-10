@@ -79,7 +79,7 @@ export default function MediaLibrary() {
 
   return (
     <div>
-      <Grid container alignItems={"center"} sx={{mb: '24px', mt: '48px'}}>
+      <Grid container alignItems={"center"} sx={{mb: '16px', mt: {xs: '16px', md: '48px'}}}>
         <Grid item xs={10}>
           <Typography variant="h4">
             Media library
@@ -89,7 +89,7 @@ export default function MediaLibrary() {
       {!!libraryEntry ? (
         <Box sx={{pt: 2}}>
           <Box sx={{mb: 2}}>
-            <Grid container spacing={2} sx={{mb: '48px'}}>
+            <Grid container spacing={1} sx={{mb: {xs: '24px', md: '48px'}}} alignItems="center" wrap="nowrap">
               {libraryEntry.id !== 0 && (
                 <Grid
                   item
@@ -102,25 +102,23 @@ export default function MediaLibrary() {
                 </Grid>
               )}
               <Grid item xs={'auto'}>
-                <FolderAvatar folder={libraryEntry} sx={{width: '96px', height: '96px'}}/>
+                <FolderAvatar folder={libraryEntry} sx={{width: {xs: '56px', md: '96px'}, height: {xs: '56px', md: '96px'}}}/>
               </Grid>
-              <Grid item xs sx={{display: 'flex', flexDirection: 'column', justifyContent: 'center'}}>
-                <Typography variant="h5" sx={{mb: 1}}>{libraryEntry ? libraryEntry.name : ''}</Typography>
-                <Grid container gap={2}>
-                  <Stack direction={'row'} spacing={2}>
-                    <Button variant="contained" onClick={handleOpenAddDialog}>
-                      <AddOutlined/>&nbsp;
-                      Add entries
-                    </Button>
-                    {!!libraryEntry.children && (
-                      <SortButton libraryEntries={libraryEntry.children} onSorted={handleSorted}/>
-                    )}
-                    <Button variant={'text'} disabled={selection.selectedItemIds.length === 0} onClick={handleMarkAsPlayed}>
-                      <CheckOutlined/>&nbsp;
-                      Mark as {allSelectedPlayed ? 'not played' : 'played'}
-                    </Button>
-                  </Stack>
-                </Grid>
+              <Grid item xs sx={{display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: 0}}>
+                <Typography variant="h5" sx={{mb: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>{libraryEntry ? libraryEntry.name : ''}</Typography>
+                <Stack direction={'row'} spacing={1} flexWrap="wrap" useFlexGap>
+                  <Button variant="contained" onClick={handleOpenAddDialog} size="small">
+                    <AddOutlined fontSize="small"/>
+                    <Box component="span" sx={{display: {xs: 'none', sm: 'inline'}, ml: 0.5}}>Add entries</Box>
+                  </Button>
+                  {!!libraryEntry.children && (
+                    <SortButton libraryEntries={libraryEntry.children} onSorted={handleSorted}/>
+                  )}
+                  <Button variant={'text'} disabled={selection.selectedItemIds.length === 0} onClick={handleMarkAsPlayed} size="small">
+                    <CheckOutlined fontSize="small"/>
+                    <Box component="span" sx={{display: {xs: 'none', sm: 'inline'}, ml: 0.5}}>Mark as {allSelectedPlayed ? 'not played' : 'played'}</Box>
+                  </Button>
+                </Stack>
               </Grid>
             </Grid>
           </Box>
