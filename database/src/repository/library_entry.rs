@@ -203,13 +203,14 @@ impl LibraryEntryRepository {
                     WITH RECURSIVE library_hierarchy AS (
                         SELECT *, substr('0000' || sort_key, -4, 4) as path
                         FROM library_entry
-                        WHERE parent_id = ?
+                        WHERE parent_id = ? AND deleted = 0
 
                         UNION ALL
 
                         SELECT le.*, lh.path || '.' || substr('0000' || le.sort_key, -4, 4)
                         FROM library_entry le
                         INNER JOIN library_hierarchy lh ON le.parent_id = lh.id
+                        WHERE le.deleted = 0
                     )
                     SELECT * FROM library_hierarchy WHERE variant != 'folder' ORDER BY path ASC;
                 "#,

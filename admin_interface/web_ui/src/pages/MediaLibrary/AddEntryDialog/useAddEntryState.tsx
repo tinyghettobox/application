@@ -2,7 +2,8 @@ import {createContext, ReactElement, useContext, useState, MouseEvent} from "rea
 import {notify} from "@/components/Notification";
 import isEqual from "fast-deep-equal";
 import {LibraryEntry, NewLibraryEntry} from "@db-models/LibraryEntry";
-import {postLibraryEntries} from "@/util/api";
+import {postLibraryEntries, putSyncConfig, postTriggerSync} from "@/util/api";
+import {CreateSyncConfig, defaultSyncConfig, isSyncableType} from "@/types/sync";
 
 type AddEntryState = {
   parentId?: number;
@@ -14,6 +15,8 @@ type AddEntryState = {
   abort: () => void;
   submit: (event: MouseEvent) => void;
   getNextSortKey: () => number;
+  syncConfigs: Map<string, CreateSyncConfig>;
+  setSyncConfigForEntry: (spotifyId: string, config: CreateSyncConfig) => void;
 }
 
 const AddEntryStateContext = createContext<AddEntryState | undefined>(undefined);
@@ -38,6 +41,7 @@ function flatten(entries: NewLibraryEntry[], parent?: NewLibraryEntry): FlatEntr
 
 export const AddEntryStateProvider = (props: Props) => {
   const [entries, setEntries] = useState<NewLibraryEntry[]>([]);
+  const [syncConfigs, setSyncConfigs] = useState<Map<string, CreateSyncConfig>>(new Map());
 
   const addEntry = (entry: NewLibraryEntry) => {
     setEntries(oldEntries => [...oldEntries, entry]);
@@ -69,21 +73,46 @@ export const AddEntryStateProvider = (props: Props) => {
 
   const abort = () => {
     setEntries([]);
+    setSyncConfigs(new Map());
     props.onClose();
   }
+
+  const setSyncConfigForEntry = (spotifyId: string, config: CreateSyncConfig) => {
+    setSyncConfigs(prev => new Map(prev).set(spotifyId, config));
+  };
 
   const submit = async (event: MouseEvent) => {
     event.preventDefault();
 
+    let createdEntries: LibraryEntry[];
     try {
-      await postLibraryEntries(props.parent.id as number, entries);
+      createdEntries = await postLibraryEntries(props.parent.id as number, entries);
     } catch (e) {
       notify('error', `Error while creating entries: ${e}`, 8000);
       return;
     }
 
+    // Post sync configs for Spotify container entries and trigger immediate sync.
+    for (const created of createdEntries) {
+      const spotifyId = created.trackSource?.spotifyId;
+      const spotifyType = created.trackSource?.spotifyType;
+      if (!spotifyId || !isSyncableType(spotifyType)) continue;
+
+      const config = syncConfigs.get(spotifyId) ?? defaultSyncConfig(spotifyType!);
+
+      try {
+        await putSyncConfig(created.id!, config);
+        // putSyncConfig already sets status=pending which starts the job,
+        // but we call trigger explicitly to make it visible immediately.
+        await postTriggerSync(created.id!);
+      } catch (e) {
+        notify('error', `Sync config error for ${created.name}: ${e}`, 6000);
+      }
+    }
+
     notify('success', 'Entries created', 2000);
     setEntries([]);
+    setSyncConfigs(new Map());
     props.onClose(true);
   }
 
@@ -106,7 +135,9 @@ export const AddEntryStateProvider = (props: Props) => {
     isEntryAdded,
     abort,
     submit,
-    getNextSortKey
+    getNextSortKey,
+    syncConfigs,
+    setSyncConfigForEntry,
   }
 
 

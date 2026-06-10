@@ -61,12 +61,12 @@ export default function SpotifyAddForm({allowedVariant}: Props) {
       return;
     }
 
-    const entries: NewLibraryEntry[] = [];
+    const newEntries: NewLibraryEntry[] = [];
     for (const searchResultItem of searchResult.items) {
-      entries.push(await searchResultToLibraryEntry(searchResultItem, formData.searchType, getNextSortKey()));
+      newEntries.push(await searchResultToLibraryEntry(searchResultItem, formData.searchType, getNextSortKey()));
     }
 
-    setSearchResult({loading: false, data: entries});
+    setSearchResult({loading: false, data: newEntries});
   }
 
   return (
@@ -132,6 +132,8 @@ export default function SpotifyAddForm({allowedVariant}: Props) {
               :
               formState.isSubmitted && <Typography>No search result yet</Typography>
           }
+
+
         </Grid>
         <Divider orientation="vertical" textAlign={'left'} flexItem>
           <EastOutlined/>

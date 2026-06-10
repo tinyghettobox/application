@@ -8,6 +8,8 @@ pub use repository::library_entry::LibraryEntryRepository;
 pub use repository::spotify_config::SpotifyConfigRepository;
 pub use repository::system_config::SystemConfigRepository;
 pub use repository::track_source::TrackSourceRepository;
+pub use repository::sync_config::SyncConfigRepository;
+pub use repository::sync_status::SyncStatusRepository;
 
 pub mod model;
 mod repository;

@@ -51,6 +51,7 @@ pub struct Model {
     #[ts(type = "string", optional)]
     pub played_at: Option<DateTimeUtc>,
     pub sort_key: i32,
+    pub deleted: bool,
     #[sea_orm(ignore)]
     #[ts(optional)]
     pub children: Option<Vec<Model>>, // Just used to pass children from API to client
@@ -91,6 +92,7 @@ impl Debug for Model {
             .field("image", &FormatImage(self.image.as_ref()))
             .field("played_at", &self.played_at)
             .field("sort_key", &self.sort_key)
+            .field("deleted", &self.deleted)
             .field("children", &self.children)
             .field("track_source", &self.track_source)
             .field("parent_name", &self.parent_name)
@@ -185,6 +187,7 @@ impl CreateModel {
         model.name = Set(self.name.clone());
         model.image = Set(self.image.clone());
         model.sort_key = Set(self.sort_key.clone());
+        model.deleted = Set(false);
         model
     }
 }

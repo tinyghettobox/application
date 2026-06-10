@@ -35,6 +35,17 @@
   }
 }
 
+.deletedEntry {
+  cursor: default;
+  pointer-events: none;
+
+  // Allow the delete button to remain clickable.
+  .deleteButton {
+    pointer-events: all;
+    opacity: 1;
+  }
+}
+
 .sortPopover {
   padding: 16px;
   width: 400px;

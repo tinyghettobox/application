@@ -11,6 +11,8 @@ import {LibraryEntry} from "@db-models/LibraryEntry";
 import {useParams, Link} from "react-router-dom";
 import {notify} from "@/components/Notification";
 import useSelection from "./useSelection";
+import {useFolderSyncStatuses} from "@/pages/MediaLibrary/useFolderSyncStatuses";
+import SyncSettings from "@/pages/MediaLibrary/SyncSettings";
 
 export default function MediaLibrary() {
   const params = useParams();
@@ -19,6 +21,7 @@ export default function MediaLibrary() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const usedVariant = libraryEntry?.children?.map(child => child.variant)[0];
   const selection = useSelection(libraryEntry?.children ?? []);
+  const {statuses: syncStatuses, handleTrigger: handleSyncTrigger} = useFolderSyncStatuses(entityId);
   const allSelectedPlayed = libraryEntry?.children
     ?.filter(child => selection.selectedItemIds.includes(child.id!))
     .some(child => child.playedAt);
@@ -129,6 +132,8 @@ export default function MediaLibrary() {
                 onDelete={handleDelete}
                 selectedItemIds={selection.selectedItemIds}
                 onSelect={selection.handleSelect}
+                syncStatuses={syncStatuses}
+                onTriggerSync={handleSyncTrigger}
               />
             ) : (
               <TrackList
@@ -143,6 +148,9 @@ export default function MediaLibrary() {
           {!!libraryEntry &&
             <AddEntryDialog parent={libraryEntry} open={dialogOpen} onClose={handleCloseAddDialog} allowedVariant={usedVariant}/>
           }
+          {libraryEntry.id !== 0 && (
+            <SyncSettings entryId={libraryEntry.id!}/>
+          )}
         </Box>
 
       ) : (

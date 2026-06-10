@@ -1,6 +1,7 @@
 import {SystemConfig} from "@db-models/SystemConfig";
 import {SpotifyConfig} from "@db-models/SpotifyConfig";
 import {LibraryEntry, NewLibraryEntry} from "@db-models/LibraryEntry";
+import {CreateSyncConfig, SyncConfig, SyncStatus} from "@/types/sync";
 
 function snakeToCamel(some: string): string {
   return some.replace(/([a-z])_([a-z])/g, (_, a, b) => `${a}${b.toUpperCase()}`);
@@ -130,6 +131,38 @@ export async function postMarkLibraryEntriesPlayed(libraryEntryIds: number[], pl
 
 export async function postLibraryEntries(parent_id: number, entries: NewLibraryEntry[]): Promise<LibraryEntry[]> {
   return post<NewLibraryEntry[], LibraryEntry[]>(`/api/library?parent_id=${parent_id}`, entries);
+}
+
+export async function getSyncConfig(id: number): Promise<SyncConfig | null> {
+  try {
+    return await get<SyncConfig>(`/api/library/${id}/sync-config`);
+  } catch {
+    return null;
+  }
+}
+
+export async function putSyncConfig(id: number, config: CreateSyncConfig): Promise<SyncConfig> {
+  return put<CreateSyncConfig, SyncConfig>(`/api/library/${id}/sync-config`, config);
+}
+
+export async function getSyncStatus(id: number): Promise<SyncStatus | null> {
+  try {
+    return await get<SyncStatus>(`/api/library/${id}/sync-status`);
+  } catch {
+    return null;
+  }
+}
+
+export async function getChildrenSyncStatuses(parentId: number): Promise<SyncStatus[]> {
+  try {
+    return await get<SyncStatus[]>(`/api/library/${parentId}/children/sync-statuses`);
+  } catch {
+    return [];
+  }
+}
+
+export async function postTriggerSync(id: number): Promise<void> {
+  return post<void, void>(`/api/library/${id}/sync`, undefined);
 }
 
 export function uploadLibraryEntryFile(file: File, onProgress: (progress: number) => void, onLoad: (error?: string, data?: unknown) => void) {

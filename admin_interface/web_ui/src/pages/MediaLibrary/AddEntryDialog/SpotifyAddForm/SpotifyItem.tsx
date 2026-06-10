@@ -122,7 +122,12 @@ export default function SpotifyItem({entry, parentSelected = false, allowedVaria
     removeEntry(state.libraryEntry);
 
     if (!libraryEntryIsAdded) {
-      addEntry(state.libraryEntry);
+      // For container types (artist/album/playlist/show), add without pre-loading children.
+      // The sync job will handle loading children after submission.
+      const entryToAdd = state.libraryEntry.variant === 'folder'
+        ? {...state.libraryEntry, children: undefined}
+        : state.libraryEntry;
+      addEntry(entryToAdd);
     }
   }
   const dataUri = state.libraryEntry.image ? `data:image/png;base64,${arrayToBase64(state.libraryEntry.image)}` : '';
@@ -148,14 +153,12 @@ export default function SpotifyItem({entry, parentSelected = false, allowedVaria
                 `You can not add ${state.libraryEntry.variant}s in this folder as types of library entries in one folder need to be the same` :
                 libraryEntryIsAdded ?
                   'Remove this item from the playlist' :
-                  state.childrenLoaded ?
-                    'Add this item to be played' :
-                    'Please first toggle the item to load its children'}
+                  'Add this item to be synced and played'}
           >
             <div>
               <IconButton
                 onClick={handleAddRemoveEntry}
-                disabled={parentSelected || !state.childrenLoaded || (allowedVariant && allowedVariant !== state.libraryEntry.variant)}
+                disabled={parentSelected || (allowedVariant && allowedVariant !== state.libraryEntry.variant)}
               >
                 {libraryEntryIsAdded || parentSelected ?
                   <Check color={parentSelected ? 'disabled' : 'primary'}/> :

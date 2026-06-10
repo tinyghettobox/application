@@ -14,6 +14,7 @@ serde = { version = "1.0.195", features = ["derive"] }
 tracing = "0.1.40"
 ts-rs = { version = "10.1.0", features = ["chrono-impl", "no-serde-warnings"] }
 regex = "1.10.3"
+chrono = { version = "0.4", features = ["serde"] }
 
 [build-dependencies]
 regex = "1.10.3"

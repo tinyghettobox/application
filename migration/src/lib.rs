@@ -7,6 +7,8 @@ mod m20240212_225127_create_root_library_entry;
 mod m20240321_123652_add_library_entry_sort_key;
 mod m20250129_230144_add_on_off_shim_pins;
 mod m20250315_224856_track_source_optional_library_entry_id;
+mod m20260606_000001_add_library_entry_deleted;
+mod m20260606_000002_add_sync_tables;
 
 pub struct Migrator;
 
@@ -21,6 +23,8 @@ impl MigratorTrait for Migrator {
             Box::new(m20240321_123652_add_library_entry_sort_key::Migration),
             Box::new(m20250129_230144_add_on_off_shim_pins::Migration),
             Box::new(m20250315_224856_track_source_optional_library_entry_id::Migration),
+            Box::new(m20260606_000001_add_library_entry_deleted::Migration),
+            Box::new(m20260606_000002_add_sync_tables::Migration),
         ]
     }
 }
