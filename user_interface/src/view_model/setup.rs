@@ -10,6 +10,9 @@ pub struct SetupVM {
     state: State,
 }
 
+/// How many times `enable_ap.sh` may be attempted (1 initial + 2 retries).
+const AP_MAX_ATTEMPTS: u32 = 3;
+
 /// Raw RGBA pixel data for the QR code image, safe to send across threads.
 struct QrPixels {
     width: u32,
@@ -30,6 +33,9 @@ impl SetupVM {
         // Pre-seed as true when setup was already complete at startup so that
         // LoadLibraryEntry(0) is not dispatched a second time here.
         let library_loaded = Arc::new(AtomicBool::new(initial_setup_complete));
+        // Track whether the AP enable thread has already been started so it
+        // fires at most once (the thread itself retries up to AP_MAX_ATTEMPTS).
+        let ap_enable_started = Arc::new(AtomicBool::new(false));
 
         self.state.subscribe(move |changes| {
             if !changes.iter().any(|f| matches!(f, Field::system_config(_))) {
@@ -69,28 +75,39 @@ impl SetupVM {
                 });
             }
 
-            // Enable the access point (fire-and-forget; script is idempotent).
-            std::thread::spawn(move || {
-                tracing::info!("Enabling WiFi access point with SSID 'tinyghettobox'...");
-                match std::process::Command::new("/srv/tinyghettobox/enable_ap.sh")
-                    .args(["on", "tinyghettobox", &ap_password])
-                    .output()
-                {
-                    Ok(out) if out.status.success() => {
-                        tracing::info!("enable_ap.sh succeeded");
-                    }
-                    Ok(out) => {
-                        let stderr = String::from_utf8_lossy(&out.stderr).trim().to_string();
-                        let stdout = String::from_utf8_lossy(&out.stdout).trim().to_string();
-                        let msg = if !stderr.is_empty() { stderr } else { stdout };
-                        tracing::error!("enable_ap.sh failed (exit {}): {}", out.status, msg);
-                    }
-                    Err(e) => {
-                        tracing::error!("Failed to spawn enable_ap.sh: {}", e);
-                    }
-                }
-            });
+            // Enable the access point once; the thread retries up to AP_MAX_ATTEMPTS times.
+            if !ap_enable_started.swap(true, Ordering::SeqCst) {
+                std::thread::spawn(move || enable_ap_with_retries(&ap_password));
+            }
         });
+    }
+}
+
+/// Runs `enable_ap.sh on tinyghettobox <password>`, retrying up to `AP_MAX_ATTEMPTS` times.
+fn enable_ap_with_retries(ap_password: &str) {
+    for attempt in 1..=AP_MAX_ATTEMPTS {
+        tracing::info!("Enabling WiFi access point (attempt {}/{})", attempt, AP_MAX_ATTEMPTS);
+        match std::process::Command::new("/srv/tinyghettobox/enable_ap.sh")
+            .args(["on", "tinyghettobox", ap_password])
+            .output()
+        {
+            Ok(out) if out.status.success() => {
+                tracing::info!("enable_ap.sh succeeded");
+                return;
+            }
+            Ok(out) => {
+                let stderr = String::from_utf8_lossy(&out.stderr);
+                let stdout = String::from_utf8_lossy(&out.stdout);
+                let msg = if !stderr.trim().is_empty() { stderr } else { stdout };
+                tracing::error!("enable_ap.sh failed (exit {}): {}", out.status, msg.trim());
+            }
+            Err(e) => {
+                tracing::error!("Failed to spawn enable_ap.sh: {}", e);
+            }
+        }
+        if attempt < AP_MAX_ATTEMPTS {
+            std::thread::sleep(std::time::Duration::from_secs(2));
+        }
     }
 }
 

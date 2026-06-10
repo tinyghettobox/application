@@ -85,7 +85,6 @@ pub fn start(conn: DatabaseConnection, notify: Arc<Notify>) {
             loop {
                 match run_cycle(&conn).await {
                     CycleResult::NothingToDo => {
-                        info!("Sync job: nothing due, sleeping {}s", NORMAL_INTERVAL_SECS);
                         break;
                     }
                     CycleResult::Done => {
