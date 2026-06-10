@@ -1,37 +1,43 @@
 import { HorizontalBox } from "std-widgets.slint";
 import { Theme } from "./theme.slint";
-import { IconArrowLeft, IconLogs } from "./icons.slint";
+import { IconArrowLeft, IconLogs, IconWifi, IconWifiOff, IconAudioOff, IconSystemBlocked } from "./icons.slint";
 
 
 export global Navbar {
   in property <bool> visible: false;
   in property <int> parent-id: 0;
   in property <string> entry-name: "Music";
+  /// One of: "system-not-ready" | "audio-not-ready" | "wifi-not-ready" |
+  ///         "wifi-disconnected" | "wifi-weak" | "wifi-ok" | "hidden"
+  in property <string> system-status: "system-not-ready";
+  in property <string> status-tooltip-text: "Initialising audio and network…";
   callback go-back(int /* index */);
   callback open-logs();
 }
 
 export component NavbarView {
+  // Always occupies 70 px so the content area never shifts during navigation.
   height: 70px;
-  opacity: Navbar.visible ? 1.0 : 0.0;
 
-  animate opacity {
-    duration: 100ms;
-    easing: ease-in-out;
-  }
-
+  // Background + border — only visible once the user has navigated into a folder.
   Rectangle {
     width: parent.width;
-    background: Theme.background-accent-color;
+    height: parent.height;
+    background: Navbar.visible ? Theme.background-accent-color : Colors.transparent;
+    animate background { duration: 150ms; easing: ease-in-out; }
+
     HorizontalBox {
       padding: 0;
       height: parent.height;
+
+      // ── Back button ────────────────────────────────────────────────
       back-area := TouchArea {
         width: 70px;
         height: parent.height;
-        clicked => {
-            Navbar.go-back(Navbar.parent-id);
-        }
+        enabled: Navbar.visible;
+        opacity: Navbar.visible ? 1.0 : 0.0;
+        animate opacity { duration: 150ms; easing: ease-in-out; }
+        clicked => { Navbar.go-back(Navbar.parent-id); }
         IconArrowLeft {
           color: Theme.text-color;
           width: 28px;
@@ -41,6 +47,7 @@ export component NavbarView {
         }
       }
 
+      // ── Entry title ─────────────────────────────────────────────────
       Text {
         height: parent.height;
         text: Navbar.entry-name;
@@ -48,14 +55,97 @@ export component NavbarView {
         font-size: 24px;
         vertical-alignment: center;
         horizontal-stretch: 1;
+        opacity: Navbar.visible ? 1.0 : 0.0;
+        animate opacity { duration: 150ms; easing: ease-in-out; }
       }
 
+      // ── System status icon ──────────────────────────────────────────
+      // Visible at all times (even on the root screen), using whatever
+      // space is to the left of the logs button.
+      status-area := TouchArea {
+        width: 44px;
+        height: parent.height;
+        // Only show the icon when there is something meaningful to display.
+        visible: Navbar.system-status != "hidden";
+        clicked => { status-popup.show(); }
+
+        // Colour helpers
+        property <color> icon-color:
+          Navbar.system-status == "wifi-ok" ? Theme.text-accent-color :
+          Navbar.system-status == "wifi-weak" ? #ffcc00 :
+          Colors.red;
+
+        // System not ready
+        if Navbar.system-status == "system-not-ready":
+          IconSystemBlocked {
+            color: parent.icon-color;
+            width: 22px; height: 22px;
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+          }
+        // Audio not ready
+        if Navbar.system-status == "audio-not-ready":
+          IconAudioOff {
+            color: parent.icon-color;
+            width: 22px; height: 22px;
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+          }
+        // WiFi not ready / disconnected
+        if Navbar.system-status == "wifi-not-ready" || Navbar.system-status == "wifi-disconnected":
+          IconWifiOff {
+            color: parent.icon-color;
+            width: 22px; height: 22px;
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+          }
+        // WiFi weak or ok
+        if Navbar.system-status == "wifi-weak" || Navbar.system-status == "wifi-ok":
+          IconWifi {
+            color: parent.icon-color;
+            width: 22px; height: 22px;
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+          }
+
+        // ── Tooltip popup ───────────────────────────────────────────
+        status-popup := PopupWindow {
+          // Anchored to top-right, appearing below the navbar.
+          x: parent.width - self.width;
+          y: parent.height;
+          width: 220px;
+          height: tooltip-text.preferred-height + 24px;
+          close-policy: close-on-click-outside;
+
+          Rectangle {
+            background: Theme.background-accent-color;
+            border-color: Theme.border-color;
+            border-width: 1px;
+            border-radius: 6px;
+            width: 100%;
+            height: 100%;
+
+            tooltip-text := Text {
+              x: 12px;
+              y: 12px;
+              width: parent.width - 24px;
+              text: Navbar.status-tooltip-text;
+              color: Theme.text-color;
+              font-size: 13px;
+              wrap: word-wrap;
+            }
+          }
+        }
+      }
+
+      // ── Logs button ─────────────────────────────────────────────────
       logs-area := TouchArea {
         width: 70px;
         height: parent.height;
-        clicked => {
-            Navbar.open-logs();
-        }
+        enabled: Navbar.visible;
+        opacity: Navbar.visible ? 1.0 : 0.0;
+        animate opacity { duration: 150ms; easing: ease-in-out; }
+        clicked => { Navbar.open-logs(); }
         IconLogs {
           color: Theme.text-accent-color;
           width: 24px;
@@ -65,11 +155,15 @@ export component NavbarView {
         }
       }
     }
+
+    // Bottom border — only visible when navbar is active.
     Rectangle {
       width: parent.width;
       height: 1px;
       y: parent.height - self.height;
-      background: Theme.border-color;
+      background: Navbar.visible ? Theme.border-color : Colors.transparent;
+      animate background { duration: 150ms; easing: ease-in-out; }
     }
   }
 }
+

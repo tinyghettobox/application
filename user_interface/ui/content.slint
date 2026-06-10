@@ -13,6 +13,13 @@ export global Content {
     callback select-library-entry(int /* id */);
     callback play-folder(int /* id */);
     callback context-menu-action(int /* id */, string /* action: "played" | "not-played" */);
+    callback tile-scroll-changed(float /* viewport-y in logical pixels */);
+    in property <int> tile-total-row-count: 0;       // total rows across all entries
+    in property <int> tile-first-row: 0;             // first-row index of the visible window
+    // Scroll position tracking
+    in-out property <float> tile-scroll-y: 0;        // current scroll Y, updated by user scrolling
+    in property <float> tile-restore-scroll-y: 0;    // Rust sets this on navigation
+    in property <int> tile-restore-scroll-seq: 0;    // incremented each navigation to force trigger
 }
 
 export component ContentView {
@@ -34,6 +41,14 @@ export component ContentView {
             }
             entry-play-clicked(id) => {
                 Content.play-folder(id);
+            }
+            total-row-count: Content.tile-total-row-count;
+            first-row: Content.tile-first-row;
+            restore-scroll-y: Content.tile-restore-scroll-y;
+            restore-scroll-seq: Content.tile-restore-scroll-seq;
+            report-scroll-y(y) => {
+                Content.tile-scroll-y = y;
+                Content.tile-scroll-changed(y);
             }
         }
     if Content.variant != "folder" && Content.variant != "stream":

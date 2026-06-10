@@ -97,3 +97,51 @@ export component IconCheck inherits Path {
     viewbox-height: 24;
     commands: "M9,16.17 L4.83,12 L3.41,13.41 L9,19 L21,7 L19.59,5.59 Z";
 }
+
+// ── System-status icons ──────────────────────────────────────────────────────
+
+// WiFi icon — 3 concentric arcs + a bottom dot.
+// Tint via `color` to indicate signal quality (white/yellow/red).
+export component IconWifi inherits Path {
+    in property <brush> color <=> self.fill;
+    fill: black;
+    viewbox-x: 0;
+    viewbox-y: 0;
+    viewbox-width: 24;
+    viewbox-height: 24;
+    commands: "M1,9 L3,11 C7.97,6.03 16.03,6.03 21,11 L23,9 C16.93,2.93 7.08,2.93 1,9 Z M5,13 L7,15 C9.65,12.36 14.36,12.36 17,15 L19,13 C15.27,9.28 8.74,9.28 5,13 Z M9,17 L12,20 L15,17 C13.35,15.36 10.66,15.36 9,17 Z";
+}
+
+// WiFi-off icon — single bottom arc + dot + diagonal strike-through.
+export component IconWifiOff inherits Path {
+    in property <brush> color <=> self.fill;
+    fill: black;
+    viewbox-x: 0;
+    viewbox-y: 0;
+    viewbox-width: 24;
+    viewbox-height: 24;
+    commands: "M9,17 L12,20 L15,17 C13.35,15.36 10.66,15.36 9,17 Z M1,1 L22.78,22.78 L21.37,24.19 L17.63,20.45 C15.58,21.73 13.37,22.5 11.03,22.5 L11.03,22.5 L2.81,14.28 C2.29,13.2 2,11.97 2,10.7 L2,10.7 M23,9 L20.78,11.22 C18.72,9.16 16.02,7.96 13.06,7.69 L10.84,5.47 C11.23,5.49 11.61,5.5 12,5.5 C16.27,5.5 20.14,7.24 23,9 Z M5.01,12.78 C5,12.53 5,12.27 5,12 C5,11.07 5.16,10.17 5.45,9.33 L3.44,7.32 C2.52,8.97 2,10.88 2,12.93 L5.01,12.78 Z M1,9 L3,11 C4.35,9.72 5.94,8.75 7.7,8.17 L5.67,6.14 C4.04,6.97 2.57,8.09 1,9 Z";
+}
+
+// Audio-off icon — speaker cone with mute lines (reuses VolumeOff shape with an X).
+export component IconAudioOff inherits Path {
+    in property <brush> color <=> self.fill;
+    fill: black;
+    viewbox-x: 0;
+    viewbox-y: 0;
+    viewbox-width: 24;
+    viewbox-height: 24;
+    commands: "M16.5,12 C16.5,10.23 15.48,8.71 14,7.97 L14,10.18 L16.45,12.63 C16.48,12.43 16.5,12.22 16.5,12 Z M19,12 C19,12.94 18.8,13.82 18.46,14.64 L19.97,16.15 C20.62,14.91 21,13.5 21,12 C21,7.72 18.01,4.14 14,3.23 L14,5.29 C16.89,6.15 19,8.83 19,12 Z M4.27,3 L3,4.27 L7.73,9 L3,9 L3,15 L7,15 L12,20 L12,13.27 L16.25,17.52 C15.58,18.04 14.83,18.45 14,18.7 L14,20.76 C15.38,20.44 16.63,19.78 17.69,18.9 L19.73,20.94 L21,19.67 L4.27,3 Z M12,4 L9.91,6.09 L12,8.18 L12,4 Z";
+}
+
+// System-blocked icon — prohibition circle (slash through a ring).
+// Shown when both audio AND wifi are still initialising.
+export component IconSystemBlocked inherits Path {
+    in property <brush> color <=> self.fill;
+    fill: black;
+    viewbox-x: 0;
+    viewbox-y: 0;
+    viewbox-width: 24;
+    viewbox-height: 24;
+    commands: "M12,2 C6.48,2 2,6.48 2,12 C2,17.52 6.48,22 12,22 C17.52,22 22,17.52 22,12 C22,6.48 17.52,2 12,2 Z M4,12 C4,7.58 7.58,4 12,4 C13.85,4 15.55,4.63 16.9,5.69 L5.69,16.9 C4.63,15.55 4,13.85 4,12 Z M12,20 C10.15,20 8.45,19.37 7.1,18.31 L18.31,7.1 C19.37,8.45 20,10.15 20,12 C20,16.42 16.42,20 12,20 Z";
+}

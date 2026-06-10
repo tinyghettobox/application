@@ -179,6 +179,9 @@ export component Tile {
             font-size: 16px;
             color: Theme.text-color;
             horizontal-alignment: center;
+            wrap: word-wrap;
+            overflow: clip;
+            height: 58px; // fixed height for up to 3 lines, keeps all tiles in a row equal
         }
     }
 
@@ -211,17 +214,61 @@ export component Tile {
 }
 
 export component TileListView {
+    // Data: Rust passes only the visible window of rows; Slint renders ~12 at most.
     in property <[[UILibraryEntry]]> rows;
+    in property <int> total-row-count: 0;  // total rows across all entries — drives viewport height
+    in property <int> first-row: 0;        // row index of rows[0] within the full list
+
     callback entry-clicked(int /* id */);
     callback entry-long-pressed(int /* id */, string /* name */);
     callback entry-play-clicked(int /* id */);
+    callback report-scroll-y(float /* viewport-y in logical pixels */);
+
+    // Scroll restore — seq is always incremented so `changed` fires even when y value is the same
+    in property <float> restore-scroll-y: 0;
+    in property <int>   restore-scroll-seq: 0;
 
     width: 100%;
     height: 100%;
+
+    // Row height: MUST match ROW_HEIGHT_PX in content.rs
+    // Tile VerticalBox: padding(8+8) + ring(180) + spacing(10) + text(58) = 264px, + row-gap(8) = 272px
+    property <length> row-height: 272px;
+
+    // Deferred scroll restore: fires on component creation (scroll-restore-pending starts true)
+    // AND on each navigation (changed restore-scroll-seq sets it true).
+    // The 1-tick delay lets Slint commit the viewport-height binding before setting viewport-y,
+    // and also handles the tile→detail→tile case where TileListView is recreated from scratch
+    // (changed doesn't fire for initial property values, but the timer always fires on creation).
+    property <bool> scroll-restore-pending: true;
+    Timer {
+        interval: 16ms;
+        running: root.scroll-restore-pending;
+        triggered => {
+            root.scroll-restore-pending = false;
+            scroll-area.viewport-y = root.restore-scroll-y * 1px;
+        }
+    }
+    changed restore-scroll-seq => { root.scroll-restore-pending = true; }
+
     VerticalBox {
-        ScrollView {
-            VerticalBox {
-                for row in rows: HorizontalBox {
+        scroll-area := ScrollView {
+            // Virtual viewport: full logical height even though only ~12 rows are rendered
+            viewport-height: root.total-row-count * root.row-height;
+
+            changed viewport-y => {
+                root.report-scroll-y(self.viewport-y / 1px);
+            }
+
+            // Non-layout container so rows can be absolutely positioned by their virtual y offset
+            Rectangle {
+                width: scroll-area.visible-width;
+                height: scroll-area.viewport-height;
+
+                for row[i] in rows: HorizontalBox {
+                    y: (root.first-row + i) * root.row-height;
+                    x: 0;
+                    width: parent.width;
                     alignment: center;
                     spacing: 20px;
                     for entry in row: Tile {
@@ -242,6 +289,68 @@ export component TileListView {
                         play-clicked => { entry-play-clicked(entry.id); }
                     }
                 }
+            }
+        }
+    }
+
+    // Scrollbar overlay — only shown when content is taller than the visible area
+    if scroll-area.viewport-height > scroll-area.visible-height + 4px: Rectangle {
+        x: root.width - 14px;
+        y: 0;
+        width: 14px;
+        height: root.height;
+        background: transparent;
+
+        property <length> scrollable-height: scroll-area.viewport-height - scroll-area.visible-height;
+        property <length> thumb-height: max(44px, root.height * (scroll-area.visible-height / max(1px, scroll-area.viewport-height)));
+        property <length> track-height: root.height - thumb-height;
+        property <float> scroll-progress: scrollable-height > 0px
+            ? (-scroll-area.viewport-y / scrollable-height)
+            : 0;
+        property <length> thumb-y: track-height * scroll-progress;
+
+        // Track
+        Rectangle {
+            x: 5px;
+            y: 0;
+            width: 4px;
+            height: parent.height;
+            border-radius: 2px;
+            background: Theme.background-accent-color;
+        }
+
+        // Thumb
+        Rectangle {
+            x: 3px;
+            y: thumb-y;
+            width: 8px;
+            height: thumb-height;
+            border-radius: 4px;
+            opacity: 0.75;
+            background: Theme.secondary-color;
+        }
+
+        // Touch target for drag-scrolling
+        TouchArea {
+            width: parent.width;
+            height: parent.height;
+            property <length> drag-start-mouse-y: 0;
+            property <length> drag-start-viewport-y: 0;
+            pointer-event(e) => {
+                if e.kind == PointerEventKind.down {
+                    self.drag-start-mouse-y = self.mouse-y;
+                    self.drag-start-viewport-y = scroll-area.viewport-y;
+                }
+            }
+            moved => {
+                scroll-area.viewport-y = max(
+                    -parent.scrollable-height,
+                    min(0px,
+                        self.drag-start-viewport-y
+                        - ((self.mouse-y - self.drag-start-mouse-y) / max(1px, parent.track-height))
+                          * parent.scrollable-height
+                    )
+                );
             }
         }
     }

@@ -5,8 +5,7 @@ use std::sync::mpsc::sync_channel;
 
 use image::{GenericImageView, ImageReader};
 use slint::{Image, Model, ModelRc, SharedPixelBuffer};
-use tracing::error;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
+use tracing_subscriber::{filter::LevelFilter, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
 slint::include_modules!();
 
@@ -19,7 +18,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     let (log_tx, log_rx) = sync_channel::<model::actions::Action>(256);
 
     tracing_subscriber::registry()
-        .with(EnvFilter::from_default_env())
+        .with(EnvFilter::builder()
+            .with_default_directive(LevelFilter::DEBUG.into())
+            .from_env_lossy())
         .with(tracing_subscriber::fmt::layer())
         .with(log_layer::StateLogLayer::new(log_tx))
         .init();
@@ -29,18 +30,17 @@ fn main() -> Result<(), Box<dyn Error>> {
         .enable_all()
         .build()?;
 
-    let (state, player_rx) = rt.block_on(async {
+    // DB connect and State creation only — Player::new() is deferred until the
+    // audio daemon (PipeWire) signals it is ready via the oneshot channel.
+    let (state, conn_for_player) = rt.block_on(async {
         let conn = database::connect().await.expect("DB connect failed");
-
-        // Spawn Player::new on a background task so ALSA init doesn't block the UI from starting.
         let conn_for_player = conn.clone();
-        let player_rx = tokio::spawn(async move {
-            player::Player::new(conn_for_player, 0.7).await
-        });
-
         let state = model::State::new(conn);
-        (state, player_rx)
+        (state, conn_for_player)
     });
+
+    // Oneshot used by SystemMonitorVM to wake the player-init task.
+    let (audio_ready_tx, audio_ready_rx) = tokio::sync::oneshot::channel::<()>();
 
     // Forward log actions from the tracing layer into State::dispatch.
     {
@@ -63,47 +63,53 @@ fn main() -> Result<(), Box<dyn Error>> {
     let _messages_vm = view_model::messages::MessagesVM::new(ui.as_weak(), state.clone());
     let _navbar_vm = view_model::navbar::NavbarVM::new(ui.as_weak(), state.clone());
     let _playbar_vm = view_model::playbar::PlaybarVM::new(ui.as_weak(), state.clone());
+    // SystemMonitorVM polls audio/wifi readiness and dispatches status actions.
+    // On non-Linux it immediately signals Ready so behaviour is unchanged.
+    let _system_monitor_vm = view_model::system_monitor::SystemMonitorVM::new(state.clone(), audio_ready_tx);
 
-    // Wire player callbacks once Player::new() finishes, then load library.
+    // Show the library immediately — no need to wait for audio/network.
+    state.dispatch(model::actions::Action::LoadLibraryEntry(0));
+
+    // Init the player once the system monitor confirms the audio daemon is up.
     {
         let state_clone = state.clone();
         tokio::spawn(async move {
-            match player_rx.await {
-                Ok(player) => {
-                    {
-                        let mut p = player.lock().await;
-                        let s1 = state_clone.clone();
-                        let s2 = state_clone.clone();
-                        let s3 = state_clone.clone();
-                        let s4 = state_clone.clone();
-                        p.connect_progress_changed(move |progress| {
-                            s1.dispatch(model::actions::Action::SetProgress(progress));
-                        });
-                        p.connect_track_changed(move |entry| {
-                            s2.dispatch(model::actions::Action::SetPlayingTrack(entry));
-                        });
-                        p.connect_track_ended(move |entry| {
-                            s3.dispatch(model::actions::Action::SetPlayedAt(entry.id, true));
-                        });
-                        p.connect_error(move |msg| {
-                            s4.dispatch(model::actions::Action::AppendLog(
-                                model::actions::LogEntry {
-                                    level: model::actions::LogLevel::Error,
-                                    message: msg,
-                                    timestamp: chrono::Utc::now().naive_utc(),
-                                }
-                            ));
-                        });
-                    }
-                    state_clone.set_player(player);
-                    state_clone.dispatch(model::actions::Action::InitVolume);
-                    state_clone.dispatch(model::actions::Action::LoadLibraryEntry(0));
-                }
-                Err(e) => {
-                    error!("Player init failed: {:?}", e);
-                    std::process::exit(1);
-                }
+            // Block until SystemMonitorVM fires the audio-ready signal (or drops on failure).
+            if audio_ready_rx.await.is_err() {
+                // Sender dropped without sending means AudioStatus::Failed was dispatched.
+                tracing::error!("Audio system never became available; player will not be initialised");
+                return;
             }
+
+            let player = player::Player::new(conn_for_player, 0.7).await;
+            {
+                let mut p = player.lock().await;
+                let s1 = state_clone.clone();
+                let s2 = state_clone.clone();
+                let s3 = state_clone.clone();
+                let s4 = state_clone.clone();
+                p.connect_progress_changed(move |progress| {
+                    s1.dispatch(model::actions::Action::SetProgress(progress));
+                });
+                p.connect_track_changed(move |entry| {
+                    s2.dispatch(model::actions::Action::SetPlayingTrack(entry));
+                });
+                p.connect_track_ended(move |entry| {
+                    s3.dispatch(model::actions::Action::SetPlayedAt(entry.id, true));
+                });
+                p.connect_error(move |msg| {
+                    s4.dispatch(model::actions::Action::AppendLog(
+                        model::actions::LogEntry {
+                            level: model::actions::LogLevel::Error,
+                            message: msg,
+                            timestamp: chrono::Utc::now().naive_utc(),
+                        }
+                    ));
+                });
+            }
+            state_clone.set_player(player);
+            tracing::info!("Player initialised successfully");
+            state_clone.dispatch(model::actions::Action::InitVolume);
         });
     }
 

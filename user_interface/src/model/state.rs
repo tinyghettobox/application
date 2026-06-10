@@ -9,7 +9,7 @@ use database::{model::library_entry::Model as LibraryEntry, DatabaseConnection};
 use player::{Player, Progress, Queue};
 use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 
-use super::actions::{Action, LogEntry};
+use super::actions::{Action, AudioStatus, LogEntry, WifiStatus};
 use crate::with_getters_setters;
 
 pub(super) const LOG_RING_CAPACITY: usize = 300;
@@ -40,6 +40,8 @@ with_getters_setters! {
         pub log_entries: Vec<LogEntry>,
         pub show_logs: bool,
         pub display_active: bool,
+        pub audio_status: AudioStatus,
+        pub wifi_status: WifiStatus,
     }
 
     pub struct State {
@@ -65,6 +67,8 @@ impl Default for InnerState {
             log_entries: Vec::new(),
             show_logs: false,
             display_active: true,
+            audio_status: AudioStatus::Initializing,
+            wifi_status: WifiStatus::Initializing,
         }
     }
 }
@@ -158,8 +162,11 @@ impl State {
                         Action::PlayNext => self_clone.play_next().await,
                         Action::SetVolume(v) => self_clone.set_volume(v).await,
                         Action::AppendLog(entry) => self_clone.append_log(entry),
+                        Action::ClearMessages => self_clone.clear_messages(),
                         Action::ToggleShowLogs => self_clone.toggle_show_logs(),
                         Action::SetDisplayActive(active) => self_clone.set_display_active(active),
+                        Action::SetAudioStatus(status) => self_clone.set_audio_status(status).await,
+                        Action::SetWifiStatus(status) => self_clone.set_wifi_status(status).await,
                         Action::Shutdown => self_clone.shutdown().await,
                     };
 

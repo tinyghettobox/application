@@ -1,32 +1,33 @@
-import { VerticalBox, HorizontalBox } from "std-widgets.slint";
+import { Theme } from "./theme.slint";
 
 export global Messages {
     in property <[string]> messages;
 }
 
-export component MessagesView inherits Rectangle {
-    
-    VerticalBox {
-        for msg in Messages.messages: Text {
-            text: msg;
-            font-size: 16px;
-        }
-    }
-    
-    // Fixed overlay message - always on top
-    Rectangle {
-        y: 10px;
-        width: 200px;
-        height: 30px;
-        border-radius: 5px;
+// Toast notification overlay — appears at the bottom of the screen.
+// Visible only when there is at least one pending message.
+export component MessagesView {
+    if Messages.messages.length > 0: Rectangle {
         x: (parent.width - self.width) / 2;
-        
-        for msg in Messages.messages: Text {
-            text: msg;
-            color: white;
+        y: parent.height - self.height - 24px;
+        width: min(toast-text.preferred-width + 40px, parent.width - 48px);
+        height: toast-text.preferred-height + 20px;
+        border-radius: 8px;
+        background: #323232;
+        drop-shadow-blur: 12px;
+        drop-shadow-color: #00000066;
+
+        toast-text := Text {
+            x: 20px;
+            y: 10px;
+            width: parent.width - 40px;
+            // Show only the most recent message.
+            text: Messages.messages[Messages.messages.length - 1];
+            color: #ffffff;
+            font-size: 16px;
+            wrap: word-wrap;
             horizontal-alignment: center;
-            vertical-alignment: center;
-            font-size: 14px;
         }
     }
 }
+
