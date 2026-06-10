@@ -1,0 +1,139 @@
+import { Theme } from "./theme.slint";
+
+export global Setup {
+    in property <bool> visible: false;
+    in property <image> qr-code;
+    in property <string> ap-password: "";
+}
+
+export component SetupView {
+    visible: Setup.visible;
+
+    Rectangle {
+        width: parent.width;
+        height: parent.height;
+        background: Theme.background-color;
+
+        // Left panel — instructions
+        Rectangle {
+            x: 0;
+            y: 0;
+            width: parent.width * 0.55;
+            height: parent.height;
+            background: Theme.background-color;
+
+            VerticalLayout {
+                x: 40px;
+                y: 40px;
+                width: parent.width - 80px;
+                height: parent.height - 80px;
+                spacing: 20px;
+                alignment: start;
+
+                Text {
+                    text: "Welcome to tinyghettobox";
+                    font-size: 22px;
+                    color: Theme.text-color;
+                    font-weight: 700;
+                }
+
+                Text {
+                    text: "Complete the initial setup from your phone or computer.";
+                    font-size: 16px;
+                    color: Theme.text-accent-color;
+                    wrap: word-wrap;
+                }
+
+                VerticalLayout {
+                    spacing: 12px;
+
+                    Text {
+                        text: "1.  Scan the QR code to connect to the wifi network";
+                        font-size: 16px;
+                        color: Theme.text-color;
+                        wrap: word-wrap;
+                    }
+
+                    Text {
+                        text: "    Network:  tinyghettobox";
+                        font-size: 16px;
+                        color: Theme.text-accent-color;
+                        wrap: word-wrap;
+                    }
+
+                    Text {
+                        text: "    Password: " + Setup.ap-password;
+                        font-size: 16px;
+                        color: Theme.secondary-color;
+                        font-family: "monospace";
+                        wrap: word-wrap;
+                    }
+
+                    Text {
+                        text: "2.  Your browser will open the setup page automatically.";
+                        font-size: 16px;
+                        color: Theme.text-color;
+                        wrap: word-wrap;
+                    }
+
+                    Text {
+                        text: "3.  Follow the on-screen instructions.";
+                        font-size: 16px;
+                        color: Theme.text-color;
+                        wrap: word-wrap;
+                    }
+                }
+
+                Text {
+                    text: "Once setup is complete this screen will disappear.";
+                    font-size: 14px;
+                    color: Theme.text-accent-color;
+                    wrap: word-wrap;
+                }
+            }
+        }
+
+        // Right panel — QR code
+        Rectangle {
+            x: parent.width * 0.55;
+            y: 0;
+            width: parent.width * 0.45;
+            height: parent.height;
+            background: Theme.background-accent-color;
+
+            HorizontalLayout {
+                alignment: center;
+                VerticalLayout {
+                    alignment: center;
+                    spacing: 12px;
+
+                    Rectangle {
+                        width: 220px;
+                        height: 220px;
+                        horizontal-stretch: 0;
+
+                        // White background so QR code is scannable against dark UI
+                        background: white;
+                        border-radius: 8px;
+
+                        Image {
+                            source: Setup.qr-code;
+                            width: 200px;
+                            height: 200px;
+                            x: 10px;
+                            y: 10px;
+                            image-rendering: pixelated;
+                        }
+                    }
+
+                    Text {
+                        text: "Scan to connect";
+                        font-size: 14px;
+                        color: Theme.text-accent-color;
+                        horizontal-alignment: center;
+                    }
+                }
+            }
+        }
+    }
+}

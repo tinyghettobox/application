@@ -4,6 +4,7 @@ pub mod logs;
 pub mod messages;
 pub mod navbar;
 pub mod playbar;
+pub mod setup;
 pub mod system_monitor;
 
 use slint::Weak;

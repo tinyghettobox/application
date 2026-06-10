@@ -24,4 +24,4 @@ librespot = { git = "https://github.com/librespot-org/librespot", rev = "5440c4d
 librespot = { git = "https://github.com/librespot-org/librespot", rev = "5440c4d385302ab35550a3551365a0b86f8c72ad", default-features = false, features = ["rodio-backend", "with-libmdns", "native-tls"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
-librespot = { git = "https://github.com/librespot-org/librespot", rev = "5440c4d385302ab35550a3551365a0b86f8c72ad", default-features = false, features = ["pulseaudio-backend", "with-libmdns", "native-tls"] }
+librespot = { git = "https://github.com/librespot-org/librespot", rev = "5440c4d385302ab35550a3551365a0b86f8c72ad", default-features = false, features = ["alsa-backend", "with-libmdns", "native-tls"] }

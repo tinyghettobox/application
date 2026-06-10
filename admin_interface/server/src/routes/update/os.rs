@@ -30,6 +30,7 @@ pub fn get_current_app_version() -> Result<(u32, u32, u32, Option<String>), io::
     Ok((0, 0, 0, None))
 }
 
+#[allow(dead_code)]
 pub fn get_root_partitions() -> Result<(BlockDevice, BlockDevice), Problem> {
     if cfg!(not(target_os = "linux")) {
         return Err(problem!("Update not supported on non-linux systems", 400));
@@ -86,12 +87,14 @@ pub struct BlockDevice {
     pub mount_point: Option<String>,
 }
 
+#[allow(dead_code)]
 #[derive(Deserialize)]
 pub struct LsblkResponse {
     #[serde(rename = "blockdevices")]
     pub devices: Vec<BlockDevice>,
 }
 
+#[allow(dead_code)]
 pub fn get_partitions() -> Result<Vec<BlockDevice>, Problem> {
     if cfg!(not(target_os = "linux")) {
         return Ok(vec![]);

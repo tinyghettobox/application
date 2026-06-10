@@ -5,7 +5,7 @@ use std::sync::{
 use tracing;
 
 use async_trait::async_trait;
-use database::{model::library_entry::Model as LibraryEntry, DatabaseConnection};
+use database::{model::{library_entry::Model as LibraryEntry, system_config::Model as SystemConfig}, DatabaseConnection};
 use player::{Player, Progress, Queue};
 use tokio::sync::mpsc::{unbounded_channel, UnboundedSender};
 
@@ -42,6 +42,7 @@ with_getters_setters! {
         pub display_active: bool,
         pub audio_status: AudioStatus,
         pub wifi_status: WifiStatus,
+        pub system_config: Option<SystemConfig>,
     }
 
     pub struct State {
@@ -69,6 +70,7 @@ impl Default for InnerState {
             display_active: true,
             audio_status: AudioStatus::Initializing,
             wifi_status: WifiStatus::Initializing,
+            system_config: None,
         }
     }
 }
@@ -144,6 +146,7 @@ impl State {
                     }
                     match action {
                         Action::InitVolume => self_clone.init_volume().await,
+                        Action::LoadSystemConfig => self_clone.load_system_config().await,
                         Action::LoadLibraryEntry(id) => self_clone.load_library_entry(id).await,
                         Action::StartPlayingLibraryEntry(library_entry) => {
                             self_clone.start_playing_library_entry(library_entry);

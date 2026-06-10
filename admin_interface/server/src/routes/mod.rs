@@ -4,3 +4,4 @@ pub mod spotify;
 pub mod static_files;
 pub mod system_config;
 pub mod update;
+pub mod wifi;

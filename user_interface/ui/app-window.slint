@@ -7,13 +7,15 @@ import { Logs, LogsView, UILogEntry } from "./logs.slint";
 import { Theme } from "./theme.slint";
 import { VerticalBox } from "std-widgets.slint";
 import { DisplayTimer, DisplayOverlay } from "./display_timer.slint";
+import { Setup, SetupView } from "./setup.slint";
 
 export { UILibraryEntry, Helper, UILogEntry }
-export { Content, Messages, Navbar, Playbar, Logs, DisplayTimer }
+export { Content, Messages, Navbar, Playbar, Logs, DisplayTimer, Setup }
 
 export component AppWindow inherits Window {
     preferred-width: 800px;
     preferred-height: 480px;
+    default-font-family: "DejaVu Sans";
     background: Theme.background-color;
 
     VerticalBox {
@@ -39,6 +41,12 @@ export component AppWindow inherits Window {
 
     // Must be last so it sits on top of all other content.
     DisplayOverlay {
+        width: parent.width;
+        height: parent.height;
+    }
+
+    // Setup screen overlays everything when setup is not yet complete.
+    SetupView {
         width: parent.width;
         height: parent.height;
     }

@@ -15,8 +15,11 @@ pub struct SpotifyItem {
     pub image_url: Option<String>,
     /// Spotify type of *this* item (e.g. `"album"`, `"track"`, `"episode"`).
     pub spotify_type: String,
+    #[allow(dead_code)]
     pub disc_number: Option<u32>,
+    #[allow(dead_code)]
     pub track_number: Option<u32>,
+    #[allow(dead_code)]
     pub release_date: Option<String>,
 }
 

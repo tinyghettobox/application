@@ -21,7 +21,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .with(EnvFilter::builder()
             .with_default_directive(LevelFilter::DEBUG.into())
             .from_env_lossy())
-        .with(tracing_subscriber::fmt::layer())
+        .with(tracing_subscriber::fmt::layer().with_ansi(cfg!(not(target_arch = "aarch64"))))
         .with(log_layer::StateLogLayer::new(log_tx))
         .init();
 
@@ -32,11 +32,19 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // DB connect and State creation only — Player::new() is deferred until the
     // audio daemon (PipeWire) signals it is ready via the oneshot channel.
-    let (state, conn_for_player) = rt.block_on(async {
+    // Also read setup_complete synchronously so we can show the setup screen
+    // immediately without waiting for the async LoadSystemConfig round-trip.
+    let (state, conn_for_player, initial_setup_complete) = rt.block_on(async {
         let conn = database::connect().await.expect("DB connect failed");
         let conn_for_player = conn.clone();
+        let setup_complete = database::SystemConfigRepository::get(&conn)
+            .await
+            .ok()
+            .flatten()
+            .map(|c| c.setup_complete)
+            .unwrap_or(false);
         let state = model::State::new(conn);
-        (state, conn_for_player)
+        (state, conn_for_player, setup_complete)
     });
 
     // Oneshot used by SystemMonitorVM to wake the player-init task.
@@ -66,9 +74,32 @@ fn main() -> Result<(), Box<dyn Error>> {
     // SystemMonitorVM polls audio/wifi readiness and dispatches status actions.
     // On non-Linux it immediately signals Ready so behaviour is unchanged.
     let _system_monitor_vm = view_model::system_monitor::SystemMonitorVM::new(state.clone(), audio_ready_tx);
+    let _setup_vm = view_model::setup::SetupVM::new(ui.as_weak(), state.clone(), initial_setup_complete);
 
-    // Show the library immediately — no need to wait for audio/network.
+    // Apply initial setup visibility synchronously before the first frame so
+    // the correct screen is shown without any flicker.
+    if !initial_setup_complete {
+        ui.global::<Setup>().set_visible(true);
+    }
+
+    // Start loading library content immediately; if setup is not complete the
+    // SetupView overlay will hide it until setup is done.
     state.dispatch(model::actions::Action::LoadLibraryEntry(0));
+
+    // Load system config — SetupVM will keep setup visibility in sync and
+    // dispatch LoadLibraryEntry(0) once setup_complete transitions to true.
+    state.dispatch(model::actions::Action::LoadSystemConfig);
+    {
+        let state_for_poll = state.clone();
+        tokio::spawn(async move {
+            let mut interval = tokio::time::interval(std::time::Duration::from_secs(3));
+            interval.tick().await; // skip the immediate first tick (already dispatched above)
+            loop {
+                interval.tick().await;
+                state_for_poll.dispatch(model::actions::Action::LoadSystemConfig);
+            }
+        });
+    }
 
     // Init the player once the system monitor confirms the audio daemon is up.
     {

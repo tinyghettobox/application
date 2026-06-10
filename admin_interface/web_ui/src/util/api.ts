@@ -95,8 +95,27 @@ export async function getSystemConfig(): Promise<SystemConfig> {
   return get<SystemConfig>('/api/system/config');
 }
 
-export async function putSystemConfig(config: SystemConfig): Promise<SystemConfig> {
-  return put<SystemConfig>('/api/system/config', config);
+export async function putSystemConfig(config: Partial<SystemConfig>): Promise<SystemConfig> {
+  return put<Partial<SystemConfig>, SystemConfig>('/api/system/config', config);
+}
+
+export interface WifiConnectRequest {
+  ssid: string;
+  password: string;
+  security: 'WPA' | 'WEP' | 'nopass';
+}
+
+export interface WifiStatusResponse {
+  status: 'idle' | 'connecting' | 'connected' | 'failed';
+  error?: string;
+}
+
+export async function postWifiConnect(req: WifiConnectRequest): Promise<WifiStatusResponse> {
+  return post<WifiConnectRequest, WifiStatusResponse>('/api/wifi/connect', req);
+}
+
+export async function getWifiStatus(): Promise<WifiStatusResponse> {
+  return get<WifiStatusResponse>('/api/wifi/status');
 }
 
 export async function getSpotifyConfig(): Promise<SpotifyConfig> {

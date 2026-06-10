@@ -64,9 +64,9 @@ export default function SyncSettings({entryId}: Props) {
         sortRegex: updated.sortRegex,
         syncIntervalDays: updated.syncIntervalDays,
       });
-      notify('Sync settings saved');
+      notify('success', 'Sync settings saved');
     } catch (e) {
-      notify(`Failed to save sync settings: ${e}`);
+      notify('error', `Failed to save sync settings: ${e}`);
     } finally {
       setSaving(false);
     }

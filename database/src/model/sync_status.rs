@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use sea_orm::prelude::DateTimeUtc;
 use serde::{Deserialize, Serialize};
 

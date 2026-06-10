@@ -1,5 +1,5 @@
 use std::io::{Cursor, Read};
-use tracing::{debug, warn};
+use tracing::debug;
 
 /// Downloads the image at `url`, resizes it to 180×180 JPEG, and returns the
 /// compressed bytes. Returns an error string on failure (callers treat images

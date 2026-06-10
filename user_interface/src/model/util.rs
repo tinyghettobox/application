@@ -56,6 +56,7 @@ macro_rules! with_getters_setters {
         }        
 
         // ---- Impl for outer struct ----
+        #[allow(dead_code)]
         impl $Outer {
             $(
                 pub fn $field(&self) -> $ty

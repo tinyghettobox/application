@@ -3,11 +3,11 @@ use actix_web::{get, put, web, HttpRequest, HttpResponse, Responder, Result};
 use database::{DatabaseConnection, SpotifyConfigRepository};
 use rspotify::model::{AlbumId, ArtistId, PlaylistId, SearchType, ShowId};
 use rspotify::prelude::{BaseClient, OAuthClient};
-use rspotify::{AuthCodeSpotify, Credentials, OAuth, Token};
+use rspotify::{AuthCodeSpotify, Credentials, OAuth};
 use serde::Deserialize;
 use serde_json::json;
 use std::collections::HashSet;
-use tracing::{error, warn};
+use tracing::error;
 
 #[get("/api/spotify/config")]
 pub async fn get_config(conn: web::Data<DatabaseConnection>) -> impl Responder {

@@ -1,5 +1,4 @@
-use super::LogEntry;
-use crate::model::state::{Field, State, LOG_RING_CAPACITY};
+use crate::model::state::{Field, State};
 
 impl State {
     pub(in crate::model) fn toggle_show_logs(&mut self) {

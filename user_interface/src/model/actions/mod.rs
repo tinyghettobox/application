@@ -5,6 +5,7 @@ mod append_log;
 mod clear_messages;
 mod init_volume;
 mod load_library_entries;
+mod load_system_config;
 mod play_library_entry;
 mod play_next;
 mod play_prev;
@@ -37,6 +38,7 @@ pub struct LogEntry {
 
 /// Audio subsystem readiness state.
 #[derive(Debug, Clone, PartialEq)]
+#[allow(dead_code)]
 pub enum AudioStatus {
     /// Waiting for audio daemon (PipeWire/PulseAudio) to become available.
     Initializing,
@@ -48,6 +50,7 @@ pub enum AudioStatus {
 
 /// WiFi / network connectivity state.
 #[derive(Debug, Clone, PartialEq)]
+#[allow(dead_code)]
 pub enum WifiStatus {
     /// System monitor has not yet determined connectivity.
     Initializing,
@@ -71,6 +74,7 @@ impl WifiStatus {
 #[derive(Debug)]
 pub enum Action {
     InitVolume,
+    LoadSystemConfig,
     LoadLibraryEntry(i32),
     StartPlayingLibraryEntry(LibraryEntry),
     PlayLibraryEntry(LibraryEntry),
@@ -93,6 +97,6 @@ pub enum Action {
 
 impl Action {
     pub fn should_log(&self) -> bool {
-        !matches!(self, Action::SetProgress(_) | Action::AppendLog(_) | Action::SetWifiStatus(_) | Action::ClearMessages)
+        !matches!(self, Action::SetProgress(_) | Action::AppendLog(_) | Action::SetWifiStatus(_) | Action::LoadSystemConfig | Action::ClearMessages)
     }
 }

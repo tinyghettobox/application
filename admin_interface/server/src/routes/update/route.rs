@@ -34,6 +34,7 @@ pub async fn get_operating_system_update_version() -> actix_web::Result<impl Res
     Ok(HttpResponse::Ok().json(newer_versions))
 }
 
+#[allow(dead_code)]
 #[derive(Deserialize)]
 struct UpdateOperatingSystem {
     version: String,

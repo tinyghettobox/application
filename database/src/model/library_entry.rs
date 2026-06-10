@@ -113,6 +113,7 @@ impl Related<Entity> for Entity {
     }
 }
 
+#[allow(dead_code)]
 pub struct ParentLink;
 impl Linked for ParentLink {
     type FromEntity = Entity;
@@ -192,6 +193,7 @@ impl CreateModel {
     }
 }
 
+#[allow(dead_code)]
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct BulkUpdateModel {
     pub id: i32,

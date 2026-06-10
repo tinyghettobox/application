@@ -237,6 +237,7 @@ impl SpotifyManager {
 
                     if config.access_token.is_none() {
                         info!("No Spotify access token configured, skipping connection");
+                        tokio::time::sleep(Duration::from_secs(5)).await;
                         continue;
                     }
 

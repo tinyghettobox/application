@@ -1,4 +1,4 @@
-use crate::model::state::{Field, State};
+use crate::model::state::State;
 
 impl State {
     pub(in crate::model) async fn shutdown(&mut self) {

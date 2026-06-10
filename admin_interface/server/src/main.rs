@@ -18,6 +18,7 @@ mod sync_job;
 async fn main() {
     tracing_subscriber::fmt()
         .with_max_level(LevelFilter::DEBUG)
+        .with_ansi(cfg!(not(target_arch = "aarch64")))
         .init();
     let port = std::env::var("PORT")
         .unwrap_or("8080".to_owned())
@@ -30,6 +31,9 @@ async fn main() {
     // Shared notify handle: route handlers signal it when a sync is triggered
     // so the background job wakes up immediately instead of waiting 5 minutes.
     let sync_notify = Arc::new(Notify::new());
+
+    // Shared wifi connection state (polled by the frontend during setup).
+    let wifi_state = routes::wifi::new_shared_wifi_state();
 
     // Start the background Spotify sync job.
     sync_job::start(connection.clone(), Arc::clone(&sync_notify));
@@ -58,10 +62,13 @@ async fn main() {
             .service(library::get_children_sync_statuses)
             .service(library::trigger_sync)
             .service(update::get_operating_system_update_version)
+            .service(wifi::connect)
+            .service(wifi::status)
             .service(image::proxy_image)
             .service(static_files::get)
             .app_data(web::Data::new(connection.clone()))
             .app_data(web::Data::new(Arc::clone(&sync_notify)))
+            .app_data(web::Data::new(wifi_state.clone()))
             .app_data(web::JsonConfig::default().limit(100 * 1024 * 1024))
     })
     .bind(("0.0.0.0", port))

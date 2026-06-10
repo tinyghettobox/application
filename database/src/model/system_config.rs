@@ -36,6 +36,8 @@ pub struct Model {
     pub power_off_btn_delay: i32,
     pub power_off_pin: i32,
     pub cut_pin: i32,
+    pub setup_complete: bool,
+    pub ap_password: String,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
