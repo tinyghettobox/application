@@ -24,22 +24,23 @@ async function setupGuard() {
   return null;
 }
 
+const router = createBrowserRouter([
+  // Setup wizard — outside Root layout, no nav bar.
+  { path: '/setup/:step?', element: <Setup /> },
+  {
+    path: '/',
+    element: <Root />,
+    loader: setupGuard,
+    children: [
+      {path: '', loader: () => redirect('/systemConfig')},
+      {path: 'systemConfig', element: <SystemConfig />, id: 'System configuration'},
+      {path: 'spotifyConfig/:step?', element: <SpotifyConfig />, id: 'Spotify configuration'},
+      {path: 'mediaLibrary/:id?', element: <MediaLibrary />, id: 'Media library'}
+    ]
+  }
+]);
+
 export const App = () => {
-  const router = createBrowserRouter([
-    // Setup wizard — outside Root layout, no nav bar.
-    { path: '/setup/:step?', element: <Setup /> },
-    {
-      path: '/',
-      element: <Root />,
-      loader: setupGuard,
-      children: [
-        {path: '', loader: () => redirect('/systemConfig')},
-        {path: 'systemConfig', element: <SystemConfig />, id: 'System configuration'},
-        {path: 'spotifyConfig/:step?', element: <SpotifyConfig />, id: 'Spotify configuration'},
-        {path: 'mediaLibrary/:id?', element: <MediaLibrary />, id: 'Media library'}
-      ]
-    }
-  ]);
 
   return (
     <ThemeProvider theme={theme}>

@@ -48,7 +48,7 @@ export component SetupView {
                     spacing: 12px;
 
                     Text {
-                        text: "1.  Scan the QR code to connect to the wifi network";
+                        text: "1.  Scan the QR code or connect manually to the wifi network";
                         font-size: 16px;
                         color: Theme.text-color;
                         wrap: word-wrap;
@@ -70,9 +70,16 @@ export component SetupView {
                     }
 
                     Text {
-                        text: "2.  Your browser will open the setup page automatically.";
+                        text: "2.  Open the setup page in your browser.";
                         font-size: 16px;
                         color: Theme.text-color;
+                        wrap: word-wrap;
+                    }
+
+                    Text {
+                        text: "    Navigate to:  http://tinyghettobox.local";
+                        font-size: 16px;
+                        color: Theme.text-accent-color;
                         wrap: word-wrap;
                     }
 
@@ -80,6 +87,13 @@ export component SetupView {
                         text: "3.  Follow the on-screen instructions.";
                         font-size: 16px;
                         color: Theme.text-color;
+                        wrap: word-wrap;
+                    }
+
+                    Text {
+                        text: "    Note: after saving wifi the browser may disconnect briefly — that is normal.";
+                        font-size: 14px;
+                        color: Theme.text-accent-color;
                         wrap: word-wrap;
                     }
                 }

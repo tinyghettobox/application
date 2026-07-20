@@ -36,6 +36,8 @@ impl SetupVM {
         // Track whether the AP enable thread has already been started so it
         // fires at most once (the thread itself retries up to AP_MAX_ATTEMPTS).
         let ap_enable_started = Arc::new(AtomicBool::new(false));
+        // Track whether start_wifi.sh has been called so it fires at most once.
+        let wifi_start_started = Arc::new(AtomicBool::new(false));
 
         self.state.subscribe(move |changes| {
             if !changes.iter().any(|f| matches!(f, Field::system_config(_))) {
@@ -54,6 +56,11 @@ impl SetupVM {
                 });
                 if !library_loaded.swap(true, Ordering::SeqCst) {
                     state_clone.dispatch(Action::LoadLibraryEntry(0));
+                }
+                // Start WiFi client once — setup is complete so wpa_supplicant.conf
+                // exists and the provisioning AP is not (or is no longer) running.
+                if !wifi_start_started.swap(true, Ordering::SeqCst) {
+                    std::thread::spawn(start_wifi_client);
                 }
                 return;
             }
@@ -80,6 +87,26 @@ impl SetupVM {
                 std::thread::spawn(move || enable_ap_with_retries(&ap_password));
             }
         });
+    }
+}
+
+/// Runs `start_wifi.sh` once to bring up WiFi client mode.
+/// Called in a background thread after setup_complete becomes true.
+fn start_wifi_client() {
+    tracing::info!("Starting WiFi client (start_wifi.sh)");
+    match std::process::Command::new("/srv/tinyghettobox/start_wifi.sh").output() {
+        Ok(out) if out.status.success() => {
+            tracing::info!("start_wifi.sh succeeded");
+        }
+        Ok(out) => {
+            let stderr = String::from_utf8_lossy(&out.stderr);
+            let stdout = String::from_utf8_lossy(&out.stdout);
+            let msg = if !stderr.trim().is_empty() { stderr } else { stdout };
+            tracing::error!("start_wifi.sh failed (exit {}): {}", out.status, msg.trim());
+        }
+        Err(e) => {
+            tracing::error!("Failed to spawn start_wifi.sh: {}", e);
+        }
     }
 }
 

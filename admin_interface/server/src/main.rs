@@ -64,6 +64,7 @@ async fn main() {
             .service(update::get_operating_system_update_version)
             .service(wifi::connect)
             .service(wifi::status)
+            .service(wifi::networks)
             .service(image::proxy_image)
             .service(static_files::get)
             .app_data(web::Data::new(connection.clone()))

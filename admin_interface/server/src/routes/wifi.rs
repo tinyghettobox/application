@@ -110,3 +110,42 @@ pub async fn status(wifi_state: web::Data<SharedWifiState>) -> impl Responder {
     let state = wifi_state.lock().unwrap().clone();
     HttpResponse::Ok().json(state)
 }
+
+/// GET /api/wifi/networks
+/// Runs scan_wifi.sh, which briefly stops the AP, scans, restarts the AP,
+/// and returns a JSON array of visible networks sorted by signal strength.
+#[get("/api/wifi/networks")]
+pub async fn networks() -> impl Responder {
+    let output = tokio::process::Command::new("/srv/tinyghettobox/scan_wifi.sh")
+        .output()
+        .await;
+
+    match output {
+        Ok(out) if out.status.success() => {
+            let stdout = String::from_utf8_lossy(&out.stdout);
+            // Parse the JSON array emitted by the script.
+            match serde_json::from_str::<serde_json::Value>(stdout.trim()) {
+                Ok(json) => HttpResponse::Ok()
+                    .content_type("application/json")
+                    .body(json.to_string()),
+                Err(e) => {
+                    error!("Failed to parse scan_wifi.sh output: {}", e);
+                    HttpResponse::Ok()
+                        .content_type("application/json")
+                        .body("[]")
+                }
+            }
+        }
+        Ok(out) => {
+            let stderr = String::from_utf8_lossy(&out.stderr);
+            warn!("scan_wifi.sh failed: {}", stderr);
+            HttpResponse::Ok()
+                .content_type("application/json")
+                .body("[]")
+        }
+        Err(e) => {
+            error!("Failed to spawn scan_wifi.sh: {}", e);
+            HttpResponse::InternalServerError().finish()
+        }
+    }
+}

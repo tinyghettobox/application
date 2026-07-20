@@ -102,7 +102,7 @@ export async function putSystemConfig(config: Partial<SystemConfig>): Promise<Sy
 export interface WifiConnectRequest {
   ssid: string;
   password: string;
-  security: 'WPA' | 'WEP' | 'nopass';
+  security: 'wpa' | 'wpa2' | 'wpa3' | 'wep' | 'nopass';
 }
 
 export interface WifiStatusResponse {
@@ -116,6 +116,16 @@ export async function postWifiConnect(req: WifiConnectRequest): Promise<WifiStat
 
 export async function getWifiStatus(): Promise<WifiStatusResponse> {
   return get<WifiStatusResponse>('/api/wifi/status');
+}
+
+export interface WifiNetwork {
+  ssid: string;
+  signal: number;  // dBm, e.g. -67
+  security: 'wpa' | 'wpa2' | 'wpa3' | 'wep' | 'nopass';
+}
+
+export async function getWifiNetworks(): Promise<WifiNetwork[]> {
+  return get<WifiNetwork[]>('/api/wifi/networks');
 }
 
 export async function getSpotifyConfig(): Promise<SpotifyConfig> {

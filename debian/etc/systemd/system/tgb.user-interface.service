@@ -1,11 +1,12 @@
 [Unit]
 Description=TinyGhettoBox user interface
-Wants=local-fs.target systemd-timesyncd.service pulseaudio.service
-After=local-fs.target systemd-timesyncd.service pulseaudio.service
+Wants=local-fs.target systemd-timesyncd.service pipewire.service
+After=local-fs.target systemd-timesyncd.service pipewire.service
 
 [Service]
 WorkingDirectory=/srv/tinyghettobox
 Environment="DISPLAY=:0"
+Environment="SLINT_DEFAULT_FONT=/srv/tinyghettobox/DejaVuSans.ttf"
 ExecStart=/srv/tinyghettobox/user_interface
 Restart=always
 RestartSec=20

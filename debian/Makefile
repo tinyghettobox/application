@@ -22,6 +22,7 @@ create_dirs:
 copy_binaries:
 	cp $(BIN_SOURCE_DIR)/admin_interface_server $(INSTALL_DIR)
 	cp $(BIN_SOURCE_DIR)/user_interface $(INSTALL_DIR)
+	cp ../splash/resources/DejaVuSans.ttf $(INSTALL_DIR)
 
 copy_webui:
 	cp -r ../admin_interface/web_ui/dist/* $(OUTPUT_DIR)/srv/tinyghettobox/admin_interface_ui

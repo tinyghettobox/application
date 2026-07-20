@@ -4,7 +4,7 @@ import SetupForm from './SetupForm';
 export interface SetupFormValues {
   ssid: string;
   wifiPassword: string;
-  security: 'WPA' | 'WEP' | 'nopass';
+  security: 'wpa' | 'wpa2' | 'wpa3' | 'wep' | 'nopass';
   useSpotify: boolean | null;
   spotifyClientId: string;
   spotifySecretKey: string;
@@ -17,7 +17,7 @@ export default function Setup() {
     defaultValues: {
       ssid: '',
       wifiPassword: '',
-      security: 'WPA',
+      security: 'wpa2',
       useSpotify: null,
       spotifyClientId: '',
       spotifySecretKey: '',

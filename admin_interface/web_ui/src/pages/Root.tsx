@@ -1,4 +1,4 @@
-import {AppBar, Box, Button, Container, Drawer, IconButton, List, ListItem, ListItemButton, ListItemText} from "@mui/material";
+import {AppBar, Box, Button, Container, Drawer, IconButton, List, ListItem, ListItemButton, ListItemText, Toolbar} from "@mui/material";
 import {matchPath, Outlet, useLocation} from "react-router-dom";
 import {useNavigate} from "react-router";
 import {Menu as MenuIcon} from "@mui/icons-material";
@@ -26,20 +26,22 @@ export default function Root() {
     <>
       <AppBar position={"static"}>
         <Container maxWidth={"xl"}>
-          {/* Desktop nav */}
-          <Box gap={3} sx={{flexGrow: 1, display: {xs: 'none', md: 'flex'}}}>
-            {NAV_ITEMS.map(item => (
-              <Button key={item.path} onClick={handleNavigate(item.path)} sx={{my: 2, color: 'white', display: 'block', ...activeStyle(item.path)}}>
-                {item.label}
-              </Button>
-            ))}
-          </Box>
-          {/* Mobile hamburger */}
-          <Box sx={{display: {xs: 'flex', md: 'none'}, py: 1}}>
-            <IconButton color="inherit" onClick={() => setDrawerOpen(true)} size="large" aria-label="menu">
-              <MenuIcon />
-            </IconButton>
-          </Box>
+          <Toolbar disableGutters>
+            {/* Desktop nav */}
+            <Box gap={3} sx={{flexGrow: 1, display: {xs: 'none', md: 'flex'}}}>
+              {NAV_ITEMS.map(item => (
+                <Button key={item.path} onClick={handleNavigate(item.path)} sx={{my: 2, color: 'white', display: 'block', ...activeStyle(item.path)}}>
+                  {item.label}
+                </Button>
+              ))}
+            </Box>
+            {/* Mobile hamburger */}
+            <Box sx={{display: {xs: 'flex', md: 'none'}}}>
+              <IconButton color="inherit" onClick={() => setDrawerOpen(true)} size="large" aria-label="menu">
+                <MenuIcon />
+              </IconButton>
+            </Box>
+          </Toolbar>
         </Container>
       </AppBar>
 

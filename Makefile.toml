@@ -19,3 +19,10 @@ script = "podman run -ti -u $(id -u):$(id -g) -v ${CARGO_MAKE_WORKING_DIRECTORY}
 
 [tasks.build-deb]
 script = "docker run -ti -u $(id -u):$(id -g) -v ${CARGO_MAKE_WORKING_DIRECTORY}/..:/project -v ~/.cargo:/.cargo cross_compile make -C debian"
+
+[tasks.copy-to-os]
+script = """
+cp target/aarch64-unknown-linux-gnu/release/user_interface ../build-root/package/tinyghettobox-user-interface/app/user_interface
+cp target/aarch64-unknown-linux-gnu/release/admin_interface_server ../build-root/package/tinyghettobox-admin-interface/app/admin_interface_server
+cp -r admin_interface/web_ui/dist/* ../build-root/package/tinyghettobox-admin-interface/app/web_ui/
+"""
